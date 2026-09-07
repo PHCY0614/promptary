@@ -179,7 +179,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 flex items-center justify-between border-b border-[#1e1e21]">
-          <h2 className="text-sm font-medium text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
+          <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
             {existing ? "編輯嘗試紀錄" : "新增嘗試"}
           </h2>
           <button onClick={close} className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors w-7 h-7 flex items-center justify-center">×</button>
@@ -284,7 +284,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
             <textarea
               value={form.prompt}
               onChange={(e) => set("prompt", e.target.value)}
-              rows={3}
+              rows={5}
               className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors resize-none"
               style={{ fontFamily: "'JetBrains Mono', monospace" }}
             />

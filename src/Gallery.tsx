@@ -1,3 +1,4 @@
+import { STATUS_STYLE } from "./statusStyles";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Collection, Status } from "./types";
 import { getCoverImage, Store } from "./store";
@@ -7,19 +8,9 @@ type SortKey = "newest" | "updated" | "oldest";
 
 const STATUS_LABEL: Record<Status, string> = { tried: "已試過", want: "想試試", ref: "參考" };
 const STATUS_DOT: Record<Status, string> = {
-  tried: "bg-[#4a8c6e]",
-  want: "bg-[#6e7abf]",
-  ref: "bg-[#8a6e42]",
-};
-const STATUS_TEXT: Record<Status, string> = {
-  tried: "text-[#6abf96]",
-  want: "text-[#8a96e0]",
-  ref: "text-[#c9a96e]",
-};
-const STATUS_BG: Record<Status, string> = {
-  tried: "bg-[#1e3d2e]",
-  want: "bg-[#1e2040]",
-  ref: "bg-[#2a2010]",
+  tried: "bg-[#91B8A0]",
+  want: "bg-[#D7B577]",
+  ref: "bg-[#B5A0D8]",
 };
 
 const ALL_TAGS_FROM = (cs: Collection[]) =>
@@ -99,22 +90,23 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
       className="h-full overflow-y-auto"
       onScroll={(e) => { scrollPos.current = (e.target as HTMLDivElement).scrollTop; }}
     >
-      {/* Header */}
+      {/* Header：桌面左右等寬，中間搜尋固定置中；窄螢幕分列避免擠壓。 */}
       <header className="sticky top-0 z-30 bg-[#0d0d0e]/95 backdrop-blur-md border-b border-[#1e1e21]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
-          <div className="flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)_minmax(0,1fr)] lg:items-center lg:gap-4">
+          <div className="min-w-0 flex flex-wrap items-center gap-x-3 gap-y-1">
             <h1
               className="text-xl font-semibold text-[#f0ede8] leading-tight"
               style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic" }}
             >
               Promptary
             </h1>
+            <p className="text-sm italic text-[#9f9b95] whitespace-nowrap">你的咒語收藏庫 <span className="font-normal text-[#e8e1d7]">—☆ﾟ.*･</span></p>
           </div>
 
           {/* Search */}
-          <div className="flex-1 max-w-sm">
+          <div className="min-w-0 w-full max-w-sm justify-self-center lg:max-w-none">
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b8b5af] text-sm select-none">⌕</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b8b5af] text-xs select-none">⌕</span>
               <input
                 type="text"
                 placeholder="搜尋 prompt、筆記、標籤…"
@@ -126,7 +118,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 ml-auto">
+          <div className="min-w-0 flex flex-wrap items-center justify-end gap-2 lg:justify-self-end">
             <ImportBackup store={store} />
             {/* 排序與管理使用相同的箭頭、按鈕及等寬下拉選單。 */}
             <details ref={sortMenuRef} className="relative shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape" && sortMenuRef.current) sortMenuRef.current.open = false; }}>
@@ -154,7 +146,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
               onClick={() => setFilter(f)}
               className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 filter === f
-                  ? "bg-[#c9a96e] text-[#0d0d0e]"
+                  ? (f === "all" || f === "favorite" ? "bg-[#c9a96e] text-[#0d0d0e]" : `border ${STATUS_STYLE[f]}`)
                   : "text-[#b8b5af] hover:text-[#f0ede8]"
               }`}
             >
@@ -188,7 +180,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
       {showTags && <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setShowTags(false)} onKeyDown={(e) => { if (e.key === "Escape") setShowTags(false); }}>
         <section role="dialog" aria-modal="true" aria-label="所有標籤" className="w-full max-w-md rounded-xl bg-[#161618] border border-[#2e2e32] p-4" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm text-[#f0ede8]">所有標籤</h2>
+            <h2 className="text-sm font-bold text-[#f0ede8]">所有標籤</h2>
             <button onClick={() => setShowTags(false)} className="text-xs text-[#b8b5af] p-2">關閉</button>
           </div>
           <input autoFocus value={tagSearch} onChange={(e) => setTagSearch(e.target.value)} aria-label="搜尋標籤" placeholder="搜尋標籤…" className="w-full rounded-lg bg-[#0d0d0e] border border-[#2e2e32] p-2 text-xs text-[#f0ede8] placeholder:text-[#9d9a94]" />
@@ -303,7 +295,7 @@ function CollectionCard({
           )}
           <div className="flex items-center justify-between">
             <span
-              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${STATUS_BG[c.status]} ${STATUS_TEXT[c.status]}`}
+              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium border ${STATUS_STYLE[c.status]}`}
             >
               <span className={`w-1 h-1 rounded-full ${STATUS_DOT[c.status]}`} />
               {STATUS_LABEL[c.status]}

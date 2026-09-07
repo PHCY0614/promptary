@@ -143,7 +143,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 flex items-center justify-between border-b border-[#1e1e21]">
-          <h2 className="text-sm font-medium text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
+          <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
             {existing ? "編輯收藏" : "新增收藏"}
           </h2>
           <button onClick={close} className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors w-7 h-7 flex items-center justify-center">

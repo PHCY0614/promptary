@@ -1,3 +1,4 @@
+import { STATUS_STYLE } from "./statusStyles";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Collection, Attempt, Status, CoverSource } from "./types";
 import { Store, getCoverImage } from "./store";
@@ -93,20 +94,20 @@ export default function DetailView({
         <div className="flex-1" />
         <button
           onClick={() => toggleFavorite(c.id)}
-          className={`text-lg transition-colors ${c.isFavorite ? "text-[#e06e6e]" : "text-[#b8b5af] hover:text-[#b8b5af]"}`}
+          aria-label={c.isFavorite ? "取消最愛" : "加入最愛"} aria-pressed={c.isFavorite} className={`text-xs w-9 h-9 flex items-center justify-center transition-colors ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
         >
-          ♥
+          <svg width="20" height="20" viewBox="0 0 24 24" fill={c.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
         </button>
         <button
           onClick={onEditCollection}
-          className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#f0ede8] border border-[#2e2e32] rounded-lg transition-colors font-mono"
+          className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
         >
           編輯
         </button>
         {!showDeleteConfirm ? (
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-mono"
+            className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] hover:border-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-mono"
           >
             刪除
           </button>
@@ -123,7 +124,8 @@ export default function DetailView({
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-3 grid grid-cols-1 md:grid-cols-[1fr_1.4fr] gap-3 md:gap-6 items-start">
           {/* Status + tags */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-mono text-[#b8b5af] px-2 py-0.5 border border-[#2e2e32] rounded-full">
+            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[c.status]}`}>
+              <span className="w-1 h-1 rounded-full bg-current" />
               {STATUS_LABEL[c.status]}
             </span>
             {c.tags.map((t) => (
@@ -151,7 +153,7 @@ export default function DetailView({
             </div>
 
       </div>
-      {compareMode === "side" && <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-8">
+      {compareMode === "side" && <div className="max-w-6xl mx-auto px-4 xs:px-6 pb-8">
         <ImageComparison collection={c} preferredAttemptId={selectedAttempt?.id} store={store} onZoom={(src) => setViewer({ images: [src], index: 0 })} />
       </div>}
       <div className={`max-w-6xl mx-auto px-4 sm:px-6 pb-6 gap-6 grid-cols-1 md:grid-cols-[1fr_1.4fr] ${compareMode === "side" ? "hidden" : "grid"}`}>
@@ -161,6 +163,7 @@ export default function DetailView({
           <ImagePane
             images={c.referenceImages}
             label="參考原圖"
+            collectedDate={c.addedAt.slice(0, 10)}
             onZoom={(i) => setViewer({ images: c.referenceImages, index: i })}
             emptyText="尚無參考圖"
           />
@@ -206,7 +209,7 @@ export default function DetailView({
           {/* Collection notes */}
           {c.collectionNotes && (
             <div>
-              <p className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest mb-1.5">收藏筆記</p>
+              <p className="text-xs font-bold text-[#b8b5af] font-mono uppercase tracking-widest mb-1.5">收藏筆記</p>
               <p className="text-xs text-[#a09c95] leading-relaxed bg-[#161618] rounded-lg p-3 border border-[#1e1e21]">
                 {c.collectionNotes}
               </p>
@@ -216,7 +219,7 @@ export default function DetailView({
           {c.source && (
             <p className="text-xs text-[#b8b5af] font-mono">來源：{c.source}</p>
           )}
-          <p className="text-xs text-[#b8b5af] font-mono">收藏於 {c.addedAt.slice(0, 10)}</p>
+
         </div>
 
         {/* Right: compare + attempts */}
@@ -224,7 +227,7 @@ export default function DetailView({
           {/* Attempts */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest">
+              <p className="text-xs font-bold text-[#b8b5af] font-mono uppercase tracking-widest">
                 嘗試紀錄 ({c.attempts.length})
               </p>
               <button
@@ -281,24 +284,28 @@ function ImagePane({
   label,
   onZoom,
   emptyText,
+  collectedDate,
 }: {
   images: string[];
   label: string;
   onZoom: (i: number) => void;
   emptyText: string;
+  collectedDate?: string;
 }) {
   const [idx, setIdx] = useState(0);
   const i = Math.min(idx, images.length - 1);
+  // 圖片標題與收藏日期同排；手機可換行。
+  const heading = <div className="flex flex-wrap items-baseline justify-between gap-2"><p className="text-xs font-bold text-[#c8c4bc]">{label}</p>{collectedDate && <p className="text-xs text-[#b8b5af]">收藏於 {collectedDate}</p>}</div>;
 
   if (images.length === 0) {
     return (
-      <div className="flex flex-col gap-1.5"><p className="h-5 text-xs leading-5 text-[#b8b5af]">{label}</p><div className="h-[min(65vh,640px)] bg-[#161618] rounded-lg flex items-center justify-center border border-[#2e2e32]"><p className="text-xs text-[#b8b5af] font-mono">{emptyText}</p></div></div>
+      <div className="flex flex-col gap-1.5">{heading}<div className="h-[min(65vh,640px)] bg-[#161618] rounded-lg flex items-center justify-center border border-[#2e2e32]"><p className="text-xs text-[#b8b5af] font-mono">{emptyText}</p></div></div>
     );
   }
 
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="h-5 truncate text-xs leading-5 text-[#b8b5af] font-mono">{label}</p>
+      {heading}
       <button
         className="relative w-full h-[min(65vh,640px)] rounded-lg overflow-hidden bg-[#161618] cursor-zoom-in"
         aria-label={`放大${label}`}
@@ -356,7 +363,7 @@ function AttemptCard({
         <div className="flex items-start gap-2 mb-2.5">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={`text-xs font-mono font-medium ${platformColor}`}>{a.platform}</span>
+              <span className={`text-xs font-mono font-bold ${platformColor}`}>{a.platform}</span>
               {a.model && <span className="text-xs text-[#b8b5af] font-mono">{a.model}</span>}
               <span className="text-xs text-[#b8b5af] font-mono">{a.date}</span>
             </div>
@@ -405,7 +412,7 @@ function AttemptCard({
       {/* Action row */}
       <div className="px-3 pb-2 flex flex-wrap items-center gap-2 border-t border-[#1e1e21] pt-2">
         <div className="flex-1" />
-        <button onClick={onEdit} className="text-xs text-[#b8b5af] hover:text-[#f0ede8] font-mono transition-colors">編輯</button>
+        <button onClick={onEdit} className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors">編輯</button>
         {!showDelConfirm ? (
           <button onClick={() => setShowDelConfirm(true)} className="text-xs text-[#b8b5af] hover:text-[#e06e6e] font-mono transition-colors">刪除</button>
         ) : (

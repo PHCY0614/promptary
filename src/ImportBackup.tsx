@@ -10,6 +10,8 @@ export default function ImportBackup({ store }: { store: Store }) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState("");
   const menuRef = useRef<HTMLDetailsElement>(null);
   const preview = pending ? mergeBackup(store.collections, pending) : null;
 
@@ -38,16 +40,20 @@ export default function ImportBackup({ store }: { store: Store }) {
     <details ref={menuRef} className="relative shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape" && menuRef.current) menuRef.current.open = false; }}>
       <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">管理 ▾</summary>
       <div className="absolute right-0 top-full mt-2 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
-        <button onClick={() => { if (menuRef.current) menuRef.current.open = false; setOpen(true); setPending(null); setMessage(""); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">匯入</button>
+        <button onClick={() => { if (menuRef.current) menuRef.current.open = false; setOpen(true); setPending(null); setMessage(""); setFileName(""); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">匯入</button>
         <button onClick={() => { if (menuRef.current) menuRef.current.open = false; store.exportData(); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">匯出</button>
       </div>
     </details>
     {/* Portal 脫離 header 的 backdrop-filter 定位範圍，視窗以整個螢幕置中。 */}
     {open && createPortal(<div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onKeyDown={(e) => { if (e.key === "Escape" && !lock.current) setOpen(false); }}>
       <section role="dialog" aria-modal="true" aria-label="匯入備份" className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-[#161618] border border-[#2e2e32] p-5 text-sm text-[#f0ede8]">
-        <h2 className="mb-3">匯入備份</h2>
+        <h2 className="mb-3 text-sm font-bold">匯入備份</h2>
         <p className="text-xs text-[#b8b5af] mb-3">選擇 Promptary 匯出的 JSON（上限 100 MB）。相同收藏 ID 會跳過，不覆蓋現有版本。</p>
-        <input autoFocus aria-label="選擇備份 JSON" type="file" accept=".json,application/json" disabled={busy} onChange={(e) => { void read(e.target.files?.[0]); e.target.value = ""; }} className="w-full min-w-0 text-xs" />
+        <input ref={fileInput} aria-label="選擇備份 JSON" type="file" accept=".json,application/json" disabled={busy} onChange={(e) => { const file = e.target.files?.[0]; if (file) { setFileName(file.name); void read(file); } e.target.value = ""; }} className="hidden" />
+        <div className="flex flex-wrap items-center gap-3">
+          <button autoFocus type="button" disabled={busy} onClick={() => fileInput.current?.click()} className="shrink-0 rounded-lg border border-[#b8b5af] bg-[#303034] px-2.5 py-1.5 text-xs text-[#f0ede8] hover:bg-[#404046] disabled:opacity-50">{fileName ? "更換檔案" : "選擇備份檔案"}</button>
+          <span className="min-w-0 break-all text-xs text-[#b8b5af]">{fileName || "尚未選擇檔案"}</span>
+        </div>
         {preview && <p className="mt-4">共 {pending!.length} 筆收藏：將新增 {preview.added} 筆，跳過 {preview.skipped} 筆。</p>}
         {message && <p role="status" className="mt-4 text-xs text-[#e1c48e]">{message}</p>}
         <div className="mt-5 flex justify-end gap-3">

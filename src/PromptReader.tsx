@@ -48,7 +48,7 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false }:
   return (
     <section aria-label={title} className="min-w-0">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h3 className="text-xs text-[#c8c4bc] font-mono uppercase tracking-widest">{title}</h3>
+        <h3 className="font-bold text-xs text-[#c8c4bc] font-mono uppercase tracking-widest">{title}</h3>
       </div>
       {text.trim() ? <>
         <div className="mb-3 flex items-center gap-2" aria-label={`${title}閱讀方式`}>
@@ -61,7 +61,7 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false }:
         {view === "original" ? (
           <div className="relative rounded-lg border border-[#2e2e32] bg-[#111113] p-3 pt-11">
             <div className="absolute right-2 top-2"><CopyPromptButton text={text} /></div>
-            <div tabIndex={0} aria-label={`${title}原文內容`} className={fullHeight || expanded ? "h-[min(55vh,480px)] overflow-y-auto overscroll-contain pr-2" : ""}>
+            <div tabIndex={0} aria-label={`${title}原文內容`} className={fullHeight || expanded ? "max-h-[min(55vh,480px)] overflow-y-auto overscroll-contain pr-2" : ""}>
               <p className={`whitespace-pre-wrap break-words [overflow-wrap:anywhere] font-mono text-xs leading-relaxed text-[#c8c4bc] ${fullHeight || expanded ? "" : "line-clamp-5"}`}>{text}</p>
             </div>
             {!fullHeight && <button type="button" onClick={() => setExpanded(!expanded)} className="mt-2 text-xs text-[#c9a96e]">{expanded ? "收起咒語" : "展開完整咒語"}</button>}
@@ -78,7 +78,7 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false }:
             <div tabIndex={0} aria-label={`${title}分類內容`} className="h-[min(55vh,480px)] overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable] flex flex-col gap-4">
               {groups.filter((group) => group.parts.length).map((group) => (
                 <section key={group.id} aria-label={group.label}>
-                  <h4 className="mb-2 text-xs font-medium text-[#e4c68f]">{group.label} · {group.parts.length}</h4>
+                  <h4 className="mb-2 text-xs font-bold text-[#e4c68f]">{group.label} · {group.parts.length}</h4>
                   <ul className="flex flex-wrap gap-2">
                     {group.parts.map((part) => (
                       <li key={part.id} className={`min-w-0 max-w-full rounded border border-[#2e2e32] bg-[#161618] px-2.5 py-1.5 ${editing ? "basis-[200px] grow" : ""}`}>
