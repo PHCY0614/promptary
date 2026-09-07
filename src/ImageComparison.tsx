@@ -17,17 +17,19 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
   const valid = selected.map((id) => images.some((image) => image.id === id) ? id : undefined);
   return (
     <section aria-label="圖片與 Prompt 並排比較" className="min-w-0">
-      {/* 共用一列選圖：每張圖只有一個按鈕，取消後保持另一欄位置。 */}
-      <div aria-label="比較選圖" className="mb-4 flex h-10 items-center gap-2 overflow-x-auto whitespace-nowrap">
+      {/* 共用縮圖 filmstrip：44 × 58px；超出寬度時可橫向捲動。 */}
+      <div aria-label="比較選圖" className="mb-4 overflow-x-auto py-1">
+        <div className="mx-auto flex w-max items-center gap-2 whitespace-nowrap">
         {images.map((option) => (
-          <button key={option.id} type="button" aria-pressed={valid.includes(option.id)}
+          <button key={option.id} type="button" aria-label={option.label} aria-pressed={valid.includes(option.id)}
             title={valid.filter(Boolean).length === 2 && !valid.includes(option.id) ? "請先取消一張已選圖片" : option.label}
             disabled={valid.filter(Boolean).length === 2 && !valid.includes(option.id)}
             onClick={() => setSelected(toggleComparisonSelection(valid, option.id))}
-            className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-mono disabled:opacity-50 ${valid.includes(option.id) ? "border-[#c9a96e] bg-[#2a2010] text-[#e4c68f]" : "border-[#55545a] text-[#b8b5af] hover:text-[#f0ede8]"}`}>
-            {option.attempt ? `${option.attempt.platform} · ${option.attempt.date.slice(5)}${option.attempt.rating ? ` · ${option.attempt.rating}★` : ""}${option.attempt.images.length > 1 ? ` · 圖${option.attempt.images.indexOf(option.src) + 1}` : ""}` : `參考圖${collection.referenceImages.length > 1 ? ` ${collection.referenceImages.indexOf(option.src) + 1}` : ""}`}
+            className={`h-[58px] w-[44px] shrink-0 overflow-hidden rounded-md border p-0.5 focus-visible:outline-2 focus-visible:outline-[#c9a96e] focus-visible:outline-offset-2 disabled:opacity-50 ${valid.includes(option.id) ? "border-[#c9a96e] bg-[#2a2010] text-[#e4c68f]" : "border-[#55545a] text-[#b8b5af] hover:text-[#f0ede8]"}`}>
+            <img src={option.src} alt="" loading="lazy" className="h-full w-full rounded-sm object-cover" />
           </button>
         ))}
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         {([0, 1] as const).map((slot) => {
@@ -58,3 +60,4 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
     </section>
   );
 }
+
