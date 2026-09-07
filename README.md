@@ -48,7 +48,7 @@ Promptary 是一個收藏 AI 生圖 prompt 與實測紀錄的小工具。
 - Tailwind CSS v4
 - IndexedDB
 
-介面最初以 Figma Make 產出的版本為基礎，再持續自己調整，開發過程也有使用 AI 協助。
+以 Figma Make 產出的介面為基礎，並在開發與除錯過程中使用 OpenAI Codex 協助。
 
 使用 Node.js 22 與 pnpm 10.34.3，請使用近期的 Node.js 22 修補版本。
 
