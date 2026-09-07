@@ -144,13 +144,13 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors inline-flex items-center gap-1.5 ${
                 filter === f
                   ? (f === "all" || f === "favorite" ? "bg-[#c9a96e] text-[#0d0d0e]" : `border ${STATUS_STYLE[f]}`)
                   : "text-[#b8b5af] hover:text-[#f0ede8]"
               }`}
             >
-              {f === "all" ? "全部" : f === "favorite" ? "♥ 最愛" : STATUS_LABEL[f]}
+              {f === "all" ? "全部" : f === "favorite" ? <><svg width="14" height="14" viewBox="0 0 24 24" fill={filter === "favorite" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>最愛</> : STATUS_LABEL[f]}
             </button>
           ))}
         </div>
@@ -318,10 +318,14 @@ function CollectionCard({
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
-          className={`text-sm transition-colors flex-shrink-0 ${c.isFavorite ? "text-[#e06e6e]" : "text-[#b8b5af] hover:text-[#b8b5af]"}`}
+          aria-label={c.isFavorite ? "取消最愛" : "加入最愛"}
+          aria-pressed={c.isFavorite}
+          className={`inline-flex items-center justify-center transition-colors flex-shrink-0 ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
           title={c.isFavorite ? "取消最愛" : "加入最愛"}
         >
-          ♥
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={c.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
+          </svg>
         </button>
       </div>
     </div>
