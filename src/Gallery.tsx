@@ -144,9 +144,9 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors inline-flex items-center gap-1.5 ${
+              className={`h-7 flex-shrink-0 px-3 rounded-full border border-transparent text-xs font-medium transition-colors inline-flex items-center gap-1.5 ${
                 filter === f
-                  ? (f === "all" || f === "favorite" ? "bg-[#c9a96e] text-[#0d0d0e]" : `border ${STATUS_STYLE[f]}`)
+                  ? (f === "all" || f === "favorite" ? "bg-[#c9a96e] text-[#0d0d0e]" : STATUS_STYLE[f])
                   : "text-[#b8b5af] hover:text-[#f0ede8]"
               }`}
             >
