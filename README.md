@@ -102,5 +102,3 @@ pnpm build
 Promptary 目前使用 GitHub Pages：
 
 [https://phcy0614.github.io/promptary/](https://phcy0614.github.io/promptary/)
-
-`main` 分支更新後，GitHub Actions 會自動執行檢查、測試、建置與部署。
