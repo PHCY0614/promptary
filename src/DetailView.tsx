@@ -8,6 +8,16 @@ import PromptReader from "./PromptReader";
 import type { PromptClassification } from "./promptClassification";
 
 const STATUS_LABEL: Record<Status, string> = { tried: "已試過", want: "想試試", ref: "參考" };
+
+// 來源只允許一般網頁協定成為連結，避免危險協定被直接執行。
+function safeSourceHref(source: string): string | null {
+  try {
+    const url = new URL(source);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
 const PLATFORM_COLORS: Record<string, string> = {
   PixAI: "text-[#a78bfa]",
   Midjourney: "text-[#6abf96]",
@@ -80,6 +90,7 @@ export default function DetailView({
   ];
 
   const currentCover = getCoverImage(c);
+  const sourceHref = c.source ? safeSourceHref(c.source) : null;
 
   return (
     <div ref={detailRef} className="h-full overflow-y-auto bg-[#0d0d0e]">
@@ -217,7 +228,13 @@ export default function DetailView({
           )}
 
           {c.source && (
-            <p className="text-xs text-[#b8b5af] font-mono">來源：{c.source}</p>
+            <p className="text-xs text-[#b8b5af] font-mono break-all">
+              來源：{sourceHref ? (
+                <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-[#c9a96e]">
+                  {c.source}
+                </a>
+              ) : c.source}
+            </p>
           )}
 
         </div>

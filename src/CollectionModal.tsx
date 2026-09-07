@@ -269,7 +269,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
                 type="text"
                 value={form.source}
                 onChange={(e) => set("source", e.target.value)}
-                placeholder="threads.net/@…"
+                placeholder="填入網址"
                 className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-mono"
               />
             </div>
