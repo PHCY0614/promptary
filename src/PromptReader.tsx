@@ -69,7 +69,6 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false }:
         ) : (
           <div className="relative rounded-lg border border-[#2e2e32] bg-[#111113] p-3 pt-11">
             <div className="absolute right-2 top-2"><CopyPromptButton text={text} /></div>
-            <p className="mb-3 text-xs leading-relaxed text-[#a09c95]">可調整每段分類；不確定或跨多類的內容放入「未分類」。原文與複製順序不變。</p>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <button type="button" disabled={saving} onClick={() => setEditing(!editing)} className="rounded border border-[#2e2e32] px-3 py-1.5 text-xs text-[#c9a96e]">{editing ? "完成調整" : "調整分類"}</button>
               {editing && <button type="button" disabled={saving} onClick={() => { setOverrides({}); setDirty(true); setMessage(""); }} className="text-xs text-[#a09c95] hover:text-[#c9a96e]">恢復自動分類</button>}
