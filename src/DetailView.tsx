@@ -1,0 +1,421 @@
+import { useLayoutEffect, useRef, useState } from "react";
+import { Collection, Attempt, Status, CoverSource } from "./types";
+import { Store, getCoverImage } from "./store";
+import ImageViewer from "./ImageViewer";
+import ImageComparison from "./ImageComparison";
+import PromptReader from "./PromptReader";
+import type { PromptClassification } from "./promptClassification";
+
+const STATUS_LABEL: Record<Status, string> = { tried: "已試過", want: "想試試", ref: "參考" };
+const PLATFORM_COLORS: Record<string, string> = {
+  PixAI: "text-[#a78bfa]",
+  Midjourney: "text-[#6abf96]",
+  Flux: "text-[#60a5fa]",
+  Gemini: "text-[#fbbf24]",
+  ChatGPT: "text-[#34d399]",
+  "GPT-4o": "text-[#34d399]",
+  SDXL: "text-[#f472b6]",
+  ComfyUI: "text-[#fb923c]",
+  Leonardo: "text-[#e879f9]",
+};
+
+type CompareMode = "mine" | "side";
+
+interface Props {
+  collection: Collection;
+  store: Store;
+  onBack: () => void;
+  onAddAttempt: () => void;
+  onEditAttempt: (a: Attempt) => void;
+  onEditCollection: () => void;
+}
+
+export default function DetailView({
+  collection: c,
+  store,
+  onBack,
+  onAddAttempt,
+  onEditAttempt,
+  onEditCollection,
+}: Props) {
+  const { toggleFavorite, deleteCollection, deleteAttempt, setCover } = store;
+  const [compareMode, setCompareMode] = useState<CompareMode>("mine");
+  const [selectedAttemptId, setSelectedAttemptId] = useState<string>(
+    c.attempts.at(-1)?.id ?? ""
+  );
+  const [viewer, setViewer] = useState<{ images: string[]; index: number } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCoverPicker, setShowCoverPicker] = useState(false);
+  const detailRef = useRef<HTMLDivElement>(null);
+
+  // 切換比較版面後回到圖片區，避免瀏覽器捲動錨點留在移到下方的原始資訊。
+  useLayoutEffect(() => {
+    detailRef.current?.scrollTo({ top: 0 });
+  }, [compareMode]);
+
+  const selectedAttempt = c.attempts.find((a) => a.id === selectedAttemptId) ?? c.attempts.at(-1);
+
+  async function handleDelete() {
+    if (await deleteCollection(c.id)) onBack();
+  }
+
+  const allImages: { src: string; label: string; coverSrc: CoverSource }[] = [
+    ...c.referenceImages.map((src, i) => ({
+      src,
+      label: `參考圖 ${i + 1}`,
+      coverSrc: { type: "reference" as const, index: i },
+    })),
+    ...c.attempts.flatMap((a) =>
+      a.images.map((src, i) => ({
+        src,
+        label: `${a.platform} ${a.date.slice(5)} · 圖${i + 1}`,
+        coverSrc: {
+          type: "attempt" as const,
+          attemptId: a.id,
+          imageIndex: i,
+        },
+      }))
+    ),
+  ];
+
+  const currentCover = getCoverImage(c);
+
+  return (
+    <div ref={detailRef} className="h-full overflow-y-auto bg-[#0d0d0e]">
+      {/* Nav bar */}
+      <div className="sticky top-0 z-30 bg-[#0d0d0e]/95 backdrop-blur-md border-b border-[#1e1e21] px-4 sm:px-6 py-3 flex items-center gap-3">
+        <button
+          onClick={onBack}
+          className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors text-sm font-mono flex items-center gap-1.5"
+        >
+          ← 返回
+        </button>
+        <div className="flex-1" />
+        <button
+          onClick={() => toggleFavorite(c.id)}
+          className={`text-lg transition-colors ${c.isFavorite ? "text-[#e06e6e]" : "text-[#b8b5af] hover:text-[#b8b5af]"}`}
+        >
+          ♥
+        </button>
+        <button
+          onClick={onEditCollection}
+          className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#f0ede8] border border-[#2e2e32] rounded-lg transition-colors font-mono"
+        >
+          編輯
+        </button>
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-mono"
+          >
+            刪除
+          </button>
+        ) : (
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-[#e06e6e] font-mono">確認刪除？</span>
+            <button onClick={handleDelete} className="px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-mono">確認</button>
+            <button onClick={() => setShowDeleteConfirm(false)} className="px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-mono">取消</button>
+          </div>
+        )}
+      </div>
+
+      {/* 模式入口位置固定；主頁左窄右寬，並排模式左右等寬。 */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-3 grid grid-cols-1 md:grid-cols-[1fr_1.4fr] gap-3 md:gap-6 items-start">
+          {/* Status + tags */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-mono text-[#b8b5af] px-2 py-0.5 border border-[#2e2e32] rounded-full">
+              {STATUS_LABEL[c.status]}
+            </span>
+            {c.tags.map((t) => (
+              <span key={t} className="text-xs font-mono text-[#c9a96e] bg-[#2a2010] px-2 py-0.5 rounded-full">
+                #{t}
+              </span>
+            ))}
+          </div>
+
+
+            <div className="flex items-center gap-2">
+              {(["mine", "side"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setCompareMode(m)}
+                  className={`px-2.5 py-1 text-xs font-mono rounded-md transition-colors ${
+                    compareMode === m
+                      ? "bg-[#c9a96e] text-[#0d0d0e]"
+                      : "text-[#b8b5af] hover:text-[#f0ede8] border border-[#2e2e32]"
+                  }`}
+                >
+                  {m === "mine" ? "我的成果" : "並排比較"}
+                </button>
+              ))}
+            </div>
+
+      </div>
+      {compareMode === "side" && <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-8">
+        <ImageComparison collection={c} preferredAttemptId={selectedAttempt?.id} store={store} onZoom={(src) => setViewer({ images: [src], index: 0 })} />
+      </div>}
+      <div className={`max-w-6xl mx-auto px-4 sm:px-6 pb-6 gap-6 grid-cols-1 md:grid-cols-[1fr_1.4fr] ${compareMode === "side" ? "hidden" : "grid"}`}>
+        {/* Left: reference info */}
+        <div className="min-w-0 flex flex-col gap-5">
+          {/* 主頁直接從參考原圖標題開始，與右側嘗試紀錄並排。選圖只在比較模式顯示。 */}
+          <ImagePane
+            images={c.referenceImages}
+            label="參考原圖"
+            onZoom={(i) => setViewer({ images: c.referenceImages, index: i })}
+            emptyText="尚無參考圖"
+          />
+
+          {/* Cover picker */}
+          {allImages.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowCoverPicker(!showCoverPicker)}
+                className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-mono transition-colors"
+              >
+                {showCoverPicker ? "▲ 收起" : "▼ 更換封面"}
+              </button>
+              {showCoverPicker && (
+                <div className="mt-2 grid grid-cols-5 gap-1.5">
+                  {allImages.map((img, i) => (
+                    <div
+                      key={i}
+                      className={`relative rounded overflow-hidden bg-[#161618] cursor-pointer group`}
+                      style={{ aspectRatio: "1" }}
+                      onClick={async () => { if (await setCover(c.id, img.coverSrc)) setShowCoverPicker(false); }}
+                      title={img.label}
+                    >
+                      <img src={img.src} alt="" className="w-full h-full object-cover group-hover:opacity-70 transition-opacity" />
+                      {currentCover === img.src && (
+                        <div className="absolute inset-0 border-2 border-[#c9a96e] rounded pointer-events-none" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 原始 Prompt：完整原文與獨立的分類閱讀視圖。 */}
+          <PromptReader
+            title="原始 Prompt"
+            text={c.originalPrompt}
+            saved={c.promptClassification}
+            onSave={(promptClassification) => store.editCollection(c.id, { promptClassification })}
+          />
+
+          {/* Collection notes */}
+          {c.collectionNotes && (
+            <div>
+              <p className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest mb-1.5">收藏筆記</p>
+              <p className="text-xs text-[#a09c95] leading-relaxed bg-[#161618] rounded-lg p-3 border border-[#1e1e21]">
+                {c.collectionNotes}
+              </p>
+            </div>
+          )}
+
+          {c.source && (
+            <p className="text-xs text-[#b8b5af] font-mono">來源：{c.source}</p>
+          )}
+          <p className="text-xs text-[#b8b5af] font-mono">收藏於 {c.addedAt.slice(0, 10)}</p>
+        </div>
+
+        {/* Right: compare + attempts */}
+        <div className="min-w-0 flex flex-col gap-5">
+          {/* Attempts */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest">
+                嘗試紀錄 ({c.attempts.length})
+              </p>
+              <button
+                onClick={onAddAttempt}
+                className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
+              >
+                + 新增嘗試
+              </button>
+            </div>
+
+            {c.attempts.length === 0 ? (
+              <div className="text-center py-8 border border-dashed border-[#2e2e32] rounded-lg">
+                <p className="text-xs text-[#b8b5af] font-mono mb-2">還沒有嘗試紀錄</p>
+                <button onClick={onAddAttempt} className="text-xs text-[#c9a96e] hover:underline font-mono">
+                  新增第一次嘗試
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {[...c.attempts].reverse().map((a) => (
+                  <AttemptCard
+                    key={a.id}
+                    attempt={a}
+                    isSelected={a.id === selectedAttempt?.id}
+                    onEdit={() => onEditAttempt(a)}
+                    onDelete={() => deleteAttempt(c.id, a.id)}
+                    onZoom={(i) => setViewer({ images: a.images, index: i })}
+                    currentCover={currentCover}
+                    onSaveClassification={(promptClassification) => store.editAttempt(c.id, a.id, { promptClassification })}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+
+        </div>
+      </div>
+
+      {viewer && (
+        <ImageViewer
+          images={viewer.images}
+          index={viewer.index}
+          onClose={() => setViewer(null)}
+          onChange={(i) => setViewer({ ...viewer, index: i })}
+        />
+      )}
+    </div>
+  );
+}
+
+function ImagePane({
+  images,
+  label,
+  onZoom,
+  emptyText,
+}: {
+  images: string[];
+  label: string;
+  onZoom: (i: number) => void;
+  emptyText: string;
+}) {
+  const [idx, setIdx] = useState(0);
+  const i = Math.min(idx, images.length - 1);
+
+  if (images.length === 0) {
+    return (
+      <div className="flex flex-col gap-1.5"><p className="h-5 text-xs leading-5 text-[#b8b5af]">{label}</p><div className="h-[min(65vh,640px)] bg-[#161618] rounded-lg flex items-center justify-center border border-[#2e2e32]"><p className="text-xs text-[#b8b5af] font-mono">{emptyText}</p></div></div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="h-5 truncate text-xs leading-5 text-[#b8b5af] font-mono">{label}</p>
+      <button
+        className="relative w-full h-[min(65vh,640px)] rounded-lg overflow-hidden bg-[#161618] cursor-zoom-in"
+        aria-label={`放大${label}`}
+        type="button"
+        onClick={() => onZoom(i)}
+      >
+        <img src={images[i]} alt={label} className="w-full h-full object-contain" />
+      </button>
+      {images.length > 1 && (
+        <div className="flex gap-1 overflow-x-auto">
+          {images.map((src, j) => (
+            <div
+              key={j}
+              className={`w-12 shrink-0 rounded overflow-hidden cursor-pointer bg-[#161618] ${j === i ? "ring-1 ring-[#c9a96e]" : "opacity-50 hover:opacity-80"}`}
+              style={{ aspectRatio: "1" }}
+              onClick={() => setIdx(j)}
+            >
+              <img src={src} alt="" className="w-full h-full object-cover" />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AttemptCard({
+  attempt: a,
+  isSelected,
+  onEdit,
+  onDelete,
+  onZoom,
+  currentCover,
+  onSaveClassification,
+}: {
+  attempt: Attempt;
+  isSelected: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onZoom: (i: number) => void;
+  currentCover: string;
+  onSaveClassification: (classification: PromptClassification) => Promise<boolean>;
+}) {
+  const [showDelConfirm, setShowDelConfirm] = useState(false);
+  const platformColor = PLATFORM_COLORS[a.platform] ?? "text-[#b8b5af]";
+
+  return (
+    <div
+      className={`rounded-lg border transition-colors ${
+        isSelected ? "border-[#c9a96e44] bg-[#161618]" : "border-[#1e1e21] bg-[#0d0d0e] hover:border-[#2e2e32]"
+      }`}
+    >
+      <div className="p-3">
+        {/* Header row */}
+        <div className="flex items-start gap-2 mb-2.5">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`text-xs font-mono font-medium ${platformColor}`}>{a.platform}</span>
+              {a.model && <span className="text-xs text-[#b8b5af] font-mono">{a.model}</span>}
+              <span className="text-xs text-[#b8b5af] font-mono">{a.date}</span>
+            </div>
+          </div>
+          {a.rating && (
+            <div className="flex gap-0.5 flex-shrink-0">
+              {[1,2,3,4,5].map((s) => (
+                <span key={s} className={s <= a.rating! ? "text-[#c9a96e]" : "text-[#b8b5af]"} style={{ fontSize: 12 }}>★</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Thumbnail strip */}
+        {a.images.length > 0 && (
+          <div className="flex gap-1 mb-2.5 overflow-x-auto">
+            {a.images.map((src, i) => (
+              <div
+                key={i}
+                className="relative rounded overflow-hidden bg-[#1e1e21] cursor-pointer group flex-shrink-0"
+                style={{ width: 112, height: 112 }}
+                onClick={() => onZoom(i)}
+              >
+                <img src={src} alt="" className="w-full h-full object-cover group-hover:opacity-70 transition-opacity" />
+                {currentCover === src && (
+                  <div className="absolute bottom-0 right-0 text-xs bg-[#c9a96e] text-[#0d0d0e] px-0.5 rounded-tl leading-none font-mono">封</div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Notes */}
+        {a.notes && (
+          <p className="text-xs text-[#a09c95] leading-relaxed mb-2">{a.notes}</p>
+        )}
+
+        <PromptReader
+          title="這次嘗試的 Prompt"
+          text={a.prompt}
+          saved={a.promptClassification}
+          onSave={onSaveClassification}
+        />
+      </div>
+
+      {/* Action row */}
+      <div className="px-3 pb-2 flex flex-wrap items-center gap-2 border-t border-[#1e1e21] pt-2">
+        <div className="flex-1" />
+        <button onClick={onEdit} className="text-xs text-[#b8b5af] hover:text-[#f0ede8] font-mono transition-colors">編輯</button>
+        {!showDelConfirm ? (
+          <button onClick={() => setShowDelConfirm(true)} className="text-xs text-[#b8b5af] hover:text-[#e06e6e] font-mono transition-colors">刪除</button>
+        ) : (
+          <>
+            <button onClick={onDelete} className="text-xs text-[#e06e6e] font-mono">確認</button>
+            <button onClick={() => setShowDelConfirm(false)} className="text-xs text-[#b8b5af] font-mono">取消</button>
+          </>
+        )}
+      </div>
+
+    </div>
+  );
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Promptary",
+  "language": "zh-Hant",
+  "description": "Organize and view saved raw images from Threads with searchable prompts and track your own creative experiments in a private gallery.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
