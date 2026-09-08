@@ -290,16 +290,20 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           </div>
 
           {/* Favorite */}
-          <label className="flex items-center gap-2.5 cursor-pointer">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={() => set("isFavorite", !form.isFavorite)}
-              className={`text-xl transition-colors ${form.isFavorite ? "text-[#e06e6e]" : "text-[#b8b5af] hover:text-[#b8b5af]"}`}
+              aria-label={form.isFavorite ? "取消最愛" : "加入最愛"}
+              aria-pressed={form.isFavorite}
+              className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${form.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
             >
-              ♥
+              <svg width="14" height="14" viewBox="0 0 24 24" fill={form.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
+              </svg>
             </button>
             <span className="text-xs text-[#b8b5af]">加入最愛</span>
-          </label>
+          </div>
         </fieldset>
 
         <div className="px-5 py-4 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
