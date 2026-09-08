@@ -63,7 +63,7 @@ assert.equal(states[0].length, 2);
 assert.equal(persisted.length, 2);
 const collectionId = persisted[0].id;
 await store.editCollection(collectionId, { promptClassification: { sourcePrompt: 'second', overrides: { '0': 'other' } } });
-const attemptId = await store.addAttempt(collectionId, { name: '金髮女', prompt: 'red hair', images: [], platform: 'PixAI', notes: '', rating: null, date: '2026-09-07' });
+const attemptId = await store.addAttempt(collectionId, { name: '金髮女', promptMode: 'custom', prompt: 'red hair', images: [], platform: 'PixAI', notes: '', rating: null, date: '2026-09-07' });
 await store.editAttempt(collectionId, attemptId, { promptClassification: { sourcePrompt: 'red hair', overrides: { '0': 'appearance' } } });
 assert.equal(persisted[0].originalPrompt, 'second');
 assert.equal(persisted[0].attempts[0].prompt, 'red hair');

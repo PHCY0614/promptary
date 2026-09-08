@@ -7,10 +7,10 @@ import StoredImage from "./StoredImage";
 
 type SortKey = "newest" | "updated" | "oldest";
 
-const STATUS_LABEL: Record<Status, string> = { tried: "已試過", want: "想試試", ref: "參考" };
+const STATUS_LABEL: Record<Status, string> = { tried: "試過", want: "想試", ref: "靈感" };
 const STATUS_DOT: Record<Status, string> = {
   tried: "bg-[#91B8A0]",
-  want: "bg-[#D7B577]",
+  want: "bg-[#8FAFCB]",
   ref: "bg-[#B5A0D8]",
 };
 

@@ -1,4 +1,4 @@
-import type { Collection, CoverSource, ImageRef } from "./types";
+import type { Attempt, Collection, CoverSource, ImageRef } from "./types";
 import { SEED } from "./seed";
 import { createCanonicalImage, createThumbnail, THUMBNAIL_VERSION } from "./imageProcessing";
 
@@ -13,9 +13,10 @@ interface Snapshot { revision: number; collections: Collection[] }
 export interface CanonicalImageRecord extends ImageRef { blob: Blob }
 export interface ThumbnailRecord { id: string; blob: Blob; width: number; height: number; thumbnailVersion: number; generatedAt: string }
 type LegacyImage = string | Blob | { id: string; sourceUrl?: string; width?: number; height?: number };
+type LegacyAttempt = Omit<Attempt, "images" | "promptMode"> & { images: LegacyImage[]; promptMode?: Attempt["promptMode"] };
 type LegacyCollection = Omit<Collection, "referenceImages" | "attempts" | "coverSource"> & {
   referenceImages: LegacyImage[];
-  attempts: (Omit<Collection["attempts"][number], "images"> & { images: LegacyImage[] })[];
+  attempts: LegacyAttempt[];
   coverSource: { type: "reference"; index: number } | { type: "attempt"; attemptId: string; imageIndex: number } | CoverSource;
 };
 
@@ -141,6 +142,7 @@ function isCurrentCollections(value: unknown): value is Collection[] {
   return Array.isArray(value) && value.every((collection) => collection &&
     Array.isArray(collection.referenceImages) && collection.referenceImages.every(isImageRef) &&
     Array.isArray(collection.attempts) && collection.attempts.every((attempt: Collection["attempts"][number]) =>
+      (attempt.promptMode === "original" || attempt.promptMode === "custom") &&
       Array.isArray(attempt.images) && attempt.images.every(isImageRef)));
 }
 
@@ -176,7 +178,11 @@ async function migrateCollections(value: unknown, experimental: Map<string, { di
   const migrated: Collection[] = [];
   for (const raw of value as LegacyCollection[]) {
     const referenceImages = await Promise.all(raw.referenceImages.map(migrateImage));
-    const attempts = await Promise.all(raw.attempts.map(async (attempt) => ({ ...attempt, images: await Promise.all(attempt.images.map(migrateImage)) })));
+    const attempts = await Promise.all(raw.attempts.map(async (attempt) => ({
+      ...attempt,
+      promptMode: attempt.promptMode ?? (attempt.prompt.trim() === raw.originalPrompt.trim() ? "original" : "custom"),
+      images: await Promise.all(attempt.images.map(migrateImage)),
+    })));
     let coverSource: CoverSource;
     if (raw.coverSource.type === "reference") {
       const previous = raw.coverSource as { type: "reference"; index?: number; imageId?: string };

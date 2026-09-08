@@ -3,6 +3,7 @@ import { Attempt, ImageRef, PLATFORMS } from "./types";
 import { createCanonicalImage } from "./imageUpload";
 import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
 import StoredImage from "./StoredImage";
+import ResizableTextarea from "./ResizableTextarea";
 
 // 平台選單是獨立的本機偏好；移除選項不會改寫已保存的嘗試。
 const PLATFORM_STORAGE_KEY = "promptary-custom-platforms";
@@ -30,6 +31,7 @@ interface FormState {
   platform: string;
   customPlatform: string;
   prompt: string;
+  unmodified: boolean;
   model: string;
   notes: string;
   rating: 1 | 2 | 3 | 4 | 5 | null;
@@ -48,7 +50,8 @@ function initForm(originalPrompt: string, existing?: Attempt): FormState {
       images: existing.images.map((image) => ({ id: image.id, image, name: "", status: "done" })),
       platform: isCustom ? "自訂" : existing.platform,
       customPlatform: isCustom ? existing.platform : "",
-      prompt: existing.prompt,
+      prompt: existing.promptMode === "original" ? originalPrompt : existing.prompt,
+      unmodified: existing.promptMode === "original",
       model: existing.model ?? "",
       notes: existing.notes,
       rating: existing.rating,
@@ -61,6 +64,7 @@ function initForm(originalPrompt: string, existing?: Attempt): FormState {
     platform: "PixAI",
     customPlatform: "",
     prompt: originalPrompt,
+    unmodified: false,
     model: "",
     notes: "",
     rating: null,
@@ -164,7 +168,9 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
       name: form.name.trim() || undefined,
       images: form.images.filter((item): item is UploadItem & { image: ImageRef } => item.status === "done" && Boolean(item.image)).map((item) => item.image),
       platform: effectivePlatform,
-      prompt: form.prompt.trim(),
+      promptMode: form.unmodified ? "original" : "custom",
+      prompt: form.unmodified ? originalPrompt.trim() : form.prompt.trim(),
+      promptClassification: form.unmodified ? undefined : existing?.promptClassification,
       model: form.model.trim() || undefined,
       notes: form.notes.trim(),
       rating: form.rating,
@@ -175,7 +181,14 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
 
   const isLoading = form.images.some((i) => i.status === "loading");
   const hasImageError = form.images.some((i) => i.status === "error");
-  const promptDiffers = form.prompt.trim() !== originalPrompt.trim();
+  const promptDiffers = !form.unmodified && form.prompt.trim() !== originalPrompt.trim();
+  function toggleUnmodified() {
+    setForm((current) => ({
+      ...current,
+      unmodified: !current.unmodified,
+      prompt: current.unmodified ? originalPrompt : current.prompt,
+    }));
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={close}>
@@ -288,7 +301,6 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
                 type="text"
                 value={form.model}
                 onChange={(e) => set("model", e.target.value)}
-                placeholder="v6.1, Flux Dev…"
                 className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] font-mono"
               />
             </div>
@@ -300,17 +312,28 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
               <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest">
                 實際使用的 Prompt
               </label>
-              {promptDiffers && (
-                <span className="text-xs text-[#6e7abf] font-mono">已修改</span>
-              )}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-[#b8b5af] font-mono">無修改</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={form.unmodified}
+                  aria-label="使用原始 Prompt，無修改"
+                  onClick={toggleUnmodified}
+                  className={`h-4 w-7 rounded-full transition-colors ${form.unmodified ? "bg-[#c9a96e]" : "bg-[#2e2e32]"}`}
+                >
+                  <span className={`mt-0.5 block h-3 w-3 rounded-full bg-white transition-transform ${form.unmodified ? "translate-x-3.5" : "translate-x-0.5"}`} />
+                </button>
+              </div>
             </div>
-            <textarea
+            {!form.unmodified && <ResizableTextarea
               value={form.prompt}
               onChange={(e) => set("prompt", e.target.value)}
-              rows={5}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors resize-none"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
-            />
+              placeholder="貼上或輸入 Prompt"
+              rows={3}
+              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
+              style={{ fontFamily: "'JetBrains Mono', monospace", height: 56 }}
+            />}
             {promptDiffers && (
               <button
                 onClick={() => set("prompt", originalPrompt)}
@@ -324,12 +347,12 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           {/* Notes */}
           <div>
             <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">這次心得</label>
-            <textarea
+            <ResizableTextarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
-              placeholder="哪裡成功、哪裡需要調整…"
+              placeholder="記錄心得與想法"
               rows={2}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors resize-none"
+              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
             />
           </div>
 

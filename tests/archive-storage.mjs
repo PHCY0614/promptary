@@ -85,7 +85,11 @@ const v2 = await new Promise((resolve, reject) => {
 });
 await new Promise((resolve, reject) => {
   const transaction = v2.transaction(['archive', 'images'], 'readwrite');
-  transaction.objectStore('archive').put({ revision: 7, collections: [{ ...collection(image('legacy')), referenceImages: [{ id: 'legacy', width: 1200, height: 800 }], coverSource: { type: 'reference', index: 0 } }] }, 'current');
+  const legacyAttempts = [
+    { id: 'same', images: [], platform: 'PixAI', prompt: 'original', notes: '', rating: null, date: '2026-09-09', createdAt: '2026-09-09T00:00:00.000Z' },
+    { id: 'changed', images: [], platform: 'PixAI', prompt: 'changed', notes: '', rating: null, date: '2026-09-09', createdAt: '2026-09-09T00:00:00.000Z' },
+  ];
+  transaction.objectStore('archive').put({ revision: 7, collections: [{ ...collection(image('legacy')), referenceImages: [{ id: 'legacy', width: 1200, height: 800 }], attempts: legacyAttempts, coverSource: { type: 'reference', index: 0 } }] }, 'current');
   transaction.objectStore('images').put({ display: new Blob(['legacy'], { type: 'image/webp' }), thumbnail: new Blob(['old-thumb'], { type: 'image/webp' }) }, 'legacy');
   transaction.oncomplete = resolve;
   transaction.onabort = () => reject(transaction.error);
@@ -95,6 +99,8 @@ const migratedLoad = await migrated.loadArchive();
 assert.equal(migratedLoad.revision, 8);
 assert.equal(migratedLoad.collections[0].referenceImages[0].id, 'legacy');
 assert.equal(migratedLoad.collections[0].coverSource.imageId, 'legacy');
+assert.equal(migratedLoad.collections[0].attempts[0].promptMode, 'original');
+assert.equal(migratedLoad.collections[0].attempts[1].promptMode, 'custom');
 assert.equal(await (await migrated.getCanonicalBlob('legacy')).text(), 'legacy');
 assert.deepEqual(await readStore(migrated.indexedDB, 'imageThumbnails'), []);
 console.log('PASS: metadata-only snapshots, canonical Blob storage, lazy versioned thumbnails, reference cleanup, stale writes and v2 migration');

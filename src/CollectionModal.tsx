@@ -3,11 +3,12 @@ import { Collection, ImageRef, Status } from "./types";
 import { createCanonicalImage } from "./imageUpload";
 import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
 import StoredImage from "./StoredImage";
+import ResizableTextarea from "./ResizableTextarea";
 
 const STATUS_OPTS: { value: Status; label: string }[] = [
-  { value: "want", label: "想試試" },
-  { value: "tried", label: "已試過" },
-  { value: "ref", label: "參考" },
+  { value: "want", label: "想試" },
+  { value: "tried", label: "試過" },
+  { value: "ref", label: "靈感" },
 ];
 
 // ── 圖片暫存：以固定 ID 對應非同步結果，移除或追加圖片不會錯位 ──
@@ -247,14 +248,14 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
                 </div>
               </label>
             </div>
-            <textarea
+            <ResizableTextarea
               value={form.originalPrompt}
               onChange={(e) => set("originalPrompt", e.target.value)}
-              placeholder="貼上或輸入原始 prompt…"
+              placeholder="貼上或輸入 Prompt"
               rows={3}
               disabled={form.promptPending}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors resize-none disabled:opacity-40"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors disabled:opacity-40"
+              style={{ fontFamily: "'JetBrains Mono', monospace", height: 56 }}
             />
           </div>
 
@@ -278,7 +279,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
               <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
                 狀態
               </label>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                 {STATUS_OPTS.map((o) => (
                   <label key={o.value} className="flex items-center gap-2 cursor-pointer">
                     <div
@@ -309,12 +310,12 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
             <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
               收藏筆記
             </label>
-            <textarea
+            <ResizableTextarea
               value={form.collectionNotes}
               onChange={(e) => set("collectionNotes", e.target.value)}
-              placeholder="喜歡這個光線，想拿來做角色頭像…"
+              placeholder="記錄心得與想法"
               rows={2}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors resize-none"
+              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
             />
           </div>
 

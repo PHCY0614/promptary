@@ -25,8 +25,9 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
     if (!image) return <p className="text-sm text-[#b8b5af]">請從上方選擇圖片</p>;
     const attemptIndex = attempt ? collection.attempts.findIndex((candidate) => candidate.id === attempt.id) : -1;
     const model = attempt?.model?.trim();
+    const usesOriginalPrompt = attempt?.promptMode === "original";
     const promptTitle = attempt
-      ? `嘗試 ${attemptIndex + 1} · ${attempt.platform}${model ? ` · ${model}` : ""} 的 PROMPT`
+      ? `嘗試 ${attemptIndex + 1} · ${attempt.platform}${model ? ` · ${model}` : ""}${usesOriginalPrompt ? " · 無修改" : " 的 PROMPT"}`
       : "原始 Prompt";
     return <>
       <PromptReader
@@ -34,11 +35,11 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
         fullHeight
         editable={false}
         title={promptTitle}
-        text={attempt?.prompt ?? collection.originalPrompt}
-        saved={attempt?.promptClassification ?? (!attempt ? collection.promptClassification : undefined)}
-        onSave={(promptClassification) => attempt
-          ? store.editAttempt(collection.id, attempt.id, { promptClassification })
-          : store.editCollection(collection.id, { promptClassification })}
+        text={!attempt || usesOriginalPrompt ? collection.originalPrompt : attempt.prompt}
+        saved={!attempt || usesOriginalPrompt ? collection.promptClassification : attempt.promptClassification}
+        onSave={(promptClassification) => !attempt || usesOriginalPrompt
+          ? store.editCollection(collection.id, { promptClassification })
+          : store.editAttempt(collection.id, attempt.id, { promptClassification })}
       />
       {(attempt?.notes || (!attempt && collection.collectionNotes)) && <div className="rounded-lg border border-[#2e2e32] p-3">
         <p className="mb-2 text-xs font-bold text-[#c9a96e]">{attempt ? "這次心得" : "收藏筆記"}</p>

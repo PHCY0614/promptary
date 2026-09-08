@@ -8,7 +8,7 @@ import PromptReader from "./PromptReader";
 import type { PromptClassification } from "./promptClassification";
 import StoredImage from "./StoredImage";
 
-const STATUS_LABEL: Record<Status, string> = { tried: "已試過", want: "想試試", ref: "參考" };
+const STATUS_LABEL: Record<Status, string> = { tried: "試過", want: "想試", ref: "靈感" };
 
 // 來源只允許一般網頁協定成為連結，避免危險協定被直接執行。
 function safeSourceHref(source: string): string | null {
@@ -281,7 +281,6 @@ export default function DetailView({
                     onEdit={() => onEditAttempt(a)}
                     onDelete={() => deleteAttempt(c.id, a.id)}
                     onZoom={(i) => setViewer({ images: a.images, index: i })}
-                    currentCover={currentCover}
                     onSaveClassification={(promptClassification) => store.editAttempt(c.id, a.id, { promptClassification })}
                   />
                 ))}
@@ -364,7 +363,6 @@ function AttemptCard({
   onEdit,
   onDelete,
   onZoom,
-  currentCover,
   onSaveClassification,
 }: {
   attempt: Attempt;
@@ -372,7 +370,6 @@ function AttemptCard({
   onEdit: () => void;
   onDelete: () => void;
   onZoom: (i: number) => void;
-  currentCover: ImageRef | undefined;
   onSaveClassification: (classification: PromptClassification) => Promise<boolean>;
 }) {
   const [showDelConfirm, setShowDelConfirm] = useState(false);
@@ -422,9 +419,6 @@ function AttemptCard({
                 onClick={() => onZoom(i)}
               >
                 <StoredImage image={image} variant="thumbnail" alt="" className="w-full h-full object-cover group-hover:opacity-70 transition-opacity" />
-                {currentCover?.id === image.id && (
-                  <div className="absolute bottom-0 right-0 text-xs bg-[#c9a96e] text-[#0d0d0e] px-0.5 rounded-tl leading-none font-mono">封</div>
-                )}
               </div>
             ))}
           </div>
@@ -435,12 +429,16 @@ function AttemptCard({
           <p className="text-xs text-[#a09c95] leading-relaxed mb-2">{a.notes}</p>
         )}
 
-        <PromptReader
-          title="這次嘗試的 Prompt"
-          text={a.prompt}
-          saved={a.promptClassification}
-          onSave={onSaveClassification}
-        />
+        {a.promptMode === "original" ? (
+          <p className="text-xs text-[#b8b5af] font-mono">無修改</p>
+        ) : (
+          <PromptReader
+            title="這次嘗試的 Prompt"
+            text={a.prompt}
+            saved={a.promptClassification}
+            onSave={onSaveClassification}
+          />
+        )}
       </div>
 
       {/* Action row */}

@@ -24,6 +24,7 @@ export interface Attempt {
   name?: string;
   images: ImageRef[];
   platform: string;
+  promptMode: "original" | "custom";
   prompt: string; // may differ from originalPrompt
   promptClassification?: PromptClassification; // 閱讀分類獨立保存，不改 prompt
   model?: string;

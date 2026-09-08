@@ -71,6 +71,7 @@ function validateCollections(value: unknown): asserts value is Collection[] {
     for (const attempt of collection.attempts) {
       if (!attempt || typeof attempt.id !== "string" || !attempt.id || attemptIds.has(attempt.id) ||
         typeof attempt.platform !== "string" || typeof attempt.prompt !== "string" || typeof attempt.notes !== "string" ||
+        (attempt.promptMode !== undefined && attempt.promptMode !== "original" && attempt.promptMode !== "custom") ||
         !Number.isFinite(Date.parse(attempt.date)) || !Number.isFinite(Date.parse(attempt.createdAt)) ||
         !Array.isArray(attempt.images) || !attempt.images.every(validImageRef) || !validClassification(attempt.promptClassification) ||
         (attempt.name !== undefined && typeof attempt.name !== "string") || (attempt.model !== undefined && typeof attempt.model !== "string") ||
@@ -153,7 +154,14 @@ export async function parseBackup(file: File): Promise<BackupBundle> {
   const candidate = manifest as Partial<Manifest>;
   if (candidate.format !== FORMAT || candidate.version !== FORMAT_VERSION || !Number.isFinite(Date.parse(candidate.exportedAt ?? ""))) fail();
   validateCollections(candidate.collections);
-  const refs = allImageRefs(candidate.collections);
+  const collections = candidate.collections.map((collection) => ({
+    ...collection,
+    attempts: collection.attempts.map((attempt) => ({
+      ...attempt,
+      promptMode: attempt.promptMode ?? (attempt.prompt.trim() === collection.originalPrompt.trim() ? "original" : "custom"),
+    })),
+  }));
+  const refs = allImageRefs(collections);
   const expectedPaths = new Set(["manifest.json", ...[...refs.keys()].map((id) => `images/${id}.webp`)]);
   if (Object.keys(files).some((name) => !expectedPaths.has(name)) || Object.keys(files).length !== expectedPaths.size) fail();
   const images = new Map<string, Blob>();
@@ -164,7 +172,7 @@ export async function parseBackup(file: File): Promise<BackupBundle> {
     await validateCanonicalBlob(blob, ref);
     images.set(id, blob);
   }
-  return { collections: candidate.collections, images };
+  return { collections, images };
 }
 
 export function mergeBackup(current: Collection[], incoming: Collection[]) {
