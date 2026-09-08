@@ -2,6 +2,10 @@ import { useMemo, useRef, useState } from "react";
 import CopyPromptButton from "./CopyPromptButton";
 import { classifyPrompt, classificationOverrides, PROMPT_CATEGORIES, PromptCategory, PromptClassification } from "./promptClassification";
 
+// 分類閱讀依字詞排列；只改畫面順序，不改原文、複製內容或分類儲存位置。
+const PROMPT_COLLATOR = new Intl.Collator(["zh-Hant-TW", "en"], { sensitivity: "base", numeric: true });
+const promptSortKey = (value: string) => value.normalize("NFKC").replace(/^[^A-Za-z0-9\u3400-\u9FFF]+/u, "").trim();
+
 interface Props {
   title: string;
   text: string;
@@ -26,7 +30,9 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false }:
   const busy = useRef(false);
   const parts = useMemo(() => classifyPrompt(text), [text]);
   const groups = PROMPT_CATEGORIES.map((category) => ({ ...category,
-    parts: parts.filter((part) => (overrides[part.id] ?? part.category) === category.id),
+    parts: parts
+      .filter((part) => (overrides[part.id] ?? part.category) === category.id)
+      .sort((a, b) => PROMPT_COLLATOR.compare(promptSortKey(a.text), promptSortKey(b.text))),
   }));
   function changeCategory(id: string, category: PromptCategory) {
     setOverrides((previous) => ({ ...previous, [id]: category }));
