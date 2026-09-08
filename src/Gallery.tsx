@@ -124,7 +124,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
           <div className="min-w-0 flex flex-wrap items-center justify-end gap-2 lg:justify-self-end">
             <ImportBackup store={store} />
             {/* 排序與管理使用相同的箭頭、按鈕及等寬下拉選單。 */}
-            <details ref={sortMenuRef} className="relative shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape" && sortMenuRef.current) sortMenuRef.current.open = false; }}>
+            <details ref={sortMenuRef} className="relative z-40 shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape" && sortMenuRef.current) sortMenuRef.current.open = false; }}>
               <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">{{ newest: "最新收藏", updated: "最近更新", oldest: "最早收藏" }[sort]} ▾</summary>
               <div className="absolute right-0 top-full mt-2 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
                 {([["newest", "最新收藏"], ["updated", "最近更新"], ["oldest", "最早收藏"]] as const).map(([value, label]) => (

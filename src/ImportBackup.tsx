@@ -36,7 +36,7 @@ export default function ImportBackup({ store }: { store: Store }) {
     finally { lock.current = false; setBusy(false); }
   }
   return <>
-    <details ref={menuRef} className="relative shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape" && menuRef.current) menuRef.current.open = false; }}>
+    <details ref={menuRef} className="relative z-40 shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape" && menuRef.current) menuRef.current.open = false; }}>
       <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">管理 ▾</summary>
       <div className="absolute right-0 top-full mt-2 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
         <button onClick={() => { if (menuRef.current) menuRef.current.open = false; setOpen(true); setPending(null); setMessage(""); setFileName(""); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">匯入</button>
