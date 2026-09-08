@@ -1,17 +1,17 @@
-import type { Collection, Attempt } from "./types";
+import type { Collection, Attempt, ImageRef } from "./types";
 
 export interface ComparisonImage {
   id: string;
-  src: string;
+  image: ImageRef;
   label: string;
   attempt?: Attempt;
 }
 // ── 每張圖綁定其來源版本，選圖時一併切換正確 Prompt ──
 export function comparisonImages(collection: Collection): ComparisonImage[] {
   return [
-    ...collection.referenceImages.map((src, i) => ({ id: `reference:${i}`, src, label: `參考圖 ${i + 1}` })),
-    ...collection.attempts.flatMap((attempt, attemptIndex) => attempt.images.map((src, imageIndex) => ({
-      id: `attempt:${attempt.id}:${imageIndex}`, src, attempt,
+    ...collection.referenceImages.map((image, i) => ({ id: image.id, image, label: `參考圖 ${i + 1}` })),
+    ...collection.attempts.flatMap((attempt, attemptIndex) => attempt.images.map((image, imageIndex) => ({
+      id: image.id, image, attempt,
       label: `嘗試 ${attemptIndex + 1} · ${attempt.platform} · ${attempt.date} · 圖 ${imageIndex + 1}`,
     }))),
   ];

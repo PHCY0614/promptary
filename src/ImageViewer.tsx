@@ -1,7 +1,9 @@
 import { useEffect } from "react";
+import StoredImage from "./StoredImage";
+import type { ImageRef } from "./types";
 
 interface Props {
-  images: string[];
+  images: ImageRef[];
   index: number;
   onClose: () => void;
   onChange: (i: number) => void;
@@ -58,8 +60,9 @@ export default function ImageViewer({ images, index, onClose, onChange }: Props)
         </>
       )}
 
-      <img
-        src={images[index]}
+      <StoredImage
+        image={images[index]}
+        variant="canonical"
         alt=""
         className="max-w-[90vw] max-h-[90vh] object-contain rounded"
         onClick={(e) => e.stopPropagation()}

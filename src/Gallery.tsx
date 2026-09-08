@@ -3,6 +3,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { Collection, Status } from "./types";
 import { getCoverImage, Store } from "./store";
 import ImportBackup from "./ImportBackup";
+import StoredImage from "./StoredImage";
 
 type SortKey = "newest" | "updated" | "oldest";
 
@@ -256,8 +257,10 @@ function CollectionCard({
       >
         {cover ? (
           <>
-            <img
-              src={cover}
+            <StoredImage
+              image={cover}
+              variant="thumbnail"
+              adaptiveThumbnail
               alt=""
               className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-[1.03] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setImgLoaded(true)}

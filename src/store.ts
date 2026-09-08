@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Collection, Attempt, CoverSource } from "./types";
-import { loadArchive, saveArchive, storageErrorMessage } from "./archiveStorage";
-import { mergeBackup } from "./backup";
+import { Collection, Attempt, CoverSource, ImageRef } from "./types";
+import { getCanonicalBlob, loadArchive, saveArchive, stageCanonicalImage, storageErrorMessage } from "./archiveStorage";
+import { createBackup, mergeBackup, type BackupBundle } from "./backup";
 
 export function useStore() {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -116,17 +116,19 @@ export function useStore() {
   const editAttempt = useCallback(
     (collectionId: string, attemptId: string, data: Partial<Omit<Attempt, "id" | "createdAt">>) => {
       return update(
-        (current) => current.map((c) =>
-          c.id === collectionId
-            ? {
-                ...c,
-                updatedAt: new Date().toISOString(),
-                attempts: c.attempts.map((a) =>
-                  a.id === attemptId ? { ...a, ...data } : a
-                ),
-              }
-            : c
-        )
+        (current) => current.map((c) => {
+          if (c.id !== collectionId) return c;
+          const attempts = c.attempts.map((a) => a.id === attemptId ? { ...a, ...data } : a);
+          const coverSource = c.coverSource;
+          const coveredAttempt = coverSource.type === "attempt" ? attempts.find((a) => a.id === coverSource.attemptId) : undefined;
+          const coverStillExists = coverSource.type !== "attempt" || coveredAttempt?.images.some((image) => image.id === coverSource.imageId);
+          return {
+            ...c,
+            updatedAt: new Date().toISOString(),
+            attempts,
+            coverSource: coverStillExists ? coverSource : firstAvailableCover(c.referenceImages, attempts),
+          };
+        })
       );
     },
     [update]
@@ -135,15 +137,18 @@ export function useStore() {
   const deleteAttempt = useCallback(
     (collectionId: string, attemptId: string) => {
       return update(
-        (current) => current.map((c) =>
-          c.id === collectionId
-            ? {
-                ...c,
-                updatedAt: new Date().toISOString(),
-                attempts: c.attempts.filter((a) => a.id !== attemptId),
-              }
-            : c
-        )
+        (current) => current.map((c) => {
+          if (c.id !== collectionId) return c;
+          const attempts = c.attempts.filter((a) => a.id !== attemptId);
+          return {
+            ...c,
+            updatedAt: new Date().toISOString(),
+            attempts,
+            coverSource: c.coverSource.type === "attempt" && c.coverSource.attemptId === attemptId
+              ? firstAvailableCover(c.referenceImages, attempts)
+              : c.coverSource,
+          };
+        })
       );
     },
     [update]
@@ -163,26 +168,56 @@ export function useStore() {
   );
 
   // 沿用序列化、原子寫入；成功才更新畫面並回報實際匯入數量。
-  const importData = useCallback(async (incoming: Collection[]) => {
+  const importData = useCallback(async (incoming: BackupBundle) => {
     let result = { added: 0, skipped: 0 };
+    const merged = mergeBackup(latest.current, incoming.collections);
+    try {
+      const currentImageIds = new Set(latest.current.flatMap((collection) => [
+        ...collection.referenceImages.map((image) => image.id),
+        ...collection.attempts.flatMap((attempt) => attempt.images.map((image) => image.id)),
+      ]));
+      for (const id of merged.requiredImageIds) {
+        const blob = incoming.images.get(id);
+        if (!blob) throw new Error("備份圖片不完整，原有收藏未變更。");
+        if (currentImageIds.has(id)) {
+          const [currentBytes, incomingBytes] = await Promise.all([getCanonicalBlob(id).then((value) => value.arrayBuffer()), blob.arrayBuffer()]);
+          const currentView = new Uint8Array(currentBytes);
+          const incomingView = new Uint8Array(incomingBytes);
+          if (currentView.length !== incomingView.length || currentView.some((byte, index) => byte !== incomingView[index])) {
+            throw new Error("備份內含重複但內容不同的圖片 ID，原有收藏未變更。");
+          }
+        } else {
+          const ref = [...merged.collections.flatMap((collection) => [...collection.referenceImages, ...collection.attempts.flatMap((attempt) => attempt.images)])].find((image) => image.id === id)!;
+          stageCanonicalImage(ref, blob);
+        }
+      }
+    } catch (error) {
+      setStorageError(storageErrorMessage(error));
+      return null;
+    }
     const success = await update((current) => {
-      const merged = mergeBackup(current, incoming);
-      result = { added: merged.added, skipped: merged.skipped };
-      return merged.collections;
+      const latestMerge = mergeBackup(current, incoming.collections);
+      result = { added: latestMerge.added, skipped: latestMerge.skipped };
+      return latestMerge.collections;
     });
     return success ? result : null;
   }, [update]);
 
-  const exportData = useCallback(() => {
-    const blob = new Blob([JSON.stringify(collections, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `prompt-archive-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const exportData = useCallback(async () => {
+    try {
+      const blob = await createBackup(collections);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `promptary-backup-${new Date().toISOString().slice(0, 10)}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setStorageError(null);
+      return true;
+    } catch (error) {
+      setStorageError(storageErrorMessage(error));
+      return false;
+    }
   }, [collections]);
 
   return {
@@ -206,23 +241,20 @@ export function useStore() {
 
 export type Store = ReturnType<typeof useStore>;
 
-// Utility: get display cover image for a collection
-export function getCoverImage(c: Collection): string {
-  const { coverSource } = c;
-  if (coverSource.type === "reference") {
-    return c.referenceImages[coverSource.index] ?? c.referenceImages[0] ?? "";
-  }
-  const attempt = c.attempts.find((a) => a.id === coverSource.attemptId);
-  return attempt?.images[coverSource.imageIndex] ?? c.referenceImages[0] ?? "";
+function firstAvailableCover(referenceImages: ImageRef[], attempts: Attempt[]): CoverSource {
+  const reference = referenceImages[0];
+  if (reference) return { type: "reference", imageId: reference.id };
+  const attempt = attempts.find((candidate) => candidate.images.length > 0);
+  return attempt ? { type: "attempt", attemptId: attempt.id, imageId: attempt.images[0].id } : { type: "reference", imageId: "" };
 }
 
-// Utility: convert File to base64
-export async function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+// Utility: get display cover image for a collection
+export function getCoverImage(c: Collection): ImageRef | undefined {
+  const { coverSource } = c;
+  if (coverSource.type === "reference") {
+    return c.referenceImages.find((image) => image.id === coverSource.imageId) ?? c.referenceImages[0];
+  }
+  const attempt = c.attempts.find((a) => a.id === coverSource.attemptId);
+  return attempt?.images.find((image) => image.id === coverSource.imageId) ?? c.referenceImages[0];
 }
 

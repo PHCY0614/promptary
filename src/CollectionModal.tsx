@@ -1,6 +1,8 @@
-import { useState, useRef } from "react";
-import { Collection, Status } from "./types";
-import { readReferenceImage } from "./imageUpload";
+import { useEffect, useState, useRef } from "react";
+import { Collection, ImageRef, Status } from "./types";
+import { createCanonicalImage } from "./imageUpload";
+import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
+import StoredImage from "./StoredImage";
 
 const STATUS_OPTS: { value: Status; label: string }[] = [
   { value: "want", label: "想試試" },
@@ -14,8 +16,9 @@ interface UploadItem {
   file?: File;
   progress: number;
   error?: string;
-  dataUrl: string;
+  image?: ImageRef;
   name: string;
+  isNew?: boolean;
   status: "done" | "loading" | "error";
 }
 
@@ -35,7 +38,7 @@ function initForm(c?: Collection): FormState {
   if (c) {
     return {
       name: c.name ?? "",
-      referenceImages: c.referenceImages.map((u) => ({ id: crypto.randomUUID(), progress: 100, dataUrl: u, name: "", status: "done" })),
+      referenceImages: c.referenceImages.map((image) => ({ id: image.id, progress: 100, image, name: "", status: "done" })),
       originalPrompt: c.originalPrompt,
       promptPending: c.promptPending,
       tags: c.tags.join(", "),
@@ -70,6 +73,8 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
   const savingRef = useRef(false);
   const close = () => { if (!savingRef.current) onClose(); };
   const fileRef = useRef<HTMLInputElement>(null);
+  const newImageIds = useRef(new Set<string>());
+  useEffect(() => () => { for (const id of newImageIds.current) discardStagedImage(id); }, []);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -84,8 +89,11 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
     }));
     patch({ status: "loading", progress: 0, error: undefined });
     try {
-      const dataUrl = await readReferenceImage(item.file, (progress) => patch({ progress }));
-      patch({ dataUrl, status: "done", progress: 100 });
+      patch({ progress: 20 });
+      const result = await createCanonicalImage(item.file, item.id);
+      stageCanonicalImage(result.ref, result.blob);
+      newImageIds.current.add(item.id);
+      patch({ image: result.ref, status: "done", progress: 100, isNew: true });
     } catch (error) {
       patch({ status: "error", error: error instanceof Error ? error.message : "圖片讀取失敗，請重試。" });
     }
@@ -94,7 +102,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
   function handleFiles(files: FileList | null) {
     if (!files) return;
     const items: UploadItem[] = Array.from(files).map((file) => ({
-      id: crypto.randomUUID(), file, dataUrl: "", name: file.name, status: "loading", progress: 0,
+      id: crypto.randomUUID(), file, name: file.name, status: "loading", progress: 0,
     }));
     setForm((f) => ({ ...f, referenceImages: [...f.referenceImages, ...items] }));
     items.forEach((item) => { void readImage(item); });
@@ -103,6 +111,8 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
   }
 
   function removeImage(i: number) {
+    const removed = form.referenceImages[i];
+    if (removed?.isNew) { discardStagedImage(removed.id); newImageIds.current.delete(removed.id); }
     setForm((f) => ({
       ...f,
       referenceImages: f.referenceImages.filter((_, j) => j !== i),
@@ -123,8 +133,10 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
     try {
     await onSave({
       name: form.name.trim() || undefined,
-      referenceImages: form.referenceImages.filter((i) => i.status === "done").map((i) => i.dataUrl),
-      coverSource: { type: "reference", index: 0 },
+      referenceImages: form.referenceImages.filter((i): i is UploadItem & { image: ImageRef } => i.status === "done" && Boolean(i.image)).map((i) => i.image),
+      coverSource: existing && (existing.coverSource.type === "attempt" || form.referenceImages.some((item) => item.image?.id === existing.coverSource.imageId))
+        ? existing.coverSource
+        : { type: "reference", imageId: form.referenceImages.find((item) => item.status === "done")?.image?.id ?? "" },
       originalPrompt: form.originalPrompt.trim(),
       promptPending: !form.originalPrompt.trim(),
       tags,
@@ -194,7 +206,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
                   ) : img.status === "error" ? (
                     <button type="button" onClick={() => void readImage(img)} title={img.error} aria-label={`重試 ${img.name}`} className="w-full h-full bg-[#2a1010] text-[#e06e6e] text-xs">重試</button>
                   ) : (
-                    <img src={img.dataUrl} alt="" className="w-full h-full object-cover" />
+                    img.image && <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover" />
                   )}
                   <button
                     onClick={() => removeImage(i)}
@@ -213,7 +225,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
             </div>
           </div>
 
-          <p className="text-xs text-[#b8b5af]">本機圖庫：支援 JPG、PNG、WebP，每張最多 2 MB。原圖不壓縮，以 IndexedDB 保存；尚未同步雲端。</p>
+          <p className="text-xs leading-relaxed text-[#b8b5af]">本機圖庫：支援 JPG、PNG、WebP，每張圖片最多 10 MB。<br />匯入後會自動最佳化，並僅儲存在此裝置。</p>
           {hasImageError && <div role="alert" className="text-xs text-[#e06e6e]">
             {form.referenceImages.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error}</p>)}
             請重試或移除失敗圖片後再儲存，已填內容會保留。

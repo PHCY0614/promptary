@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
+
+const canonical = new Blob(['canonical'], { type: 'image/webp' });
+const ref = { id: 'image-1', width: 1200, height: 800, mimeType: 'image/webp', byteSize: canonical.size, createdAt: '2026-09-09T00:00:00.000Z' };
+const collection = { id: 'collection-1', name: '測試', referenceImages: [ref], coverSource: { type: 'reference', imageId: ref.id }, originalPrompt: 'prompt', promptPending: false, tags: [], isFavorite: false, status: 'want', collectionNotes: '', attempts: [], addedAt: '2026-09-09T00:00:00.000Z', updatedAt: '2026-09-09T00:00:00.000Z' };
+class FileStub extends Blob { constructor(parts, name, options) { super(parts, options); this.name = name; } }
+const exports = {};
+vm.runInNewContext(ts.transpileModule(readFileSync('src/backup.ts', 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, {
+  exports, Blob, Uint8Array, DataView, Set, Map, Date, JSON, Error,
+  require(name) {
+    if (name === 'fflate') return { strFromU8, strToU8, unzipSync, zipSync };
+    if (name === './archiveStorage') return { getCanonicalBlob: async () => canonical };
+    if (name === './imageProcessing') return { validateCanonicalBlob: async (blob, expected) => { if (expected && blob.size !== expected.byteSize) throw new Error('mismatch'); } };
+    return {};
+  },
+});
+
+const backup = await exports.createBackup([collection]);
+const files = unzipSync(new Uint8Array(await backup.arrayBuffer()));
+assert.deepEqual(Object.keys(files).sort(), ['images/image-1.webp', 'manifest.json']);
+assert.equal(Object.keys(files).some((name) => name.includes('thumbnail')), false);
+const manifestText = strFromU8(files['manifest.json']);
+assert.equal(manifestText.includes('data:image'), false);
+assert.equal(JSON.parse(manifestText).collections[0].referenceImages[0].id, 'image-1');
+
+const parsed = await exports.parseBackup(new FileStub([backup], 'backup.zip', { type: 'application/zip' }));
+assert.equal(parsed.collections[0].referenceImages[0].id, 'image-1');
+assert.equal(await parsed.images.get('image-1').text(), 'canonical');
+await assert.rejects(exports.parseBackup(new FileStub(['{"old":true}'], 'old.json')), /ZIP/);
+const traversal = new Blob([zipSync({ 'manifest.json': strToU8('{}'), '../escape': strToU8('x') })]);
+await assert.rejects(exports.parseBackup(new FileStub([traversal], 'bad.zip')), /不安全/);
+const missingImageManifest = { format: 'promptary-backup', version: 1, exportedAt: '2026-09-09T00:00:00.000Z', collections: [collection] };
+const missing = new Blob([zipSync({ 'manifest.json': strToU8(JSON.stringify(missingImageManifest)) })]);
+await assert.rejects(exports.parseBackup(new FileStub([missing], 'missing.zip')), /不完整|不支援/);
+console.log('PASS: ZIP-only round trip includes canonical images and manifest, excludes Base64/thumbnails, and rejects unsafe or incomplete archives');

@@ -1,6 +1,8 @@
-import { useState, useRef } from "react";
-import { Attempt, PLATFORMS } from "./types";
-import { fileToDataUrl } from "./store";
+import { useEffect, useState, useRef } from "react";
+import { Attempt, ImageRef, PLATFORMS } from "./types";
+import { createCanonicalImage } from "./imageUpload";
+import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
+import StoredImage from "./StoredImage";
 
 // 平台選單是獨立的本機偏好；移除選項不會改寫已保存的嘗試。
 const PLATFORM_STORAGE_KEY = "promptary-custom-platforms";
@@ -13,8 +15,12 @@ function readCustomPlatforms(): string[] {
 }
 
 interface UploadItem {
-  dataUrl: string;
+  id: string;
+  file?: File;
+  image?: ImageRef;
   name: string;
+  error?: string;
+  isNew?: boolean;
   status: "done" | "loading" | "error";
 }
 
@@ -39,7 +45,7 @@ function initForm(originalPrompt: string, existing?: Attempt): FormState {
     const isCustom = ![...PLATFORMS.slice(0, -1), ...readCustomPlatforms()].includes(existing.platform);
     return {
       name: existing.name ?? "",
-      images: existing.images.map((u) => ({ dataUrl: u, name: "", status: "done" })),
+      images: existing.images.map((image) => ({ id: image.id, image, name: "", status: "done" })),
       platform: isCustom ? "自訂" : existing.platform,
       customPlatform: isCustom ? existing.platform : "",
       prompt: existing.prompt,
@@ -102,47 +108,42 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
   const savingRef = useRef(false);
   const close = () => { if (!savingRef.current) onClose(); };
   const fileRef = useRef<HTMLInputElement>(null);
+  const newImageIds = useRef(new Set<string>());
+  useEffect(() => () => { for (const id of newImageIds.current) discardStagedImage(id); }, []);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
-  async function handleFiles(files: FileList | null) {
-    if (!files) return;
-    const arr = Array.from(files);
-    const placeholders: UploadItem[] = arr.map((f) => ({
-      dataUrl: "",
-      name: f.name,
-      status: "loading",
+  async function processImage(item: UploadItem) {
+    if (!item.file) return;
+    const patchItem = (patch: Partial<UploadItem>) => setForm((form) => ({
+      ...form,
+      images: form.images.map((image) => image.id === item.id ? { ...image, ...patch } : image),
     }));
-    setForm((f) => ({ ...f, images: [...f.images, ...placeholders] }));
+    patchItem({ status: "loading", error: undefined });
+    try {
+      const result = await createCanonicalImage(item.file, item.id);
+      stageCanonicalImage(result.ref, result.blob);
+      newImageIds.current.add(item.id);
+      patchItem({ image: result.ref, status: "done", isNew: true });
+    } catch (error) {
+      patchItem({ status: "error", error: error instanceof Error ? error.message : "圖片處理失敗，請重試。" });
+    }
+  }
 
-    const results = await Promise.allSettled(arr.map((f) => fileToDataUrl(f)));
-    setForm((f) => {
-      const imgs = [...f.images];
-      const start = imgs.length - arr.length;
-      results.forEach((r, i) => {
-        imgs[start + i] =
-          r.status === "fulfilled"
-            ? { dataUrl: r.value, name: arr[i].name, status: "done" }
-            : { ...imgs[start + i], status: "error" };
-      });
-      return { ...f, images: imgs };
-    });
+  function handleFiles(files: FileList | null) {
+    if (!files) return;
+    const placeholders: UploadItem[] = Array.from(files).map((file) => ({ id: crypto.randomUUID(), file, name: file.name, status: "loading" }));
+    setForm((form) => ({ ...form, images: [...form.images, ...placeholders] }));
+    placeholders.forEach((item) => { void processImage(item); });
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   function removeImage(i: number) {
+    const removed = form.images[i];
+    if (removed?.isNew) { discardStagedImage(removed.id); newImageIds.current.delete(removed.id); }
     setForm((f) => ({ ...f, images: f.images.filter((_, j) => j !== i) }));
-  }
-
-  function retryImage(i: number, file: File) {
-    fileToDataUrl(file).then((dataUrl) => {
-      setForm((f) => {
-        const imgs = [...f.images];
-        imgs[i] = { dataUrl, name: file.name, status: "done" };
-        return { ...f, images: imgs };
-      });
-    });
   }
 
   function setRating(r: 1 | 2 | 3 | 4 | 5) {
@@ -161,7 +162,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
     try {
     await onSave({
       name: form.name.trim() || undefined,
-      images: form.images.filter((i) => i.status === "done").map((i) => i.dataUrl),
+      images: form.images.filter((item): item is UploadItem & { image: ImageRef } => item.status === "done" && Boolean(item.image)).map((item) => item.image),
       platform: effectivePlatform,
       prompt: form.prompt.trim(),
       model: form.model.trim() || undefined,
@@ -173,6 +174,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
   }
 
   const isLoading = form.images.some((i) => i.status === "loading");
+  const hasImageError = form.images.some((i) => i.status === "error");
   const promptDiffers = form.prompt.trim() !== originalPrompt.trim();
 
   return (
@@ -208,20 +210,18 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
             <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
               成果圖片（可多張）
             </label>
-            <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
             <div className="flex gap-2 flex-wrap">
               {form.images.map((img, i) => (
-                <div key={i} className="relative rounded overflow-hidden bg-[#1e1e21] flex-shrink-0" style={{ width: 64, height: 64 }}>
+                <div key={img.id} className="relative rounded overflow-hidden bg-[#1e1e21] flex-shrink-0" style={{ width: 64, height: 64 }}>
                   {img.status === "loading" ? (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="w-4 h-4 border-2 border-[#c9a96e] border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : img.status === "error" ? (
-                    <div className="w-full h-full flex items-center justify-center bg-[#2a1010] cursor-pointer" title="點擊重試">
-                      <span className="text-[#e06e6e] text-xs font-mono">!</span>
-                    </div>
+                    <button type="button" onClick={() => void processImage(img)} className="w-full h-full flex items-center justify-center bg-[#2a1010] text-[#e06e6e] text-xs" title={img.error}>重試</button>
                   ) : (
-                    <img src={img.dataUrl} alt="" className="w-full h-full object-cover" />
+                    img.image && <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover" />
                   )}
                   <button
                     onClick={() => removeImage(i)}
@@ -235,6 +235,12 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
               >+</button>
             </div>
           </div>
+
+          <p className="text-xs leading-relaxed text-[#b8b5af]">本機圖庫：支援 JPG、PNG、WebP，每張圖片最多 10 MB。<br />匯入後會自動最佳化，並僅儲存在此裝置。</p>
+          {hasImageError && <div role="alert" className="text-xs text-[#e06e6e]">
+            {form.images.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error}</p>)}
+            請重試或移除失敗圖片後再儲存，已填內容會保留。
+          </div>}
 
           {/* Platform + model */}
           <div className="grid grid-cols-2 gap-3">
@@ -359,7 +365,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-mono transition-colors">取消</button>
           <button
             onClick={handleSubmit}
-            disabled={isSaving || isLoading}
+            disabled={isSaving || isLoading || hasImageError}
             className="px-4 py-2 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors disabled:opacity-40"
           >
             {isSaving ? "儲存中…" : isLoading ? "上傳中…" : existing ? "儲存變更" : "新增嘗試"}

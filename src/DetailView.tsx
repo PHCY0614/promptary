@@ -1,11 +1,12 @@
 import { STATUS_STYLE } from "./statusStyles";
 import { useLayoutEffect, useRef, useState } from "react";
-import { Collection, Attempt, Status, CoverSource } from "./types";
+import { Collection, Attempt, Status, CoverSource, ImageRef } from "./types";
 import { Store, getCoverImage } from "./store";
 import ImageViewer from "./ImageViewer";
 import ImageComparison from "./ImageComparison";
 import PromptReader from "./PromptReader";
 import type { PromptClassification } from "./promptClassification";
+import StoredImage from "./StoredImage";
 
 const STATUS_LABEL: Record<Status, string> = { tried: "已試過", want: "想試試", ref: "參考" };
 
@@ -54,7 +55,7 @@ export default function DetailView({
   const [selectedAttemptId, setSelectedAttemptId] = useState<string>(
     c.attempts.at(-1)?.id ?? ""
   );
-  const [viewer, setViewer] = useState<{ images: string[]; index: number } | null>(null);
+  const [viewer, setViewer] = useState<{ images: ImageRef[]; index: number } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCoverPicker, setShowCoverPicker] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
@@ -70,20 +71,20 @@ export default function DetailView({
     if (await deleteCollection(c.id)) onBack();
   }
 
-  const allImages: { src: string; label: string; coverSrc: CoverSource }[] = [
-    ...c.referenceImages.map((src, i) => ({
-      src,
+  const allImages: { image: ImageRef; label: string; coverSrc: CoverSource }[] = [
+    ...c.referenceImages.map((image, i) => ({
+      image,
       label: `參考圖 ${i + 1}`,
-      coverSrc: { type: "reference" as const, index: i },
+      coverSrc: { type: "reference" as const, imageId: image.id },
     })),
     ...c.attempts.flatMap((a) =>
-      a.images.map((src, i) => ({
-        src,
+      a.images.map((image, i) => ({
+        image,
         label: `${a.platform} ${a.date.slice(5)} · 圖${i + 1}`,
         coverSrc: {
           type: "attempt" as const,
           attemptId: a.id,
-          imageIndex: i,
+          imageId: image.id,
         },
       }))
     ),
@@ -206,8 +207,8 @@ export default function DetailView({
                       onClick={async () => { if (await setCover(c.id, img.coverSrc)) setShowCoverPicker(false); }}
                       title={img.label}
                     >
-                      <img src={img.src} alt="" className="w-full h-full object-cover group-hover:opacity-70 transition-opacity" />
-                      {currentCover === img.src && (
+                      <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover group-hover:opacity-70 transition-opacity" />
+                      {currentCover?.id === img.image.id && (
                         <div className="absolute inset-0 border-2 border-[#c9a96e] rounded pointer-events-none" />
                       )}
                     </div>
@@ -311,7 +312,7 @@ function ImagePane({
   emptyText,
   collectedDate,
 }: {
-  images: string[];
+  images: ImageRef[];
   label: string;
   onZoom: (i: number) => void;
   emptyText: string;
@@ -337,18 +338,18 @@ function ImagePane({
         type="button"
         onClick={() => onZoom(i)}
       >
-        <img src={images[i]} alt={label} className="w-full h-full object-contain" />
+        <StoredImage image={images[i]} variant="canonical" alt={label} className="w-full h-full object-contain" />
       </button>
       {images.length > 1 && (
         <div className="flex gap-1 overflow-x-auto">
-          {images.map((src, j) => (
+          {images.map((image, j) => (
             <div
-              key={j}
+              key={image.id}
               className={`w-12 shrink-0 rounded overflow-hidden cursor-pointer bg-[#161618] ${j === i ? "ring-1 ring-[#c9a96e]" : "opacity-50 hover:opacity-80"}`}
               style={{ aspectRatio: "1" }}
               onClick={() => setIdx(j)}
             >
-              <img src={src} alt="" className="w-full h-full object-cover" />
+              <StoredImage image={image} variant="thumbnail" alt="" className="w-full h-full object-cover" />
             </div>
           ))}
         </div>
@@ -371,7 +372,7 @@ function AttemptCard({
   onEdit: () => void;
   onDelete: () => void;
   onZoom: (i: number) => void;
-  currentCover: string;
+  currentCover: ImageRef | undefined;
   onSaveClassification: (classification: PromptClassification) => Promise<boolean>;
 }) {
   const [showDelConfirm, setShowDelConfirm] = useState(false);
@@ -413,15 +414,15 @@ function AttemptCard({
         {/* Thumbnail strip */}
         {a.images.length > 0 && (
           <div className="flex gap-1 mb-2.5 overflow-x-auto">
-            {a.images.map((src, i) => (
+            {a.images.map((image, i) => (
               <div
-                key={i}
+                key={image.id}
                 className="relative rounded overflow-hidden bg-[#1e1e21] cursor-pointer group flex-shrink-0"
                 style={{ width: 112, height: 112 }}
                 onClick={() => onZoom(i)}
               >
-                <img src={src} alt="" className="w-full h-full object-cover group-hover:opacity-70 transition-opacity" />
-                {currentCover === src && (
+                <StoredImage image={image} variant="thumbnail" alt="" className="w-full h-full object-cover group-hover:opacity-70 transition-opacity" />
+                {currentCover?.id === image.id && (
                   <div className="absolute bottom-0 right-0 text-xs bg-[#c9a96e] text-[#0d0d0e] px-0.5 rounded-tl leading-none font-mono">封</div>
                 )}
               </div>

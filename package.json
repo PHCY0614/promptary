@@ -9,9 +9,10 @@
     "preview": "vite preview",
     "format": "oxfmt",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/archive-storage.mjs && node tests/collection-flow.mjs && node tests/prompt-classification.mjs && node tests/comparison-images.mjs"
+    "test": "node tests/image-processing.mjs && node tests/archive-storage.mjs && node tests/backup-zip.mjs && node tests/collection-flow.mjs && node tests/prompt-classification.mjs && node tests/comparison-images.mjs"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

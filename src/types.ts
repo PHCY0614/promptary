@@ -2,6 +2,15 @@ import type { PromptClassification } from "./promptClassification";
 
 export type Status = "tried" | "want" | "ref";
 
+export interface ImageRef {
+  id: string;
+  width: number;
+  height: number;
+  mimeType: "image/webp";
+  byteSize: number;
+  createdAt: string;
+}
+
 // 常用平台選單；其他既有平台在編輯時保留為「自訂」，不刪除歷史紀錄。
 export const PLATFORMS = [
   "PixAI",
@@ -13,7 +22,7 @@ export const PLATFORMS = [
 export interface Attempt {
   id: string;
   name?: string;
-  images: string[]; // base64 data URLs or https URLs
+  images: ImageRef[];
   platform: string;
   prompt: string; // may differ from originalPrompt
   promptClassification?: PromptClassification; // 閱讀分類獨立保存，不改 prompt
@@ -25,13 +34,13 @@ export interface Attempt {
 }
 
 export type CoverSource =
-  | { type: "reference"; index: number }
-  | { type: "attempt"; attemptId: string; imageIndex: number };
+  | { type: "reference"; imageId: string }
+  | { type: "attempt"; attemptId: string; imageId: string };
 
 export interface Collection {
   id: string;
   name?: string;
-  referenceImages: string[];
+  referenceImages: ImageRef[];
   coverSource: CoverSource;
 
   originalPrompt: string;

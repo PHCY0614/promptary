@@ -3,13 +3,15 @@ import type { Collection } from "./types";
 import type { Store } from "./store";
 import PromptReader from "./PromptReader";
 import { comparisonImages, defaultComparisonIds, toggleComparisonSelection } from "./comparisonImages";
+import StoredImage from "./StoredImage";
+import type { ImageRef } from "./types";
 
 // ── 桌機保留完整雙欄；手機固定雙圖並排，文字資訊改由 A／B 切換。 ──
 export default function ImageComparison({ collection, store, onZoom, preferredAttemptId }: {
   collection: Collection;
   preferredAttemptId?: string;
   store: Store;
-  onZoom: (src: string) => void;
+  onZoom: (image: ImageRef) => void;
 }) {
   const images = comparisonImages(collection);
   const [selected, setSelected] = useState<(string | undefined)[]>(() => defaultComparisonIds(images, preferredAttemptId));
@@ -55,7 +57,7 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
             disabled={valid.filter(Boolean).length === 2 && !valid.includes(option.id)}
             onClick={() => setSelected(toggleComparisonSelection(valid, option.id))}
             className={`h-[58px] w-[44px] shrink-0 overflow-hidden rounded-md border p-0.5 focus-visible:outline-2 focus-visible:outline-[#c9a96e] focus-visible:outline-offset-2 disabled:opacity-50 ${valid.includes(option.id) ? "border-[#c9a96e] bg-[#2a2010] text-[#e4c68f]" : "border-[#55545a] text-[#b8b5af] hover:text-[#f0ede8]"}`}>
-            <img src={option.src} alt="" loading="lazy" className="h-full w-full rounded-sm object-cover" />
+            <StoredImage image={option.image} variant="thumbnail" alt="" loading="lazy" className="h-full w-full rounded-sm object-cover" />
           </button>
         ))}
         </div>
@@ -65,8 +67,8 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
           const image = slotImages[slot];
           return <div key={slot} aria-label={slot === 0 ? "A 圖片" : "B 圖片"} className="min-w-0">
             <p className="mb-2 h-5 truncate text-xs leading-5 text-[#b8b5af]" title={image?.label}>{image?.label ?? `請選擇${slot === 0 ? " A" : " B"} 圖片`}</p>
-            {image ? <button type="button" onClick={() => onZoom(image.src)} aria-label={`放大${slot === 0 ? " A" : " B"} 圖片`} className="h-[42vh] min-h-[260px] max-h-[460px] w-full cursor-zoom-in overflow-hidden rounded-lg bg-[#161618]">
-              <img src={image.src} alt={image.label} className="h-full w-full object-contain" />
+            {image ? <button type="button" onClick={() => onZoom(image.image)} aria-label={`放大${slot === 0 ? " A" : " B"} 圖片`} className="h-[42vh] min-h-[260px] max-h-[460px] w-full cursor-zoom-in overflow-hidden rounded-lg bg-[#161618]">
+              <StoredImage image={image.image} variant="canonical" alt={image.label} className="h-full w-full object-contain" />
             </button> : <div className="flex h-[42vh] min-h-[260px] max-h-[460px] items-center justify-center rounded-lg border border-dashed border-[#55545a] px-2 text-center text-xs text-[#b8b5af]">{images.length ? "請從上方選擇圖片" : "尚無可比較的圖片"}</div>}
           </div>;
         })}
@@ -102,8 +104,8 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
           const image = slotImages[slot];
           return <div key={slot} aria-label={slot === 0 ? "左側比較欄" : "右側比較欄"} className="min-w-0 flex flex-col gap-4">
             <p className="h-5 truncate text-xs leading-5 text-[#b8b5af]" title={image?.label}>{image?.label ?? "請從上方選擇圖片"}</p>
-            {image ? <button type="button" onClick={() => onZoom(image.src)} aria-label={`放大${slot === 0 ? "左" : "右"}欄圖片`} className="h-[min(60vh,640px)] w-full overflow-hidden rounded-lg bg-[#161618] cursor-zoom-in">
-              <img src={image.src} alt={image.label} className="h-full w-full object-contain" />
+            {image ? <button type="button" onClick={() => onZoom(image.image)} aria-label={`放大${slot === 0 ? "左" : "右"}欄圖片`} className="h-[min(60vh,640px)] w-full overflow-hidden rounded-lg bg-[#161618] cursor-zoom-in">
+              <StoredImage image={image.image} variant="canonical" alt={image.label} className="h-full w-full object-contain" />
             </button> : <div className="h-[min(60vh,640px)] rounded-lg border border-dashed border-[#55545a] flex items-center justify-center text-sm text-[#b8b5af]">{images.length ? "請從上方選擇圖片" : "尚無可比較的圖片"}</div>}
             {image && renderTextInfo(slot)}
           </div>;

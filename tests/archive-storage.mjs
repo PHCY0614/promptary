@@ -2,90 +2,99 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { IDBFactory, IDBObjectStore } from 'fake-indexeddb';
+import { IDBFactory } from 'fake-indexeddb';
 
-const code = ts.transpileModule(readFileSync('src/archiveStorage.ts', 'utf8'), {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-}).outputText;
-const image = 'data:image/png;base64,' + Buffer.alloc(1024 * 1024, 7).toString('base64');
-const fixture = [{ id: 'kept', originalPrompt: 'original', collectionNotes: 'notes', tags: ['portrait'],
-  status: 'want', isFavorite: true, promptPending: false, coverSource: { type: 'reference', index: 0 },
-  addedAt: '2026-09-07', updatedAt: '2026-09-07', referenceImages: [image],
-  attempts: [{ id: 'attempt', prompt: 'modified', notes: 'result', platform: 'PixAI', date: '2026-09-07', images: [image] }],
-}];
-class Reader {
-  async readAsDataURL(blob) {
-    try { this.result = `data:${blob.type};base64,${Buffer.from(await blob.arrayBuffer()).toString('base64')}`; this.onload(); }
-    catch (error) { this.error = error; this.onerror(); }
-  }
-}
-function setup(raw = JSON.stringify(fixture)) {
+const image = (id) => ({ id, width: 1200, height: 800, mimeType: 'image/webp', byteSize: 9, createdAt: '2026-09-09T00:00:00.000Z' });
+const collection = (ref) => ({
+  id: 'collection', name: '藍色', originalPrompt: 'original', collectionNotes: '', tags: [], status: 'want',
+  isFavorite: false, promptPending: false, coverSource: { type: 'reference', imageId: ref.id },
+  addedAt: '2026-09-09T00:00:00.000Z', updatedAt: '2026-09-09T00:00:00.000Z', referenceImages: [ref], attempts: [],
+});
+class FileStub extends Blob { constructor(parts, name, options) { super(parts, options); this.name = name; } }
+
+function setup() {
   const exports = {};
   const indexedDB = new IDBFactory();
-  let legacy = raw;
-  vm.runInNewContext(code, { exports, indexedDB, Blob, atob, FileReader: Reader, Error,
-    require: () => ({ SEED: [] }),
-    localStorage: { getItem: () => legacy, removeItem: () => { legacy = null; } },
+  const code = ts.transpileModule(readFileSync('src/archiveStorage.ts', 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  vm.runInNewContext(code, {
+    exports, indexedDB, Blob, File: FileStub, atob, crypto: { randomUUID: () => 'migrated-id' }, Error, DOMException, Map, Set, Date,
+    localStorage: { getItem: () => null, removeItem() {} },
+    require(name) {
+      if (name === './seed') return { SEED: [] };
+      if (name === './imageProcessing') return {
+        THUMBNAIL_VERSION: 1,
+        createCanonicalImage: async (file, id) => ({ ref: { ...image(id), byteSize: file.size }, blob: new Blob([await file.arrayBuffer()], { type: 'image/webp' }) }),
+        createThumbnail: async () => ({ blob: new Blob(['thumb'], { type: 'image/webp' }), width: 800, height: 533 }),
+      };
+      return {};
+    },
   });
-  return { ...exports, indexedDB, legacy: () => legacy };
+  return { ...exports, indexedDB };
 }
-async function disk(api) {
-  const db = await new Promise((resolve) => { const request = api.indexedDB.open('prompt-archive'); request.onsuccess = () => resolve(request.result); });
-  try { return await new Promise((resolve) => { const transaction = db.transaction('archive'); const request = transaction.objectStore('archive').get('current'); transaction.oncomplete = () => resolve(request.result); }); }
-  finally { db.close(); }
+
+async function readStore(indexedDB, name, key) {
+  const db = await new Promise((resolve, reject) => { const request = indexedDB.open('prompt-archive', 3); request.onerror = () => reject(request.error); request.onsuccess = () => resolve(request.result); });
+  try {
+    return await new Promise((resolve, reject) => {
+      const transaction = db.transaction(name, 'readonly');
+      const request = key === undefined ? transaction.objectStore(name).getAllKeys() : transaction.objectStore(name).get(key);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } finally { db.close(); }
 }
-// 分類是獨立的可選欄位，原始／嘗試各有一份，舊資料無此欄位仍相容。
-fixture[0].promptClassification = { sourcePrompt: 'original', overrides: { '0': 'appearance' } };
-fixture[0].attempts[0].promptClassification = { sourcePrompt: 'modified', overrides: { '0': 'clothing' } };
+
 const api = setup();
-const loaded = await api.loadArchive();
-assert.equal(JSON.stringify(loaded.collections), JSON.stringify(fixture));
-assert.equal(api.legacy(), null);
-const stored = await disk(api);
-assert.ok(stored.collections[0].referenceImages[0] instanceof Blob);
-assert.equal(stored.collections[0].referenceImages[0].size, 1024 * 1024);
-assert.equal(stored.collections[0].attempts[0].images[0].size, 1024 * 1024);
-assert.equal((await api.loadArchive()).collections[0].attempts[0].prompt, 'modified');
-assert.equal((await api.loadArchive()).collections[0].promptClassification.overrides['0'], 'appearance');
-assert.equal((await api.loadArchive()).collections[0].attempts[0].promptClassification.overrides['0'], 'clothing');
-// 超過舊 localStorage 常見量級的多張原圖仍以 Blob 保存。
-const larger = structuredClone(fixture);
-larger[0].name = '藍色';
-larger[0].attempts[0].name = '金髮女';
-larger[0].referenceImages = Array(8).fill(image);
-const revision = await api.saveArchive(larger, loaded.revision);
-const reloadedLarger = await api.loadArchive();
-assert.equal(reloadedLarger.collections[0].referenceImages.length, 8);
-assert.equal(reloadedLarger.collections[0].name, '藍色');
-assert.equal(reloadedLarger.collections[0].attempts[0].name, '金髮女');
-await assert.rejects(api.saveArchive([], loaded.revision), /其他分頁/);
+const initial = await api.loadArchive();
+assert.equal(initial.revision, 1);
+const ref = image('stable-image');
+const canonical = new Blob(['canonical'], { type: 'image/webp' });
+api.stageCanonicalImage(ref, canonical);
+const revision = await api.saveArchive([collection(ref)], initial.revision);
+const snapshot = await readStore(api.indexedDB, 'archive', 'current');
+assert.equal(snapshot.collections[0].referenceImages[0].id, 'stable-image');
+assert.equal('blob' in snapshot.collections[0].referenceImages[0], false);
+assert.equal(JSON.stringify(snapshot).includes('data:image'), false);
+const imageRecord = await readStore(api.indexedDB, 'images', 'stable-image');
+assert.ok(imageRecord.blob instanceof Blob);
+assert.equal(await imageRecord.blob.text(), 'canonical');
+assert.equal(await (await api.getCanonicalBlob('stable-image')).text(), 'canonical');
+
+assert.deepEqual(await readStore(api.indexedDB, 'imageThumbnails'), []);
+assert.equal(await (await api.getThumbnailBlob(ref)).text(), 'thumb');
+const thumbnailRecord = await readStore(api.indexedDB, 'imageThumbnails', 'stable-image');
+assert.equal(thumbnailRecord.thumbnailVersion, 1);
+assert.equal(await (await api.getThumbnailBlob(ref)).text(), 'thumb');
+
+await assert.rejects(api.saveArchive([], initial.revision), /其他分頁/);
 assert.equal((await api.loadArchive()).collections.length, 1);
 await api.saveArchive([], revision);
-assert.equal((await api.loadArchive()).collections.length, 0);
-assert.equal((await disk(api)).collections.length, 0);
+assert.deepEqual(await readStore(api.indexedDB, 'images'), []);
+assert.deepEqual(await readStore(api.indexedDB, 'imageThumbnails'), []);
+assert.match(api.storageErrorMessage(new DOMException('full', 'QuotaExceededError')), /空間不足/);
 
-// 遷移寫入失敗必須保留舊資料；失敗更新不改变已保存的版本。
-const failing = setup();
-const oldPut = IDBObjectStore.prototype.put;
-IDBObjectStore.prototype.put = function () { throw new DOMException('full', 'QuotaExceededError'); };
-await assert.rejects(failing.loadArchive(), { name: 'QuotaExceededError' });
-assert.notEqual(failing.legacy(), null);
-assert.equal(await disk(failing), undefined);
-IDBObjectStore.prototype.put = oldPut;
-const recovered = await failing.loadArchive();
-IDBObjectStore.prototype.put = function () { throw new DOMException('full', 'QuotaExceededError'); };
-await assert.rejects(failing.saveArchive([], recovered.revision), { name: 'QuotaExceededError' });
-IDBObjectStore.prototype.put = oldPut;
-assert.equal((await failing.loadArchive()).collections.length, 1);
-assert.match(failing.storageErrorMessage(new DOMException('full', 'QuotaExceededError')), /空間不足/);
-assert.match(failing.storageErrorMessage(new DOMException('denied', 'SecurityError')), /權限/);
-for (const raw of ['invalid JSON', '{}']) {
-  const corrupt = setup(raw);
-  await assert.rejects(corrupt.loadArchive());
-  assert.equal(corrupt.legacy(), raw);
-  assert.equal(await disk(corrupt), undefined);
-}
-const parallel = setup();
-const results = await Promise.all([parallel.loadArchive(), parallel.loadArchive()]);
-assert.equal(results[0].revision, results[1].revision);
-console.log('PASS: legacy migration, byte-exact Blob round trip, >8 MB archive, deletion/reload, quota rollback/retry, corrupt legacy preservation, concurrent initialization and stale-tab rejection');
+// 尚未正式上線的 v2 display/thumbnail 實驗資料可升級；舊 thumbnail 不會成為正式資料。
+const migrated = setup();
+const v2 = await new Promise((resolve, reject) => {
+  const request = migrated.indexedDB.open('prompt-archive', 2);
+  request.onupgradeneeded = () => { request.result.createObjectStore('archive'); request.result.createObjectStore('images'); };
+  request.onerror = () => reject(request.error);
+  request.onsuccess = () => resolve(request.result);
+});
+await new Promise((resolve, reject) => {
+  const transaction = v2.transaction(['archive', 'images'], 'readwrite');
+  transaction.objectStore('archive').put({ revision: 7, collections: [{ ...collection(image('legacy')), referenceImages: [{ id: 'legacy', width: 1200, height: 800 }], coverSource: { type: 'reference', index: 0 } }] }, 'current');
+  transaction.objectStore('images').put({ display: new Blob(['legacy'], { type: 'image/webp' }), thumbnail: new Blob(['old-thumb'], { type: 'image/webp' }) }, 'legacy');
+  transaction.oncomplete = resolve;
+  transaction.onabort = () => reject(transaction.error);
+});
+v2.close();
+const migratedLoad = await migrated.loadArchive();
+assert.equal(migratedLoad.revision, 8);
+assert.equal(migratedLoad.collections[0].referenceImages[0].id, 'legacy');
+assert.equal(migratedLoad.collections[0].coverSource.imageId, 'legacy');
+assert.equal(await (await migrated.getCanonicalBlob('legacy')).text(), 'legacy');
+assert.deepEqual(await readStore(migrated.indexedDB, 'imageThumbnails'), []);
+console.log('PASS: metadata-only snapshots, canonical Blob storage, lazy versioned thumbnails, reference cleanup, stale writes and v2 migration');

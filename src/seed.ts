@@ -6,7 +6,7 @@ export const SEED: Collection[] = [
     "referenceImages": [],
     "coverSource": {
       "type": "reference",
-      "index": 0
+      "imageId": ""
     },
     "originalPrompt": "加入第一個咒語！",
     "promptPending": false,
