@@ -43,6 +43,7 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
             {image && <PromptReader
               key={image.id}
               fullHeight
+              editable={false}
               title={attempt ? "這次嘗試的 Prompt" : "原始 Prompt"}
               text={attempt?.prompt ?? collection.originalPrompt}
               saved={attempt?.promptClassification ?? (!attempt ? collection.promptClassification : undefined)}
