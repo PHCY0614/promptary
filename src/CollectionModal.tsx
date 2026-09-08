@@ -168,7 +168,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           </button>
         </div>
 
-        <fieldset disabled={isSaving} className="px-5 py-4 flex flex-col gap-4">
+        <fieldset disabled={isSaving} className="ios-form-zoom-fix px-5 py-4 flex flex-col gap-4">
           {/* 收藏名稱：選填；空白時不建立名稱欄位 */}
           <div>
             <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">

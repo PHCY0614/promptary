@@ -204,7 +204,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           <button onClick={close} className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors w-7 h-7 flex items-center justify-center">×</button>
         </div>
 
-        <fieldset disabled={isSaving} className="px-5 py-4 flex flex-col gap-4">
+        <fieldset disabled={isSaving} className="ios-form-zoom-fix px-5 py-4 flex flex-col gap-4">
           {/* 嘗試名稱：選填；與收藏名稱分開保存 */}
           <div>
             <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">

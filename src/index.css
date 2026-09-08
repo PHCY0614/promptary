@@ -49,9 +49,14 @@ html, body, #root {
 
 /* Prevent iOS browsers from zooming the page when a form control receives focus. */
 @supports (-webkit-touch-callout: none) {
-  input:not([type='file']),
-  textarea,
-  select {
+  .ios-form-zoom-fix input:not([type='file']),
+  .ios-form-zoom-fix textarea,
+  .ios-form-zoom-fix select {
     font-size: 16px !important;
+  }
+
+  .ios-form-zoom-fix input::placeholder,
+  .ios-form-zoom-fix textarea::placeholder {
+    font-size: 12px !important;
   }
 }
