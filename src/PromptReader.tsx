@@ -15,6 +15,47 @@ interface Props {
   onSave: (classification: PromptClassification) => Promise<boolean>;
 }
 
+function CategorySelect({ label, value, disabled, onChange }: {
+  label: string;
+  value: PromptCategory;
+  disabled: boolean;
+  onChange: (category: PromptCategory) => void;
+}) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const selected = PROMPT_CATEGORIES.find((category) => category.id === value)!;
+  return (
+    <details
+      ref={detailsRef}
+      className="relative max-w-full"
+      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.open = false; }}
+      onKeyDown={(event) => { if (event.key === "Escape") event.currentTarget.open = false; }}
+    >
+      <summary
+        aria-label={label}
+        aria-disabled={disabled}
+        onClick={(event) => { if (disabled) event.preventDefault(); }}
+        className={`flex list-none items-center gap-2 rounded border border-[#2e2e32] bg-[#0d0d0e] py-1 pl-2 pr-2 text-xs text-[#a09c95] [&::-webkit-details-marker]:hidden ${disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+      >
+        <span className="min-w-0 flex-1 truncate">{selected.label}</span>
+        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 shrink-0 fill-current"><path d="m5.5 7.5 4.5 4.5 4.5-4.5Z" /></svg>
+      </summary>
+      <div className="absolute left-0 top-[calc(100%-1px)] z-20 min-w-full overflow-hidden rounded border border-[#2e2e32] bg-[#0d0d0e] shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
+        {PROMPT_CATEGORIES.map((category) => (
+          <button
+            key={category.id}
+            type="button"
+            aria-pressed={category.id === value}
+            onClick={() => { onChange(category.id); if (detailsRef.current) detailsRef.current.open = false; }}
+            className={`block w-full whitespace-nowrap px-2 py-1.5 text-left text-xs transition-colors ${category.id === value ? "bg-[#2a2010] text-[#e4c68f]" : "text-[#a09c95] hover:bg-[#1e1e21] hover:text-[#f0ede8]"}`}
+          >
+            {category.label}
+          </button>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 // ── 原文／分類閱讀切換：分類調整另存，複製永遠取完整原始文字 ──
 export default function PromptReader(props: Props) {
   // 原文變更時重建分類草稿，避免舊詞句位置沿用到新版本。
@@ -142,9 +183,12 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
                       <li key={part.id} className={`min-w-0 max-w-full rounded border border-[#2e2e32] bg-[#161618] px-2.5 py-1.5 ${editing ? "basis-[200px] grow" : ""}`}>
                         <p className="whitespace-pre-wrap [overflow-wrap:anywhere] font-mono text-xs leading-relaxed text-[#c8c4bc]">{part.text}</p>
                         {editing && <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <select aria-label={`分類：${part.text}`} disabled={saving || showResetConfirm} value={overrides[part.id] ?? part.category} onChange={(event) => changeCategory(part.id, event.target.value as PromptCategory)} className="max-w-full rounded border border-[#2e2e32] bg-[#0d0d0e] px-2 py-1 text-xs text-[#a09c95] disabled:cursor-not-allowed disabled:opacity-40">
-                            {PROMPT_CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}
-                          </select>
+                          <CategorySelect
+                            label={`分類：${part.text}`}
+                            value={overrides[part.id] ?? part.category}
+                            disabled={saving || showResetConfirm}
+                            onChange={(category) => changeCategory(part.id, category)}
+                          />
                           <span className="text-[11px] text-[#a09c95]">{overrides[part.id] ? "手動調整" : part.ambiguous ? "涉及多類，請確認" : part.category === "other" ? "尚未辨識" : "自動建議"}</span>
                         </div>}
                       </li>
