@@ -7,6 +7,8 @@ const dimensions = new WeakMap();
 const urls = new Map();
 let serial = 0;
 let lastQuality = 0;
+let webpResult = 'image/webp';
+const encodeCalls = [];
 const URLStub = {
   createObjectURL(blob) { const url = `blob:${++serial}`; urls.set(url, blob); return url; },
   revokeObjectURL(url) { urls.delete(url); },
@@ -30,7 +32,9 @@ const document = {
       getContext: () => ({ drawImage() {} }),
       toBlob(callback, type, quality) {
         lastQuality = quality;
-        const output = new Blob(['webp'], { type });
+        encodeCalls.push({ type, quality });
+        if (type === 'image/webp' && webpResult === null) return callback(null);
+        const output = new Blob(['image'], { type: type === 'image/webp' ? webpResult : type });
         dimensions.set(output, { width: this.width, height: this.height });
         callback(output);
       },
@@ -67,4 +71,30 @@ const thumbnail = await exports.createThumbnail(large.blob);
 assert.equal(thumbnail.width, 800);
 assert.equal(thumbnail.height, 400);
 assert.equal(lastQuality, 0.82);
-console.log('PASS: 10 MB and 40 MP guards, stable IDs, 2048 canonical, 800 thumbnail, WebP quality and no upscaling');
+
+webpResult = 'image/png';
+encodeCalls.length = 0;
+const safariJpeg = await exports.createCanonicalImage(input('image/jpeg', 10, 1200, 800), 'safari-jpeg');
+assert.equal(safariJpeg.ref.mimeType, 'image/jpeg');
+assert.equal(safariJpeg.blob.type, 'image/jpeg');
+assert.deepEqual(encodeCalls.map(({ type, quality }) => [type, quality]), [
+  ['image/webp', 0.85],
+  ['image/jpeg', 0.88],
+]);
+
+encodeCalls.length = 0;
+const safariPng = await exports.createCanonicalImage(input('image/png', 10, 1200, 800), 'safari-png');
+assert.equal(safariPng.ref.mimeType, 'image/png');
+assert.equal(safariPng.blob.type, 'image/png');
+
+webpResult = null;
+encodeCalls.length = 0;
+const nullFallback = await exports.createCanonicalImage(input('image/jpeg', 10, 1200, 800), 'null-fallback');
+assert.equal(nullFallback.ref.mimeType, 'image/jpeg');
+assert.equal(nullFallback.blob.type, 'image/jpeg');
+
+encodeCalls.length = 0;
+const jpegThumbnail = await exports.createThumbnail(nullFallback.blob);
+assert.equal(jpegThumbnail.blob.type, 'image/jpeg');
+assert.equal(lastQuality, 0.85);
+console.log('PASS: image limits, stable IDs, resizing, WebP encoding, Safari JPEG/PNG fallback, null fallback, and thumbnail fallback');

@@ -36,11 +36,16 @@ function fail(message = "備份格式不完整或不支援，請選擇 Promptary
   throw new Error(message);
 }
 
+function imagePath(image: ImageRef): string {
+  const extension = image.mimeType === "image/webp" ? "webp" : image.mimeType === "image/jpeg" ? "jpg" : "png";
+  return `images/${image.id}.${extension}`;
+}
+
 function validImageRef(value: unknown): value is ImageRef {
   const image = value as Partial<ImageRef> | null;
   return Boolean(image && typeof image.id === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(image.id) &&
     Number.isInteger(image.width) && image.width! > 0 && Number.isInteger(image.height) && image.height! > 0 &&
-    image.mimeType === "image/webp" && Number.isInteger(image.byteSize) && image.byteSize! > 0 &&
+    ["image/webp", "image/jpeg", "image/png"].includes(image.mimeType ?? "") && Number.isInteger(image.byteSize) && image.byteSize! > 0 &&
     typeof image.createdAt === "string" && Number.isFinite(Date.parse(image.createdAt)));
 }
 
@@ -137,7 +142,7 @@ export async function createBackup(collections: Collection[]): Promise<Blob> {
   for (const [id, ref] of refs) {
     const blob = await getCanonicalBlob(id);
     await validateCanonicalBlob(blob, ref);
-    files[`images/${id}.webp`] = new Uint8Array(await blob.arrayBuffer());
+    files[imagePath(ref)] = new Uint8Array(await blob.arrayBuffer());
   }
   return new Blob([zipSync(files, { level: 0 })], { type: "application/zip" });
 }
@@ -162,13 +167,13 @@ export async function parseBackup(file: File): Promise<BackupBundle> {
     })),
   }));
   const refs = allImageRefs(collections);
-  const expectedPaths = new Set(["manifest.json", ...[...refs.keys()].map((id) => `images/${id}.webp`)]);
+  const expectedPaths = new Set(["manifest.json", ...[...refs.values()].map(imagePath)]);
   if (Object.keys(files).some((name) => !expectedPaths.has(name)) || Object.keys(files).length !== expectedPaths.size) fail();
   const images = new Map<string, Blob>();
   for (const [id, ref] of refs) {
-    const imageBytes = files[`images/${id}.webp`];
+    const imageBytes = files[imagePath(ref)];
     if (!imageBytes || imageBytes.byteLength > MAX_CANONICAL_BYTES) fail("備份內的圖片遺失或過大，原有收藏未變更。");
-    const blob = new Blob([imageBytes.slice().buffer], { type: "image/webp" });
+    const blob = new Blob([imageBytes.slice().buffer], { type: ref.mimeType });
     await validateCanonicalBlob(blob, ref);
     images.set(id, blob);
   }

@@ -6,7 +6,7 @@ export interface ImageRef {
   id: string;
   width: number;
   height: number;
-  mimeType: "image/webp";
+  mimeType: "image/webp" | "image/jpeg" | "image/png";
   byteSize: number;
   createdAt: string;
 }

@@ -134,7 +134,7 @@ async function commitSnapshot(collections: Collection[], expected: number | unde
 function isImageRef(value: unknown): value is ImageRef {
   const image = value as Partial<ImageRef> | null;
   return Boolean(image && typeof image.id === "string" && Number.isInteger(image.width) && Number.isInteger(image.height) &&
-    image.width! > 0 && image.height! > 0 && image.mimeType === "image/webp" && Number.isInteger(image.byteSize) &&
+    image.width! > 0 && image.height! > 0 && ["image/webp", "image/jpeg", "image/png"].includes(image.mimeType ?? "") && Number.isInteger(image.byteSize) &&
     image.byteSize! > 0 && typeof image.createdAt === "string");
 }
 
