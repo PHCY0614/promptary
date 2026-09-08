@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Store } from "./store";
 import { mergeBackup, parseBackup, type BackupBundle } from "./backup";
@@ -11,8 +11,18 @@ export default function ImportBackup({ store }: { store: Store }) {
   const lock = useRef(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
-  const menuRef = useRef<HTMLDetailsElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const preview = pending ? mergeBackup(store.collections, pending.collections) : null;
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeMenu = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", closeMenu);
+    return () => document.removeEventListener("pointerdown", closeMenu);
+  }, [menuOpen]);
 
   // 僅讀取本機檔案；預覽不寫入，使用者確認後才提交至 IndexedDB。
   async function read(file?: File) {
@@ -36,13 +46,13 @@ export default function ImportBackup({ store }: { store: Store }) {
     finally { lock.current = false; setBusy(false); }
   }
   return <>
-    <details ref={menuRef} className="relative z-40 shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape" && menuRef.current) menuRef.current.open = false; }}>
-      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">管理 ▾</summary>
-      <div className="absolute right-0 top-full mt-2 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
-        <button onClick={() => { if (menuRef.current) menuRef.current.open = false; setOpen(true); setPending(null); setMessage(""); setFileName(""); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">匯入</button>
-        <button onClick={() => { if (menuRef.current) menuRef.current.open = false; void store.exportData(); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">匯出</button>
-      </div>
-    </details>
+    <div ref={menuRef} className="relative z-40 shrink-0" onKeyDown={(e) => { if (e.key === "Escape") { setMenuOpen(false); (e.currentTarget.querySelector("button") as HTMLButtonElement | null)?.focus(); } }}>
+      <button type="button" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen((current) => !current)} className="whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">管理 ▾</button>
+      {menuOpen && <div className="absolute right-0 top-full mt-2 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
+        <button type="button" onClick={() => { setMenuOpen(false); setOpen(true); setPending(null); setMessage(""); setFileName(""); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">匯入</button>
+        <button type="button" onClick={() => { setMenuOpen(false); void store.exportData(); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">匯出</button>
+      </div>}
+    </div>
     {/* Portal 脫離 header 的 backdrop-filter 定位範圍，視窗以整個螢幕置中。 */}
     {open && createPortal(<div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onKeyDown={(e) => { if (e.key === "Escape" && !lock.current) setOpen(false); }}>
       <section role="dialog" aria-modal="true" aria-label="匯入備份" className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-[#161618] border border-[#2e2e32] p-5 text-sm text-[#f0ede8]">

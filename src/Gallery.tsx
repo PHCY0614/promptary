@@ -39,7 +39,8 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
     if (tagStripRef.current) tagStripRef.current.scrollLeft = 0;
   };
   const containerRef = useRef<HTMLDivElement>(null);
-  const sortMenuRef = useRef<HTMLDetailsElement>(null);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
 
   // restore scroll on mount
   useEffect(() => {
@@ -47,6 +48,15 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
       containerRef.current.scrollTop = scrollPos.current;
     }
   }, []);
+
+  useEffect(() => {
+    if (!sortMenuOpen) return;
+    const closeMenu = (event: PointerEvent) => {
+      if (!sortMenuRef.current?.contains(event.target as Node)) setSortMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", closeMenu);
+    return () => document.removeEventListener("pointerdown", closeMenu);
+  }, [sortMenuOpen]);
 
   const allTags = useMemo(() => ALL_TAGS_FROM(collections), [collections]);
 
@@ -124,14 +134,14 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
           <div className="min-w-0 flex flex-wrap items-center justify-end gap-2 lg:justify-self-end">
             <ImportBackup store={store} />
             {/* 排序與管理使用相同的箭頭、按鈕及等寬下拉選單。 */}
-            <details ref={sortMenuRef} className="relative z-40 shrink-0" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) e.currentTarget.open = false; }} onKeyDown={(e) => { if (e.key === "Escape" && sortMenuRef.current) sortMenuRef.current.open = false; }}>
-              <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">{{ newest: "最新收藏", updated: "最近更新", oldest: "最早收藏" }[sort]} ▾</summary>
-              <div className="absolute right-0 top-full mt-2 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
+            <div ref={sortMenuRef} className="relative z-40 shrink-0" onKeyDown={(e) => { if (e.key === "Escape") { setSortMenuOpen(false); (e.currentTarget.querySelector("button") as HTMLButtonElement | null)?.focus(); } }}>
+              <button type="button" aria-haspopup="true" aria-expanded={sortMenuOpen} onClick={() => setSortMenuOpen((current) => !current)} className="whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">{{ newest: "最新收藏", updated: "最近更新", oldest: "最早收藏" }[sort]} ▾</button>
+              {sortMenuOpen && <div className="absolute right-0 top-full mt-2 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
                 {([["newest", "最新收藏"], ["updated", "最近更新"], ["oldest", "最早收藏"]] as const).map(([value, label]) => (
-                  <button key={value} aria-pressed={sort === value} onClick={() => { setSort(value); if (sortMenuRef.current) sortMenuRef.current.open = false; }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">{label}</button>
+                  <button type="button" key={value} aria-pressed={sort === value} onClick={() => { setSort(value); setSortMenuOpen(false); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">{label}</button>
                 ))}
-              </div>
-            </details>
+              </div>}
+            </div>
             <button
               onClick={onAdd}
               className="px-3 py-1.5 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
