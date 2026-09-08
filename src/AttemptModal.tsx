@@ -346,7 +346,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
 
           {/* Notes */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">這次心得</label>
+            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">筆記</label>
             <ResizableTextarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}

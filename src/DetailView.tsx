@@ -229,8 +229,8 @@ export default function DetailView({
           {/* Collection notes */}
           {c.collectionNotes && (
             <div>
-              <p className="text-xs font-bold text-[#b8b5af] font-mono uppercase tracking-widest mb-1.5">收藏筆記</p>
-              <p className="text-xs text-[#a09c95] leading-relaxed bg-[#161618] rounded-lg p-3 border border-[#1e1e21]">
+              <p className="text-xs font-bold text-[#c8c4bc] font-mono uppercase tracking-widest mb-1.5">收藏筆記</p>
+              <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">
                 {c.collectionNotes}
               </p>
             </div>
@@ -426,11 +426,14 @@ function AttemptCard({
 
         {/* Notes */}
         {a.notes && (
-          <p className="text-xs text-[#a09c95] leading-relaxed mb-2">{a.notes}</p>
+          <div className="mb-3">
+            <p className="mb-1.5 text-xs font-bold text-[#c8c4bc] font-mono uppercase tracking-widest">筆記</p>
+            <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">{a.notes}</p>
+          </div>
         )}
 
         {a.promptMode === "original" ? (
-          <p className="text-xs text-[#b8b5af] font-mono">無修改</p>
+          <p className="text-xs font-bold text-[#c8c4bc] font-mono uppercase tracking-widest">無修改</p>
         ) : (
           <PromptReader
             title="這次嘗試的 Prompt"

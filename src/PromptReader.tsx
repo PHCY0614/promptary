@@ -111,11 +111,9 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
   }
   return (
     <section aria-label={title} className="min-w-0">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <h3 className="font-bold text-xs text-[#c8c4bc] font-mono uppercase tracking-widest">{title}</h3>
-      </div>
-      {text.trim() ? <>
-        <div className="mb-3 flex items-center gap-2" aria-label={`${title}閱讀方式`}>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="min-w-0 flex-1 font-bold text-xs text-[#c8c4bc] font-mono uppercase tracking-widest">{title}</h3>
+        {text.trim() && <div className="flex shrink-0 items-center gap-2" aria-label={`${title}閱讀方式`}>
           {(["original", "categories"] as const).map((mode) => {
             const blockedByDraft = mode === "original" && view === "categories" && (dirty || showResetConfirm);
             return (
@@ -132,7 +130,9 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
               </button>
             );
           })}
-        </div>
+        </div>}
+      </div>
+      {text.trim() ? <>
         {view === "original" ? (
           <div className="relative rounded-lg border border-[#2e2e32] bg-[#111113] p-3 pt-11">
             <div className="absolute right-2 top-2"><CopyPromptButton text={text} /></div>
