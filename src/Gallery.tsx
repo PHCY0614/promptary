@@ -62,12 +62,14 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
       const q = search.toLowerCase();
       list = list.filter(
         (c) =>
+          c.name?.toLowerCase().includes(q) ||
           c.originalPrompt.toLowerCase().includes(q) ||
           c.tags.some((t) => t.toLowerCase().includes(q)) ||
           c.collectionNotes.toLowerCase().includes(q) ||
           c.source?.toLowerCase().includes(q) ||
           c.attempts.some(
             (a) =>
+              a.name?.toLowerCase().includes(q) ||
               a.prompt.toLowerCase().includes(q) ||
               a.notes.toLowerCase().includes(q) ||
               a.platform.toLowerCase().includes(q)
@@ -285,10 +287,18 @@ function CollectionCard({
 
         {/* Bottom info */}
         <div className="absolute bottom-0 left-0 right-0 p-2.5">
+          {c.name && (
+            <p
+              className="mb-1 text-xs font-normal text-[#f0ede8] line-clamp-1"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
+              {c.name}
+            </p>
+          )}
           {!c.promptPending && c.originalPrompt && (
             <p
-              className="text-[11px] text-[#b0aca5] leading-relaxed line-clamp-2 mb-1.5"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              className="text-[10px] text-[#b0aca5] leading-[1.5] line-clamp-2 mb-1.5"
+              style={{ fontFamily: "'Inter', 'Microsoft JhengHei', sans-serif" }}
             >
               {c.originalPrompt}
             </p>

@@ -50,9 +50,14 @@ assert.equal((await api.loadArchive()).collections[0].promptClassification.overr
 assert.equal((await api.loadArchive()).collections[0].attempts[0].promptClassification.overrides['0'], 'clothing');
 // 超過舊 localStorage 常見量級的多張原圖仍以 Blob 保存。
 const larger = structuredClone(fixture);
+larger[0].name = '藍色';
+larger[0].attempts[0].name = '金髮女';
 larger[0].referenceImages = Array(8).fill(image);
 const revision = await api.saveArchive(larger, loaded.revision);
-assert.equal((await api.loadArchive()).collections[0].referenceImages.length, 8);
+const reloadedLarger = await api.loadArchive();
+assert.equal(reloadedLarger.collections[0].referenceImages.length, 8);
+assert.equal(reloadedLarger.collections[0].name, '藍色');
+assert.equal(reloadedLarger.collections[0].attempts[0].name, '金髮女');
 await assert.rejects(api.saveArchive([], loaded.revision), /其他分頁/);
 assert.equal((await api.loadArchive()).collections.length, 1);
 await api.saveArchive([], revision);

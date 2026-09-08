@@ -88,10 +88,12 @@ async function writeSnapshot(db: IDBDatabase, next: Snapshot, expected: number |
 function validateLegacy(value: unknown): asserts value is Collection[] {
   if (!Array.isArray(value) || value.some((c) => !c || typeof c.id !== "string" ||
     typeof c.originalPrompt !== "string" || typeof c.collectionNotes !== "string" ||
+    (c.name !== undefined && typeof c.name !== "string") ||
     !Array.isArray(c.tags) || !c.tags.every((t: unknown) => typeof t === "string") ||
     !c.coverSource || !Array.isArray(c.referenceImages) || !c.referenceImages.every((i: unknown) => typeof i === "string") ||
     !Array.isArray(c.attempts) || c.attempts.some((a: Collection["attempts"][number]) => !a ||
-      typeof a.prompt !== "string" || typeof a.notes !== "string" || !Array.isArray(a.images) || !a.images.every((i) => typeof i === "string")))) {
+      typeof a.prompt !== "string" || typeof a.notes !== "string" ||
+      (a.name !== undefined && typeof a.name !== "string") || !Array.isArray(a.images) || !a.images.every((i) => typeof i === "string")))) {
     throw new Error("舊收藏資料格式無法辨識，已保留原資料，未以範例覆蓋。");
   }
 }

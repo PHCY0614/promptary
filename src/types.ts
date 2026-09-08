@@ -12,6 +12,7 @@ export const PLATFORMS = [
 
 export interface Attempt {
   id: string;
+  name?: string;
   images: string[]; // base64 data URLs or https URLs
   platform: string;
   prompt: string; // may differ from originalPrompt
@@ -29,6 +30,7 @@ export type CoverSource =
 
 export interface Collection {
   id: string;
+  name?: string;
   referenceImages: string[];
   coverSource: CoverSource;
 

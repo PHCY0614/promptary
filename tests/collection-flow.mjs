@@ -65,7 +65,7 @@ const { useStore } = loadModule('src/store.ts', {
 });
 const store = useStore();
 await store.reload();
-const draft = { originalPrompt: 'keep my draft', referenceImages: [], tags: [], coverSource: { type: 'reference', index: 0 }, status: 'want', isFavorite: false, promptPending: false, collectionNotes: '' };
+const draft = { name: '藍色', originalPrompt: 'keep my draft', referenceImages: [], tags: [], coverSource: { type: 'reference', index: 0 }, status: 'want', isFavorite: false, promptPending: false, collectionNotes: '' };
 assert.equal(await store.addCollection(draft), undefined);
 assert.equal(states[0].length, 0);
 assert.equal(persisted.length, 0);
@@ -81,12 +81,14 @@ assert.equal(states[1], null);
 console.log('PASS: image failures/retry, storage failure atomicity, dismiss error, retry and queued mutations preserve both additions');
 
 const collectionId = persisted[0].id;
+assert.equal(persisted[0].name, '藍色');
 await store.editCollection(collectionId, { promptClassification: { sourcePrompt: 'second', overrides: { '0': 'other' } } });
 assert.equal(persisted[0].originalPrompt, 'second');
-const attemptId = await store.addAttempt(collectionId, { prompt: 'red hair', images: [], platform: 'PixAI', notes: '', rating: null, date: '2026-09-07' });
+const attemptId = await store.addAttempt(collectionId, { name: '金髮女', prompt: 'red hair', images: [], platform: 'PixAI', notes: '', rating: null, date: '2026-09-07' });
 await store.editAttempt(collectionId, attemptId, { promptClassification: { sourcePrompt: 'red hair', overrides: { '0': 'appearance' } } });
 assert.equal(persisted[0].promptClassification.overrides['0'], 'other');
 assert.equal(persisted[0].attempts[0].prompt, 'red hair');
+assert.equal(persisted[0].attempts[0].name, '金髮女');
 assert.equal(persisted[0].attempts[0].promptClassification.overrides['0'], 'appearance');
 console.log('PASS: classification saves independently for collection/attempt without rewriting either prompt');
 
@@ -96,6 +98,8 @@ const backup = parseBackup(JSON.stringify(persisted));
 assert.equal(JSON.stringify(backup), JSON.stringify(persisted));
 assert.throws(() => parseBackup('{bad'));
 assert.throws(() => parseBackup(JSON.stringify([{ ...backup[0], tags: 123 }])));
+assert.throws(() => parseBackup(JSON.stringify([{ ...backup[0], name: 123 }])));
+assert.throws(() => parseBackup(JSON.stringify([{ ...backup[0], attempts: [{ ...backup[0].attempts[0], name: 123 }] }])));
 assert.throws(() => parseBackup(JSON.stringify([{ ...backup[0], referenceImages: ['javascript:alert(1)'] }])));
 const incoming = { ...backup[0], id: 'imported', referenceImages: ['data:image/png;base64,YWJj'] };
 const valid = parseBackup(JSON.stringify([incoming, incoming]));

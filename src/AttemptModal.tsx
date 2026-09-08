@@ -19,6 +19,7 @@ interface UploadItem {
 }
 
 interface FormState {
+  name: string;
   images: UploadItem[];
   platform: string;
   customPlatform: string;
@@ -37,6 +38,7 @@ function initForm(originalPrompt: string, existing?: Attempt): FormState {
   if (existing) {
     const isCustom = ![...PLATFORMS.slice(0, -1), ...readCustomPlatforms()].includes(existing.platform);
     return {
+      name: existing.name ?? "",
       images: existing.images.map((u) => ({ dataUrl: u, name: "", status: "done" })),
       platform: isCustom ? "自訂" : existing.platform,
       customPlatform: isCustom ? existing.platform : "",
@@ -48,6 +50,7 @@ function initForm(originalPrompt: string, existing?: Attempt): FormState {
     };
   }
   return {
+    name: "",
     images: [],
     platform: "PixAI",
     customPlatform: "",
@@ -157,6 +160,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
     setIsSaving(true);
     try {
     await onSave({
+      name: form.name.trim() || undefined,
       images: form.images.filter((i) => i.status === "done").map((i) => i.dataUrl),
       platform: effectivePlatform,
       prompt: form.prompt.trim(),
@@ -186,6 +190,19 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
         </div>
 
         <fieldset disabled={isSaving} className="px-5 py-4 flex flex-col gap-4">
+          {/* 嘗試名稱：選填；與收藏名稱分開保存 */}
+          <div>
+            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+              名稱（選填）
+            </label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => set("name", e.target.value)}
+              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] transition-colors"
+            />
+          </div>
+
           {/* Images */}
           <div>
             <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">

@@ -19,13 +19,15 @@ export function parseBackup(text: string): Collection[] {
     if (!c || !str(c.id) || !c.id || !str(c.originalPrompt) || !str(c.collectionNotes) ||
       typeof c.isFavorite !== "boolean" || typeof c.promptPending !== "boolean" ||
       !["tried", "want", "ref"].includes(c.status) || !date(c.addedAt) || !date(c.updatedAt) ||
-      (c.source !== undefined && !str(c.source)) || !classification(c.promptClassification) ||
+      (c.name !== undefined && !str(c.name)) || (c.source !== undefined && !str(c.source)) ||
+      !classification(c.promptClassification) ||
       !Array.isArray(c.tags) || !c.tags.every(str) || !images(c.referenceImages) || !Array.isArray(c.attempts)) fail();
     const ids = new Set();
     for (const a of c.attempts) {
       if (!a || !str(a.id) || !a.id || ids.has(a.id) || !str(a.platform) || !str(a.prompt) || !str(a.notes) ||
         !date(a.date) || !date(a.createdAt) || !images(a.images) || !classification(a.promptClassification) ||
-        (a.model !== undefined && !str(a.model)) || !(a.rating === null || [1, 2, 3, 4, 5].includes(a.rating))) fail();
+        (a.name !== undefined && !str(a.name)) || (a.model !== undefined && !str(a.model)) ||
+        !(a.rating === null || [1, 2, 3, 4, 5].includes(a.rating))) fail();
       ids.add(a.id);
     }
     const cover = c.coverSource;

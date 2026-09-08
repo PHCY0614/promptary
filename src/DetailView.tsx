@@ -102,6 +102,14 @@ export default function DetailView({
         >
           ← 返回
         </button>
+        {c.name && (
+          <p
+            className="min-w-0 truncate text-sm font-normal not-italic text-[#f0ede8]"
+            style={{ fontFamily: "'Fraunces', serif" }}
+          >
+            {c.name}
+          </p>
+        )}
         <div className="flex-1" />
         <button
           onClick={() => toggleFavorite(c.id)}
@@ -379,6 +387,14 @@ function AttemptCard({
         {/* Header row */}
         <div className="flex items-start gap-2 mb-2.5">
           <div className="flex-1 min-w-0">
+            {a.name && (
+              <p
+                className="mb-1 text-sm font-normal text-[#f0ede8]"
+                style={{ fontFamily: "'Fraunces', serif" }}
+              >
+                {a.name}
+              </p>
+            )}
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-xs font-mono font-bold ${platformColor}`}>{a.platform}</span>
               {a.model && <span className="text-xs text-[#b8b5af] font-mono">{a.model}</span>}

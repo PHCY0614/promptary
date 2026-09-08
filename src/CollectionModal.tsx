@@ -20,6 +20,7 @@ interface UploadItem {
 }
 
 interface FormState {
+  name: string;
   referenceImages: UploadItem[];
   originalPrompt: string;
   promptPending: boolean;
@@ -33,6 +34,7 @@ interface FormState {
 function initForm(c?: Collection): FormState {
   if (c) {
     return {
+      name: c.name ?? "",
       referenceImages: c.referenceImages.map((u) => ({ id: crypto.randomUUID(), progress: 100, dataUrl: u, name: "", status: "done" })),
       originalPrompt: c.originalPrompt,
       promptPending: c.promptPending,
@@ -44,6 +46,7 @@ function initForm(c?: Collection): FormState {
     };
   }
   return {
+    name: "",
     referenceImages: [],
     originalPrompt: "",
     promptPending: false,
@@ -119,6 +122,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
     setIsSaving(true);
     try {
     await onSave({
+      name: form.name.trim() || undefined,
       referenceImages: form.referenceImages.filter((i) => i.status === "done").map((i) => i.dataUrl),
       coverSource: { type: "reference", index: 0 },
       originalPrompt: form.originalPrompt.trim(),
@@ -152,6 +156,19 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
         </div>
 
         <fieldset disabled={isSaving} className="px-5 py-4 flex flex-col gap-4">
+          {/* 收藏名稱：選填；空白時不建立名稱欄位 */}
+          <div>
+            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+              名稱（選填）
+            </label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => set("name", e.target.value)}
+              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] transition-colors"
+            />
+          </div>
+
           {/* Reference images */}
           <div>
             <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
