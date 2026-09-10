@@ -4,6 +4,7 @@ import { createCanonicalImage } from "./imageUpload";
 import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
 import StoredImage from "./StoredImage";
 import ResizableTextarea from "./ResizableTextarea";
+import { ErrorCode, translateError, useLocale } from "./i18n";
 
 // 平台選單是獨立的本機偏好；移除選項不會改寫已保存的嘗試。
 const PLATFORM_STORAGE_KEY = "promptary-custom-platforms";
@@ -80,6 +81,7 @@ interface Props {
 }
 
 export default function AttemptModal({ originalPrompt, existing, onSave, onClose }: Props) {
+  const { t } = useLocale();
   const [form, setForm] = useState<FormState>(() => initForm(originalPrompt, existing));
   const [customPlatforms, setCustomPlatforms] = useState(readCustomPlatforms);
   const [platformError, setPlatformError] = useState("");
@@ -90,13 +92,13 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
       setPlatformError("");
       return true;
     } catch {
-      setPlatformError("無法儲存平台選單，請確認瀏覽器允許儲存後重試。已填內容仍保留。");
+      setPlatformError(ErrorCode.platformSaveFailed);
       return false;
     }
   }
   function addPlatform() {
     const name = form.customPlatform.trim();
-    if (!name) { setPlatformError("請輸入平台名稱。"); return; }
+    if (!name) { setPlatformError(ErrorCode.platformNameRequired); return; }
     const known = [...PLATFORMS, ...customPlatforms].find((p) => p.toLowerCase() === name.toLowerCase());
     if (known || savePlatformOptions([...customPlatforms, name])) {
       setForm((f) => ({ ...f, platform: known ?? name, customPlatform: "" }));
@@ -132,7 +134,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
       newImageIds.current.add(item.id);
       patchItem({ image: result.ref, status: "done", isNew: true });
     } catch (error) {
-      patchItem({ status: "error", error: error instanceof Error ? error.message : "圖片處理失敗，請重試。" });
+      patchItem({ status: "error", error: error instanceof Error ? error.message : ErrorCode.imageProcessFailed });
     }
   }
 
@@ -198,7 +200,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
       >
         <div className="px-5 py-4 flex items-center justify-between border-b border-[#1e1e21]">
           <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
-            {existing ? "編輯嘗試紀錄" : "新增嘗試"}
+            {existing ? t.editAttempt : t.newAttempt}
           </h2>
           <button onClick={close} className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors w-7 h-7 flex items-center justify-center">×</button>
         </div>
@@ -207,7 +209,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           {/* 嘗試名稱：選填；與收藏名稱分開保存 */}
           <div>
             <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-              名稱（選填）
+              {t.nameOptional}
             </label>
             <input
               type="text"
@@ -220,7 +222,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           {/* Images */}
           <div>
             <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-              成果圖片（可多張）
+              {t.resultImages}
             </label>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
             <div className="flex gap-2 flex-wrap">
@@ -231,7 +233,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
                       <div className="w-4 h-4 border-2 border-[#c9a96e] border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : img.status === "error" ? (
-                    <button type="button" onClick={() => void processImage(img)} className="w-full h-full flex items-center justify-center bg-[#2a1010] text-[#e06e6e] text-xs" title={img.error}>重試</button>
+                    <button type="button" onClick={() => void processImage(img)} className="w-full h-full flex items-center justify-center bg-[#2a1010] text-[#e06e6e] text-xs" title={img.error ? translateError(img.error, t) : undefined}>{t.retry}</button>
                   ) : (
                     img.image && <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover" />
                   )}
@@ -248,22 +250,22 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
             </div>
           </div>
 
-          <p className="text-xs leading-relaxed text-[#b8b5af]">本機圖庫：支援 JPG、PNG、WebP，每張圖片最多 10 MB。<br />匯入後會自動最佳化，並僅儲存在此裝置。</p>
+          <p className="text-xs leading-relaxed text-[#b8b5af]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
           {hasImageError && <div role="alert" className="text-xs text-[#e06e6e]">
-            {form.images.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error}</p>)}
-            請重試或移除失敗圖片後再儲存，已填內容會保留。
+            {form.images.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error ? translateError(image.error, t) : ""}</p>)}
+            {t.imageSaveBlocked}
           </div>}
 
           {/* Platform + model */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">平台</label>
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.platform}</label>
               <select
                 value={form.platform}
                 onChange={(e) => set("platform", e.target.value)}
                 className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] font-technical"
               >
-                {[...PLATFORMS.slice(0, -1), ...customPlatforms, "自訂"].map((p) => <option key={p} value={p}>{p}</option>)}
+                {[...PLATFORMS.slice(0, -1), ...customPlatforms, "自訂"].map((p) => <option key={p} value={p}>{p === "自訂" ? t.customPlatform : p}</option>)}
               </select>
               {form.platform === "自訂" && (
                 <div>
@@ -271,31 +273,31 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
                   type="text"
                   value={form.customPlatform}
                   onChange={(e) => set("customPlatform", e.target.value)}
-                  placeholder="平台名稱"
+                  placeholder={t.platformName}
                   className="mt-1.5 w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] font-technical"
                 />
-                <button type="button" onClick={addPlatform} className="mt-2 text-xs text-[#c9a96e]">加入平台選單</button>
+                <button type="button" onClick={addPlatform} className="mt-2 text-xs text-[#c9a96e]">{t.addPlatform}</button>
                 </div>
               )}
               {/* 自訂平台管理：只移除選單選項，歷史紀錄保留原名稱。 */}
               {customPlatforms.length > 0 && (
                 <details className="mt-2 text-xs text-[#b8b5af]">
-                  <summary className="cursor-pointer">管理自訂平台</summary>
-                  <p className="mt-2">刪除選項不影響既有嘗試紀錄。</p>
+                  <summary className="cursor-pointer">{t.manageCustomPlatforms}</summary>
+                  <p className="mt-2">{t.deletePlatformHint}</p>
                   <div className="max-h-32 overflow-y-auto">
                     {customPlatforms.map((name) => (
                       <div key={name} className="flex items-center justify-between gap-2 py-2">
                         <span className="break-all">{name}</span>
-                        <button type="button" onClick={() => deletePlatform(name)} aria-label={`刪除平台選項 ${name}`} className="shrink-0 text-[#f19b9b]">刪除</button>
+                        <button type="button" onClick={() => deletePlatform(name)} aria-label={t.deletePlatformOption(name)} className="shrink-0 text-[#f19b9b]">{t.delete}</button>
                       </div>
                     ))}
                   </div>
                 </details>
               )}
-              {platformError && <p role="alert" className="mt-2 text-xs text-[#f19b9b]">{platformError}</p>}
+              {platformError && <p role="alert" className="mt-2 text-xs text-[#f19b9b]">{translateError(platformError, t)}</p>}
             </div>
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">模型版本（選填）</label>
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.modelOptional}</label>
               <input
                 type="text"
                 value={form.model}
@@ -309,15 +311,15 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal">
-                實際使用的咒語
+                {t.promptUsed}
               </label>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-[#b8b5af] font-ui">無修改</span>
+                <span className="text-xs text-[#b8b5af] font-ui">{t.unchanged}</span>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={form.unmodified}
-                  aria-label="使用原始咒語，無修改"
+                  aria-label={t.useOriginalUnchanged}
                   onClick={toggleUnmodified}
                   className={`h-4 w-7 rounded-full transition-colors ${form.unmodified ? "bg-[#c9a96e]" : "bg-[#2e2e32]"}`}
                 >
@@ -328,7 +330,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
             {!form.unmodified && <ResizableTextarea
               value={form.prompt}
               onChange={(e) => set("prompt", e.target.value)}
-              placeholder="貼上或輸入咒語"
+              placeholder={t.promptPlaceholder}
               rows={3}
               className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
               style={{ height: 56 }}
@@ -338,18 +340,18 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
                 onClick={() => set("prompt", originalPrompt)}
                 className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-ui mt-1 transition-colors"
               >
-                恢復原始咒語
+                {t.restoreOriginalPrompt}
               </button>
             )}
           </div>
 
           {/* Notes */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">筆記</label>
+            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.notes}</label>
             <ResizableTextarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
-              placeholder="記錄心得與想法"
+              placeholder={t.notesPlaceholder}
               rows={2}
               className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
             />
@@ -358,7 +360,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           {/* Rating + date */}
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">評分</label>
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.rating}</label>
               <div className="flex gap-1">
                 {([1, 2, 3, 4, 5] as const).map((s) => (
                   <button
@@ -372,7 +374,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
               </div>
             </div>
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">生成日期</label>
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.generatedDate}</label>
               <input
                 type="date"
                 value={form.date}
@@ -384,13 +386,13 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
         </fieldset>
 
         <div className="px-5 py-4 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
-          <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-ui transition-colors">取消</button>
+          <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-ui transition-colors">{t.cancel}</button>
           <button
             onClick={handleSubmit}
             disabled={isSaving || isLoading || hasImageError}
             className="px-4 py-2 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors disabled:opacity-40"
           >
-            {isSaving ? "儲存中……" : isLoading ? "上傳中……" : existing ? "儲存變更" : "新增嘗試"}
+            {isSaving ? t.saving : isLoading ? t.uploading : existing ? t.saveChanges : t.newAttempt}
           </button>
         </div>
       </div>

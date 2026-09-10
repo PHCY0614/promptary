@@ -1,6 +1,8 @@
 import { useRef, type PointerEvent as ReactPointerEvent, type TextareaHTMLAttributes } from "react";
+import { useLocale } from "./i18n";
 
 export default function ResizableTextarea({ className = "", disabled, style, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const { t } = useLocale();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   function setHeight(height: number) {
@@ -34,8 +36,8 @@ export default function ResizableTextarea({ className = "", disabled, style, ...
       <textarea ref={textareaRef} disabled={disabled} className={`resize-none pr-8 ${className}`} style={{ ...style, maxHeight: "40vh" }} {...props} />
       <button
         type="button"
-        aria-label="調整欄位高度"
-        title="向上或向下拖曳以調整高度"
+        aria-label={t.resizeHandle}
+        title={t.resizeHint}
         disabled={disabled}
         onPointerDown={startResize}
         onKeyDown={(event) => {

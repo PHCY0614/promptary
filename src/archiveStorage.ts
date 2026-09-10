@@ -1,6 +1,7 @@
 import type { Attempt, Collection, CoverSource, ImageRef } from "./types";
 import { SEED } from "./seed";
 import { createCanonicalImage, createThumbnail, THUMBNAIL_VERSION } from "./imageProcessing";
+import { ErrorCode, fail, isErrorCode } from "./i18n/errorCodes";
 
 const LEGACY_KEY = "prompt-archive-v2";
 const DATABASE = "prompt-archive";
@@ -41,7 +42,7 @@ function requestResult<T>(request: IDBRequest<T>): Promise<T> {
 function transactionDone(transaction: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
     transaction.oncomplete = () => resolve();
-    transaction.onabort = () => reject(transaction.error ?? new Error("儲存交易中止，請重試。"));
+    transaction.onabort = () => reject(transaction.error ?? new Error(ErrorCode.transactionAborted));
     transaction.onerror = () => { /* onabort 會提供一致的錯誤。 */ };
   });
 }
@@ -56,7 +57,7 @@ function openDatabase(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(THUMBNAIL_TABLE)) db.createObjectStore(THUMBNAIL_TABLE);
     };
     request.onerror = () => reject(request.error);
-    request.onblocked = () => reject(new Error("資料庫被其他分頁占用，請關閉其他圖庫分頁後重試。"));
+    request.onblocked = () => reject(new Error(ErrorCode.dbBlocked));
     request.onsuccess = () => {
       request.result.onversionchange = () => request.result.close();
       resolve(request.result);
@@ -92,11 +93,11 @@ async function commitSnapshot(collections: Collection[], expected: number | unde
     const completion = done.catch((error) => {
       const current = currentRequest.result as Snapshot | undefined;
       if (current?.revision !== expected || (expected === undefined && current)) {
-        throw new Error("其他分頁已更新收藏。請先保留未儲存的文字，再重新整理此頁。");
+        fail(ErrorCode.revisionConflict);
       }
       const known = new Set((imageKeysRequest.result ?? []).map(String));
       const missing = refs.find((ref) => !known.has(ref.id) && !stagedCanonical.has(ref.id));
-      if (missing) throw new Error("找不到圖片資料，表單仍保留，請重試或重新加入圖片。");
+      if (missing) fail(ErrorCode.imageMissingRetry);
       throw error;
     });
     let currentReady = false;
@@ -148,26 +149,26 @@ function isCurrentCollections(value: unknown): value is Collection[] {
 
 function dataUrlToBlob(source: string): Blob {
   const match = /^data:(image\/(?:jpeg|png|webp));base64,([\s\S]*)$/.exec(source);
-  if (!match) throw new Error("舊圖片資料格式無法辨識，原有收藏未變更。");
+  if (!match) fail(ErrorCode.legacyImageUnrecognized);
   const binary = atob(match[2]);
   return new Blob([Uint8Array.from(binary, (char) => char.charCodeAt(0))], { type: match[1] });
 }
 
 async function migrateCollections(value: unknown, experimental: Map<string, { display: Blob }>): Promise<Collection[]> {
-  if (!Array.isArray(value)) throw new Error("收藏資料格式無法辨識，原有收藏未變更。");
+  if (!Array.isArray(value)) fail(ErrorCode.archiveUnrecognized);
   const migrateImage = async (source: LegacyImage): Promise<ImageRef> => {
     if (isImageRef(source)) return source;
     let blob: Blob;
     let id: string = crypto.randomUUID();
     if (source instanceof Blob) blob = source;
     else if (typeof source === "string") {
-      if (!source.startsWith("data:")) throw new Error("舊版遠端圖片無法轉成本機圖片，原有收藏未變更。");
+      if (!source.startsWith("data:")) fail(ErrorCode.legacyRemoteImage);
       blob = dataUrlToBlob(source);
     } else {
       id = source.id;
-      if (source.sourceUrl) throw new Error("舊版遠端圖片無法轉成本機圖片，原有收藏未變更。");
+      if (source.sourceUrl) fail(ErrorCode.legacyRemoteImage);
       const record = experimental.get(source.id);
-      if (!record?.display) throw new Error("找不到舊版圖片資料，原有收藏未變更。");
+      if (!record?.display) fail(ErrorCode.legacyImageMissing);
       blob = record.display;
     }
     const file = new File([blob], "legacy-image", { type: blob.type || "image/webp" });
@@ -263,7 +264,7 @@ export async function getCanonicalBlob(id: string): Promise<Blob> {
     const done = transactionDone(transaction);
     const record = await requestResult<CanonicalImageRecord | undefined>(transaction.objectStore(IMAGE_TABLE).get(id));
     await done;
-    if (!record?.blob) throw new Error("找不到圖片資料。");
+    if (!record?.blob) fail(ErrorCode.imageMissing);
     return record.blob;
   } finally { db.close(); }
 }
@@ -306,7 +307,8 @@ export function getThumbnailBlob(image: ImageRef): Promise<Blob> {
 
 export function storageErrorMessage(error: unknown): string {
   const name = error && typeof error === "object" && "name" in error ? error.name : "";
-  if (name === "QuotaExceededError") return "此瀏覽器可用儲存空間不足。請釋放裝置空間或刪除不需要的收藏後重試；表單仍保留。";
-  if (name === "SecurityError" || name === "InvalidStateError") return "瀏覽器目前不允許使用本機資料庫，請檢查網站儲存權限後重試；表單仍保留。";
-  return error instanceof Error ? error.message : "本機資料庫操作失敗，請重試；表單仍保留。";
+  if (name === "QuotaExceededError") return ErrorCode.quotaExceeded;
+  if (name === "SecurityError" || name === "InvalidStateError") return ErrorCode.storagePermission;
+  const message = error instanceof Error ? error.message : "";
+  return isErrorCode(message) ? message : ErrorCode.storageFailed;
 }

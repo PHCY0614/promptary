@@ -41,10 +41,20 @@ const document = {
     };
   },
 };
+const errorCodes = {};
+vm.runInNewContext(ts.transpileModule(readFileSync('src/i18n/errorCodes.ts', 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, { exports: errorCodes, Error });
 const exports = {};
 vm.runInNewContext(ts.transpileModule(readFileSync('src/imageProcessing.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-}).outputText, { exports, Blob, URL: URLStub, Image: ImageStub, document, crypto: { randomUUID: () => 'generated-id' }, queueMicrotask, Error, Set, Date });
+}).outputText, {
+  exports, Blob, URL: URLStub, Image: ImageStub, document, crypto: { randomUUID: () => 'generated-id' }, queueMicrotask, Error, Set, Date,
+  require(name) {
+    if (name === './i18n/errorCodes') return errorCodes;
+    throw new Error(`unexpected ${name}`);
+  },
+});
 
 const input = (type, bytes, width, height) => {
   const blob = new Blob([new Uint8Array(bytes)], { type });
@@ -53,9 +63,9 @@ const input = (type, bytes, width, height) => {
 };
 assert.equal(exports.MAX_SOURCE_IMAGE_BYTES, 10 * 1024 * 1024);
 assert.equal(exports.MAX_DECODED_IMAGE_PIXELS, 40_000_000);
-await assert.rejects(exports.createCanonicalImage(input('image/gif', 1, 100, 100)), /僅支援/);
-await assert.rejects(exports.createCanonicalImage(input('image/png', exports.MAX_SOURCE_IMAGE_BYTES + 1, 100, 100)), /10 MB/);
-await assert.rejects(exports.createCanonicalImage(input('image/png', 1, 8000, 6000)), /4,000 萬/);
+await assert.rejects(exports.createCanonicalImage(input('image/gif', 1, 100, 100)), /imageTypeUnsupported/);
+await assert.rejects(exports.createCanonicalImage(input('image/png', exports.MAX_SOURCE_IMAGE_BYTES + 1, 100, 100)), /imageFileTooLarge/);
+await assert.rejects(exports.createCanonicalImage(input('image/png', 1, 8000, 6000)), /imageTooManyPixels/);
 
 const large = await exports.createCanonicalImage(input('image/jpeg', 10, 6000, 3000), 'stable-id');
 assert.equal(large.ref.id, 'stable-id');

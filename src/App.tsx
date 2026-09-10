@@ -5,6 +5,7 @@ import Gallery from "./Gallery";
 import DetailView from "./DetailView";
 import CollectionModal from "./CollectionModal";
 import AttemptModal from "./AttemptModal";
+import { translateError, useLocale } from "./i18n";
 
 type Modal =
   | { type: "addCollection" }
@@ -13,6 +14,7 @@ type Modal =
   | { type: "editAttempt"; collection: Collection; attempt: Attempt };
 
 export default function App() {
+  const { t } = useLocale();
   const store = useStore();
   const [openId, setOpenId] = useState<string | null>(null);
   const [modal, setModal] = useState<Modal | null>(null);
@@ -35,15 +37,15 @@ export default function App() {
       {store.storageError && (
         <div role="alert" className="fixed top-3 left-4 right-4 z-[100] rounded-lg bg-[#2a1010] border border-[#e06e6e] p-3 text-sm text-[#ffcaca]">
           <div className="flex items-start justify-between gap-3">
-            <span>{store.storageError}</span>
-            <button type="button" onClick={store.dismissStorageError} aria-label="關閉儲存錯誤提示" className="shrink-0 rounded px-2 text-lg hover:bg-white/10">×</button>
+            <span>{translateError(store.storageError, t)}</span>
+            <button type="button" onClick={store.dismissStorageError} aria-label={t.dismissStorageError} className="shrink-0 rounded px-2 text-lg hover:bg-white/10">×</button>
           </div>
         </div>
       )}
       {store.loadState !== "ready" && (
         <div className="flex h-full flex-col items-center justify-center gap-4 text-sm text-[#c8c4bc]">
-          <p role="status">{store.loadState === "loading" ? "正在載入本機收藏（首次開啟會搬移舊資料）……" : "收藏載入失敗，原有資料仍保留。"}</p>
-          {store.loadState === "error" && <button onClick={() => void store.reload()} className="rounded bg-[#c9a96e] px-4 py-2 text-black">重試載入</button>}
+          <p role="status">{store.loadState === "loading" ? t.loadingArchive : t.loadFailed}</p>
+          {store.loadState === "error" && <button onClick={() => void store.reload()} className="rounded bg-[#c9a96e] px-4 py-2 text-black">{t.retryLoad}</button>}
         </div>
       )}
       {/* Gallery */}

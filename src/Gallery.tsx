@@ -4,10 +4,10 @@ import { Collection, Status } from "./types";
 import { getCoverImage, Store } from "./store";
 import ImportBackup from "./ImportBackup";
 import StoredImage from "./StoredImage";
+import { LanguageSwitcher, brandSubtitleClass, useLocale } from "./i18n";
 
 type SortKey = "newest" | "updated" | "oldest";
 
-const STATUS_LABEL: Record<Status, string> = { tried: "試過", want: "想試", ref: "靈感" };
 const STATUS_DOT: Record<Status, string> = {
   tried: "bg-[#91B8A0]",
   want: "bg-[#8FAFCB]",
@@ -25,7 +25,9 @@ interface Props {
 }
 
 export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
+  const { locale, t } = useLocale();
   const { collections, toggleFavorite } = store;
+  const sortLabels: Record<SortKey, string> = { newest: t.sortNewest, updated: t.sortUpdated, oldest: t.sortOldest };
 
   const [filter, setFilter] = useState<Status | "all" | "favorite">("all");
   const [sort, setSort] = useState<SortKey>("newest");
@@ -113,7 +115,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             >
               Promptary
             </h1>
-            <p className="text-sm text-[#9f9b95] whitespace-nowrap" style={{ fontFamily: "var(--font-kai)" }}>你的咒語收藏庫 <span className="font-normal text-[#e8e1d7]">—☆ﾟ.*･</span></p>
+            <p className={`text-sm font-semibold italic text-[#9f9b95] whitespace-nowrap ${brandSubtitleClass(locale)}`}>{t.brandSubtitle} <span className="not-italic font-normal text-[#e8e1d7]">—☆ﾟ.*･</span></p>
           </div>
 
           {/* Search */}
@@ -122,7 +124,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b8b5af] text-xs select-none">⌕</span>
               <input
                 type="text"
-                placeholder="搜尋咒語、筆記、標籤……"
+                placeholder={t.searchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-[#161618] border border-[#2e2e32] rounded-lg pl-9 pr-3 py-1.5 text-sm text-[#f0ede8] placeholder:text-[11px] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-ui"
@@ -131,13 +133,14 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
           </div>
 
           <div className="min-w-0 flex flex-wrap items-center justify-end gap-2 lg:justify-self-end">
+            <LanguageSwitcher />
             <ImportBackup store={store} />
             {/* 排序與管理使用相同的箭頭、按鈕及等寬下拉選單。 */}
             <div ref={sortMenuRef} className="relative z-40 shrink-0" onKeyDown={(e) => { if (e.key === "Escape") { setSortMenuOpen(false); (e.currentTarget.querySelector("button") as HTMLButtonElement | null)?.focus(); } }}>
-              <button type="button" aria-haspopup="true" aria-expanded={sortMenuOpen} onClick={() => setSortMenuOpen((current) => !current)} className="whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">{{ newest: "最新收藏", updated: "最近更新", oldest: "最早收藏" }[sort]} ▾</button>
+              <button type="button" aria-haspopup="true" aria-expanded={sortMenuOpen} onClick={() => setSortMenuOpen((current) => !current)} className="whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">{sortLabels[sort]} ▾</button>
               {sortMenuOpen && <div className="absolute right-0 top-full mt-2 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
-                {([["newest", "最新收藏"], ["updated", "最近更新"], ["oldest", "最早收藏"]] as const).map(([value, label]) => (
-                  <button type="button" key={value} aria-pressed={sort === value} onClick={() => { setSort(value); setSortMenuOpen(false); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">{label}</button>
+                {(["newest", "updated", "oldest"] as const).map((value) => (
+                  <button type="button" key={value} aria-pressed={sort === value} onClick={() => { setSort(value); setSortMenuOpen(false); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">{sortLabels[value]}</button>
                 ))}
               </div>}
             </div>
@@ -145,7 +148,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
               onClick={onAdd}
               className="px-3 py-1.5 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
             >
-              + 新增
+              {t.add}
             </button>
           </div>
         </div>
@@ -162,7 +165,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
                   : "text-[#b8b5af] hover:text-[#f0ede8]"
               }`}
             >
-              {f === "all" ? "全部" : f === "favorite" ? <><svg width="14" height="14" viewBox="0 0 24 24" fill={filter === "favorite" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>最愛</> : STATUS_LABEL[f]}
+              {f === "all" ? t.statusAll : f === "favorite" ? <><svg width="14" height="14" viewBox="0 0 24 24" fill={filter === "favorite" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>{t.statusFavorite}</> : t.statusLabel[f]}
             </button>
           ))}
         </div>
@@ -183,22 +186,22 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             </button>
           ))}
           </div>
-          <button onClick={() => { setTagSearch(""); setShowTags(true); }} className="shrink-0 text-xs text-[#c9a96e] px-2 py-1">所有標籤</button>
-          <button onClick={() => { setSearch(""); setFilter("all"); setActiveTags([]); setTagSearch(""); }} className="shrink-0 text-xs text-[#b8b5af] px-2 py-1">重設</button>
+          <button onClick={() => { setTagSearch(""); setShowTags(true); }} className="shrink-0 text-xs text-[#c9a96e] px-2 py-1">{t.allTags}</button>
+          <button onClick={() => { setSearch(""); setFilter("all"); setActiveTags([]); setTagSearch(""); }} className="shrink-0 text-xs text-[#b8b5af] px-2 py-1">{t.reset}</button>
         </div>}
       </header>
 
       {/* 所有標籤：搜尋與限高清單，避免大量標籤撐長首頁。 */}
       {showTags && <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setShowTags(false)} onKeyDown={(e) => { if (e.key === "Escape") setShowTags(false); }}>
-        <section role="dialog" aria-modal="true" aria-label="所有標籤" className="w-full max-w-md rounded-xl bg-[#161618] border border-[#2e2e32] p-4" onClick={(e) => e.stopPropagation()}>
+        <section role="dialog" aria-modal="true" aria-label={t.allTags} className="w-full max-w-md rounded-xl bg-[#161618] border border-[#2e2e32] p-4" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-[#f0ede8]">所有標籤</h2>
-            <button onClick={() => setShowTags(false)} className="text-xs text-[#b8b5af] p-2">關閉</button>
+            <h2 className="text-sm font-bold text-[#f0ede8]">{t.allTags}</h2>
+            <button onClick={() => setShowTags(false)} className="text-xs text-[#b8b5af] p-2">{t.close}</button>
           </div>
-          <input autoFocus value={tagSearch} onChange={(e) => setTagSearch(e.target.value)} aria-label="搜尋標籤" placeholder="搜尋標籤……" className="w-full rounded-lg bg-[#0d0d0e] border border-[#2e2e32] p-2 text-xs text-[#f0ede8] placeholder:text-[#9d9a94]" />
+          <input autoFocus value={tagSearch} onChange={(e) => setTagSearch(e.target.value)} aria-label={t.searchTags} placeholder={t.searchTagsPlaceholder} className="w-full rounded-lg bg-[#0d0d0e] border border-[#2e2e32] p-2 text-xs text-[#f0ede8] placeholder:text-[#9d9a94]" />
           <div className="mt-3 max-h-[50vh] overflow-y-auto flex flex-wrap gap-2">
-            {allTags.filter((t) => t.toLowerCase().includes(tagSearch.trim().toLowerCase())).map((t) => <button key={t} aria-pressed={activeTags.includes(t)} onClick={() => chooseTag(t)} className={`max-w-full break-all rounded px-2 py-1 text-xs ${activeTags.includes(t) ? "bg-[#2a2010] text-[#c9a96e]" : "bg-[#242427] text-[#c8c4bc]"}`}>#{t}</button>)}
-            {!allTags.some((t) => t.toLowerCase().includes(tagSearch.trim().toLowerCase())) && <p className="text-xs text-[#b8b5af]">沒有符合的標籤</p>}
+            {allTags.filter((tag) => tag.toLowerCase().includes(tagSearch.trim().toLowerCase())).map((tag) => <button key={tag} aria-pressed={activeTags.includes(tag)} onClick={() => chooseTag(tag)} className={`max-w-full break-all rounded px-2 py-1 text-xs ${activeTags.includes(tag) ? "bg-[#2a2010] text-[#c9a96e]" : "bg-[#242427] text-[#c8c4bc]"}`}>#{tag}</button>)}
+            {!allTags.some((tag) => tag.toLowerCase().includes(tagSearch.trim().toLowerCase())) && <p className="text-xs text-[#b8b5af]">{t.noMatchingTags}</p>}
           </div>
         </section>
       </div>}
@@ -207,20 +210,20 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
-            <p className="text-[#b8b5af] font-ui text-sm">沒有符合的收藏</p>
+            <p className="text-[#b8b5af] font-ui text-sm">{t.noMatchingCollections}</p>
             {(search || filter !== "all" || activeTags.length > 0) && (
               <button
                 onClick={() => { setSearch(""); setFilter("all"); setActiveTags([]); }}
                 className="text-xs text-[#c9a96e] hover:underline font-ui"
               >
-                清除篩選
+                {t.clearFilters}
               </button>
             )}
           </div>
         ) : (
           <>
             <p className="text-[11px] text-[#b8b5af] font-ui mb-4">
-              {filtered.length} / {collections.length} 張收藏
+              {t.collectionCount(filtered.length, collections.length)}
             </p>
             <div
               className="grid gap-3"
@@ -251,6 +254,7 @@ function CollectionCard({
   onOpen: () => void;
   onToggleFavorite: () => void;
 }) {
+  const { t } = useLocale();
   const [imgLoaded, setImgLoaded] = useState(false);
   const cover = getCoverImage(c);
   const attemptCount = c.attempts.length;
@@ -286,14 +290,14 @@ function CollectionCard({
         {/* Pending badge */}
         {c.promptPending && (
           <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[11px] font-ui bg-[#2a1a00] text-[#c9a96e] border border-[#8a6e4244]">
-            咒語待補
+            {t.promptPending}
           </div>
         )}
 
         {/* Attempt count */}
         {attemptCount > 0 && (
           <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[11px] font-ui bg-black/50 text-[#b8b5af]">
-            {attemptCount} 次嘗試
+            {t.attemptCount(attemptCount)}
           </div>
         )}
 
@@ -319,7 +323,7 @@ function CollectionCard({
               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium border ${STATUS_STYLE[c.status]}`}
             >
               <span className={`w-1 h-1 rounded-full ${STATUS_DOT[c.status]}`} />
-              {STATUS_LABEL[c.status]}
+              {t.statusLabel[c.status]}
             </span>
             {bestRating > 0 && (
               <span className="text-[#c9a96e] text-[11px] font-technical">{bestRating}★</span>
@@ -339,10 +343,10 @@ function CollectionCard({
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
-          aria-label={c.isFavorite ? "取消最愛" : "加入最愛"}
+          aria-label={c.isFavorite ? t.removeFavorite : t.addFavorite}
           aria-pressed={c.isFavorite}
           className={`inline-flex items-center justify-center transition-colors flex-shrink-0 ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
-          title={c.isFavorite ? "取消最愛" : "加入最愛"}
+          title={c.isFavorite ? t.removeFavorite : t.addFavorite}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill={c.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
             <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />

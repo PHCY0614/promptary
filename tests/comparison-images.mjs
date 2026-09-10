@@ -13,7 +13,10 @@ const original = { referenceImages: [image('ref-1'), image('ref-2')], attempts: 
   { id: 'old', platform: 'PixAI', date: '2026-09-01', prompt: 'old prompt', images: [image('old-1'), image('old-2')] },
   { id: 'new', platform: 'Gemini', date: '2026-09-07', prompt: 'new prompt', images: [image('new-1')] },
 ] };
-const options = comparisonImages(original);
+const options = comparisonImages(original, {
+  reference: (n) => `Reference ${n}`,
+  attempt: (attemptIndex, platform, date, imageIndex) => `Attempt ${attemptIndex} · ${platform} · ${date} · Image ${imageIndex}`,
+});
 assert.equal(options.length, 5);
 assert.equal(new Set(options.map((item) => item.id)).size, 5);
 assert.equal(JSON.stringify(defaultComparisonIds(options)), JSON.stringify(['ref-1', 'new-1']));

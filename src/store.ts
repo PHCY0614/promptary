@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { Collection, Attempt, CoverSource, ImageRef } from "./types";
 import { getCanonicalBlob, loadArchive, saveArchive, stageCanonicalImage, storageErrorMessage } from "./archiveStorage";
 import { createBackup, mergeBackup, type BackupBundle } from "./backup";
+import { ErrorCode } from "./i18n/errorCodes";
 
 export function useStore() {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -178,13 +179,13 @@ export function useStore() {
       ]));
       for (const id of merged.requiredImageIds) {
         const blob = incoming.images.get(id);
-        if (!blob) throw new Error("備份圖片不完整，原有收藏未變更。");
+        if (!blob) throw new Error(ErrorCode.backupImagesIncomplete);
         if (currentImageIds.has(id)) {
           const [currentBytes, incomingBytes] = await Promise.all([getCanonicalBlob(id).then((value) => value.arrayBuffer()), blob.arrayBuffer()]);
           const currentView = new Uint8Array(currentBytes);
           const incomingView = new Uint8Array(incomingBytes);
           if (currentView.length !== incomingView.length || currentView.some((byte, index) => byte !== incomingView[index])) {
-            throw new Error("備份內含重複但內容不同的圖片 ID，原有收藏未變更。");
+            throw new Error(ErrorCode.backupDuplicateImageId);
           }
         } else {
           const ref = [...merged.collections.flatMap((collection) => [...collection.referenceImages, ...collection.attempts.flatMap((attempt) => attempt.images)])].find((image) => image.id === id)!;

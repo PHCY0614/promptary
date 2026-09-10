@@ -1,14 +1,13 @@
 import { STATUS_STYLE } from "./statusStyles";
 import { useLayoutEffect, useRef, useState } from "react";
-import { Collection, Attempt, Status, CoverSource, ImageRef } from "./types";
+import { Collection, Attempt, CoverSource, ImageRef } from "./types";
 import { Store, getCoverImage } from "./store";
 import ImageViewer from "./ImageViewer";
 import ImageComparison from "./ImageComparison";
 import PromptReader from "./PromptReader";
 import type { PromptClassification } from "./promptClassification";
 import StoredImage from "./StoredImage";
-
-const STATUS_LABEL: Record<Status, string> = { tried: "試過", want: "想試", ref: "靈感" };
+import { LanguageSwitcher, sectionLabelClass, useLocale } from "./i18n";
 
 // 來源只允許一般網頁協定成為連結，避免危險協定被直接執行。
 function safeSourceHref(source: string): string | null {
@@ -50,6 +49,7 @@ export default function DetailView({
   onEditAttempt,
   onEditCollection,
 }: Props) {
+  const { locale, t } = useLocale();
   const { toggleFavorite, deleteCollection, deleteAttempt, setCover } = store;
   const [compareMode, setCompareMode] = useState<CompareMode>("mine");
   const [selectedAttemptId, setSelectedAttemptId] = useState<string>(
@@ -74,13 +74,13 @@ export default function DetailView({
   const allImages: { image: ImageRef; label: string; coverSrc: CoverSource }[] = [
     ...c.referenceImages.map((image, i) => ({
       image,
-      label: `參考圖 ${i + 1}`,
+      label: t.referenceImageN(i + 1),
       coverSrc: { type: "reference" as const, imageId: image.id },
     })),
     ...c.attempts.flatMap((a) =>
       a.images.map((image, i) => ({
         image,
-        label: `${a.platform} ${a.date.slice(5)} · 圖${i + 1}`,
+        label: t.attemptCoverLabel(a.platform, a.date.slice(5), i + 1),
         coverSrc: {
           type: "attempt" as const,
           attemptId: a.id,
@@ -101,7 +101,7 @@ export default function DetailView({
           onClick={onBack}
           className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors text-sm font-ui flex items-center gap-1.5"
         >
-          ← 返回
+          {t.back}
         </button>
         {c.name && (
           <p
@@ -112,9 +112,12 @@ export default function DetailView({
           </p>
         )}
         <div className="flex-1" />
+        <div className="hidden md:block">
+          <LanguageSwitcher />
+        </div>
         <button
           onClick={() => toggleFavorite(c.id)}
-          aria-label={c.isFavorite ? "取消最愛" : "加入最愛"} aria-pressed={c.isFavorite} className={`text-xs w-9 h-9 flex items-center justify-center transition-colors ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
+          aria-label={c.isFavorite ? t.removeFavorite : t.addFavorite} aria-pressed={c.isFavorite} className={`text-xs w-9 h-9 flex items-center justify-center transition-colors ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill={c.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
         </button>
@@ -122,20 +125,20 @@ export default function DetailView({
           onClick={onEditCollection}
           className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
         >
-          編輯
+          {t.edit}
         </button>
         {!showDeleteConfirm ? (
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] hover:border-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-ui"
           >
-            刪除
+            {t.delete}
           </button>
         ) : (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-[#e06e6e] font-ui">確認刪除？</span>
-            <button onClick={handleDelete} className="px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-ui">確認</button>
-            <button onClick={() => setShowDeleteConfirm(false)} className="px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-ui">取消</button>
+            <span className="text-xs text-[#e06e6e] font-ui">{t.confirmDelete}</span>
+            <button onClick={handleDelete} className="px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-ui">{t.confirm}</button>
+            <button onClick={() => setShowDeleteConfirm(false)} className="px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-ui">{t.cancel}</button>
           </div>
         )}
       </div>
@@ -146,7 +149,7 @@ export default function DetailView({
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[c.status]}`}>
               <span className="w-1 h-1 rounded-full bg-current" />
-              {STATUS_LABEL[c.status]}
+              {t.statusLabel[c.status]}
             </span>
             {c.tags.map((t) => (
               <span key={t} className="text-xs font-technical text-[#c9a96e] bg-[#2a2010] px-2 py-0.5 rounded-full">
@@ -167,7 +170,7 @@ export default function DetailView({
                       : "text-[#b8b5af] hover:text-[#f0ede8] border border-[#2e2e32]"
                   }`}
                 >
-                  {m === "mine" ? "我的成果" : "並排比較"}
+                  {m === "mine" ? t.myResults : t.compare}
                 </button>
               ))}
             </div>
@@ -182,10 +185,10 @@ export default function DetailView({
           {/* 主頁直接從參考原圖標題開始，與右側嘗試紀錄並排。選圖只在比較模式顯示。 */}
           <ImagePane
             images={c.referenceImages}
-            label="參考原圖"
+            label={t.referenceOriginal}
             collectedDate={c.addedAt.slice(0, 10)}
             onZoom={(i) => setViewer({ images: c.referenceImages, index: i })}
-            emptyText="尚無參考圖"
+            emptyText={t.noReferenceImage}
           />
 
           {/* Cover picker */}
@@ -195,7 +198,7 @@ export default function DetailView({
                 onClick={() => setShowCoverPicker(!showCoverPicker)}
                 className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-ui transition-colors"
               >
-                {showCoverPicker ? "▲ 收起" : "▼ 更換封面"}
+                {showCoverPicker ? t.collapse : t.changeCover}
               </button>
               {showCoverPicker && (
                 <div className="mt-2 grid grid-cols-5 gap-1.5">
@@ -220,7 +223,7 @@ export default function DetailView({
 
           {/* 原始 Prompt：完整原文與獨立的分類閱讀視圖。 */}
           <PromptReader
-            title="原始咒語"
+            title={t.originalPrompt}
             text={c.originalPrompt}
             saved={c.promptClassification}
             onSave={(promptClassification) => store.editCollection(c.id, { promptClassification })}
@@ -229,7 +232,7 @@ export default function DetailView({
           {/* Collection notes */}
           {c.collectionNotes && (
             <div>
-              <p className="text-xs font-bold text-[#c8c4bc] font-ui normal-case tracking-normal mb-1.5">收藏筆記</p>
+              <p className={`text-xs font-bold text-[#c8c4bc] mb-1.5 ${sectionLabelClass(locale)}`}>{t.collectionNotes}</p>
               <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">
                 {c.collectionNotes}
               </p>
@@ -238,7 +241,7 @@ export default function DetailView({
 
           {c.source && (
             <p className="text-xs text-[#b8b5af] font-ui break-all">
-              來源：{sourceHref ? (
+              {t.source}{sourceHref ? (
                 <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="font-technical underline underline-offset-2 hover:text-[#c9a96e]">
                   {c.source}
                 </a>
@@ -253,22 +256,22 @@ export default function DetailView({
           {/* Attempts */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold text-[#b8b5af] font-ui normal-case tracking-normal">
-                嘗試紀錄 ({c.attempts.length})
+              <p className={`text-xs font-bold text-[#b8b5af] ${sectionLabelClass(locale)}`}>
+                {t.attemptLog(c.attempts.length)}
               </p>
               <button
                 onClick={onAddAttempt}
                 className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
               >
-                + 新增嘗試
+                {t.addAttempt}
               </button>
             </div>
 
             {c.attempts.length === 0 ? (
               <div className="text-center py-8 border border-dashed border-[#2e2e32] rounded-lg">
-                <p className="text-xs text-[#b8b5af] font-ui mb-2">還沒有嘗試紀錄</p>
+                <p className="text-xs text-[#b8b5af] font-ui mb-2">{t.noAttempts}</p>
                 <button onClick={onAddAttempt} className="text-xs text-[#c9a96e] hover:underline font-ui">
-                  新增第一次嘗試
+                  {t.addFirstAttempt}
                 </button>
               </div>
             ) : (
@@ -317,10 +320,11 @@ function ImagePane({
   emptyText: string;
   collectedDate?: string;
 }) {
+  const { locale, t } = useLocale();
   const [idx, setIdx] = useState(0);
   const i = Math.min(idx, images.length - 1);
   // 圖片標題與收藏日期同排；手機可換行。
-  const heading = <div className="flex flex-wrap items-baseline justify-between gap-2"><p className="text-xs font-bold text-[#c8c4bc]">{label}</p>{collectedDate && <p className="text-xs text-[#b8b5af]">收藏於 {collectedDate}</p>}</div>;
+  const heading = <div className="flex flex-wrap items-baseline justify-between gap-2"><p className={`text-xs font-bold text-[#c8c4bc] ${sectionLabelClass(locale)}`}>{label}</p>{collectedDate && <p className="text-xs text-[#b8b5af]">{t.collectedOn(collectedDate)}</p>}</div>;
 
   if (images.length === 0) {
     return (
@@ -333,7 +337,7 @@ function ImagePane({
       {heading}
       <button
         className="relative w-full h-[min(65vh,640px)] rounded-lg overflow-hidden bg-[#161618] cursor-zoom-in"
-        aria-label={`放大${label}`}
+        aria-label={t.zoom(label)}
         type="button"
         onClick={() => onZoom(i)}
       >
@@ -372,6 +376,7 @@ function AttemptCard({
   onZoom: (i: number) => void;
   onSaveClassification: (classification: PromptClassification) => Promise<boolean>;
 }) {
+  const { locale, t } = useLocale();
   const [showDelConfirm, setShowDelConfirm] = useState(false);
   const platformColor = PLATFORM_COLORS[a.platform] ?? "text-[#b8b5af]";
 
@@ -427,16 +432,16 @@ function AttemptCard({
         {/* Notes */}
         {a.notes && (
           <div className="mb-3">
-            <p className="mb-1.5 text-xs font-bold text-[#c8c4bc] font-ui normal-case tracking-normal">筆記</p>
+            <p className={`mb-1.5 text-xs font-bold text-[#c8c4bc] ${sectionLabelClass(locale)}`}>{t.notes}</p>
             <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">{a.notes}</p>
           </div>
         )}
 
         {a.promptMode === "original" ? (
-          <p className="text-xs font-bold text-[#c8c4bc] font-ui normal-case tracking-normal">無修改</p>
+          <p className={`text-xs font-bold text-[#c8c4bc] ${sectionLabelClass(locale)}`}>{t.unchanged}</p>
         ) : (
           <PromptReader
-            title="這次嘗試的咒語"
+            title={t.attemptPrompt}
             text={a.prompt}
             saved={a.promptClassification}
             onSave={onSaveClassification}
@@ -447,13 +452,13 @@ function AttemptCard({
       {/* Action row */}
       <div className="px-3 pb-2 flex flex-wrap items-center gap-2 border-t border-[#1e1e21] pt-2">
         <div className="flex-1" />
-        <button onClick={onEdit} className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors">編輯</button>
+        <button onClick={onEdit} className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors">{t.edit}</button>
         {!showDelConfirm ? (
-          <button onClick={() => setShowDelConfirm(true)} className="text-xs text-[#b8b5af] hover:text-[#e06e6e] font-ui transition-colors">刪除</button>
+          <button onClick={() => setShowDelConfirm(true)} className="text-xs text-[#b8b5af] hover:text-[#e06e6e] font-ui transition-colors">{t.delete}</button>
         ) : (
           <>
-            <button onClick={onDelete} className="text-xs text-[#e06e6e] font-ui">確認</button>
-            <button onClick={() => setShowDelConfirm(false)} className="text-xs text-[#b8b5af] font-ui">取消</button>
+            <button onClick={onDelete} className="text-xs text-[#e06e6e] font-ui">{t.confirm}</button>
+            <button onClick={() => setShowDelConfirm(false)} className="text-xs text-[#b8b5af] font-ui">{t.cancel}</button>
           </>
         )}
       </div>

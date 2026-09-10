@@ -23,6 +23,13 @@ function setup() {
     localStorage: { getItem: () => null, removeItem() {} },
     require(name) {
       if (name === './seed') return { SEED: [] };
+      if (name === './i18n/errorCodes') {
+        const errorExports = {};
+        vm.runInNewContext(ts.transpileModule(readFileSync('src/i18n/errorCodes.ts', 'utf8'), {
+          compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+        }).outputText, { exports: errorExports, Error });
+        return errorExports;
+      }
       if (name === './imageProcessing') return {
         THUMBNAIL_VERSION: 1,
         createCanonicalImage: async (file, id) => ({ ref: { ...image(id), byteSize: file.size }, blob: new Blob([await file.arrayBuffer()], { type: 'image/webp' }) }),
@@ -68,12 +75,12 @@ const thumbnailRecord = await readStore(api.indexedDB, 'imageThumbnails', 'stabl
 assert.equal(thumbnailRecord.thumbnailVersion, 1);
 assert.equal(await (await api.getThumbnailBlob(ref)).text(), 'thumb');
 
-await assert.rejects(api.saveArchive([], initial.revision), /其他分頁/);
+await assert.rejects(api.saveArchive([], initial.revision), /revisionConflict/);
 assert.equal((await api.loadArchive()).collections.length, 1);
 await api.saveArchive([], revision);
 assert.deepEqual(await readStore(api.indexedDB, 'images'), []);
 assert.deepEqual(await readStore(api.indexedDB, 'imageThumbnails'), []);
-assert.match(api.storageErrorMessage(new DOMException('full', 'QuotaExceededError')), /空間不足/);
+assert.match(api.storageErrorMessage(new DOMException('full', 'QuotaExceededError')), /quotaExceeded/);
 
 // 尚未正式上線的 v2 display/thumbnail 實驗資料可升級；舊 thumbnail 不會成為正式資料。
 const migrated = setup();

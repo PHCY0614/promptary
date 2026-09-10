@@ -7,12 +7,18 @@ export interface ComparisonImage {
   attempt?: Attempt;
 }
 // ── 每張圖綁定其來源版本，選圖時一併切換正確 Prompt ──
-export function comparisonImages(collection: Collection): ComparisonImage[] {
+export function comparisonImages(
+  collection: Collection,
+  labels: {
+    reference: (n: number) => string;
+    attempt: (attemptIndex: number, platform: string, date: string, imageIndex: number) => string;
+  },
+): ComparisonImage[] {
   return [
-    ...collection.referenceImages.map((image, i) => ({ id: image.id, image, label: `參考圖 ${i + 1}` })),
+    ...collection.referenceImages.map((image, i) => ({ id: image.id, image, label: labels.reference(i + 1) })),
     ...collection.attempts.flatMap((attempt, attemptIndex) => attempt.images.map((image, imageIndex) => ({
       id: image.id, image, attempt,
-      label: `嘗試 ${attemptIndex + 1} · ${attempt.platform} · ${attempt.date} · 圖 ${imageIndex + 1}`,
+      label: labels.attempt(attemptIndex + 1, attempt.platform, attempt.date, imageIndex + 1),
     }))),
   ];
 }

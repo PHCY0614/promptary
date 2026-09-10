@@ -41,6 +41,13 @@ const { useStore } = loadModule('src/store.ts', {
       useEffect: () => {},
       useCallback: (fn) => fn,
     };
+    if (name === './i18n/errorCodes') {
+      const errorExports = {};
+      vm.runInNewContext(ts.transpileModule(readFileSync('src/i18n/errorCodes.ts', 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+      }).outputText, { exports: errorExports, Error });
+      return errorExports;
+    }
     throw new Error(name);
   },
   crypto: { randomUUID: () => `test-${++serial}` },

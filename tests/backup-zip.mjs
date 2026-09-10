@@ -25,6 +25,13 @@ vm.runInNewContext(ts.transpileModule(readFileSync('src/backup.ts', 'utf8'), {
     if (name === 'fflate') return { strFromU8, strToU8, unzipSync, zipSync };
     if (name === './archiveStorage') return { getCanonicalBlob: async (id) => canonicals.get(id) };
     if (name === './imageProcessing') return { validateCanonicalBlob: async (blob, expected) => { if (expected && (blob.size !== expected.byteSize || blob.type !== expected.mimeType)) throw new Error('mismatch'); } };
+    if (name === './i18n/errorCodes') {
+      const errorExports = {};
+      vm.runInNewContext(ts.transpileModule(readFileSync('src/i18n/errorCodes.ts', 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+      }).outputText, { exports: errorExports, Error });
+      return errorExports;
+    }
     return {};
   },
 });
@@ -48,10 +55,10 @@ delete previousManifest.collections[0].attempts[0].promptMode;
 const previousBackup = new Blob([zipSync({ ...files, 'manifest.json': strToU8(JSON.stringify(previousManifest)) })]);
 const previousParsed = await exports.parseBackup(new FileStub([previousBackup], 'previous.zip', { type: 'application/zip' }));
 assert.equal(previousParsed.collections[0].attempts[0].promptMode, 'original');
-await assert.rejects(exports.parseBackup(new FileStub(['{"old":true}'], 'old.json')), /ZIP/);
+await assert.rejects(exports.parseBackup(new FileStub(['{"old":true}'], 'old.json')), /backupInvalid/);
 const traversal = new Blob([zipSync({ 'manifest.json': strToU8('{}'), '../escape': strToU8('x') })]);
-await assert.rejects(exports.parseBackup(new FileStub([traversal], 'bad.zip')), /不安全/);
+await assert.rejects(exports.parseBackup(new FileStub([traversal], 'bad.zip')), /backupZipUnsafePath/);
 const missingImageManifest = { format: 'promptary-backup', version: 1, exportedAt: '2026-09-09T00:00:00.000Z', collections: [collection] };
 const missing = new Blob([zipSync({ 'manifest.json': strToU8(JSON.stringify(missingImageManifest)) })]);
-await assert.rejects(exports.parseBackup(new FileStub([missing], 'missing.zip')), /不完整|不支援/);
+await assert.rejects(exports.parseBackup(new FileStub([missing], 'missing.zip')), /backupInvalid/);
 console.log('PASS: ZIP-only round trip includes canonical images and manifest, excludes Base64/thumbnails, and rejects unsafe or incomplete archives');

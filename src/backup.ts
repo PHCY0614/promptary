@@ -2,6 +2,7 @@ import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import type { Collection, ImageRef } from "./types";
 import { getCanonicalBlob } from "./archiveStorage";
 import { validateCanonicalBlob } from "./imageProcessing";
+import { ErrorCode, fail as throwCoded } from "./i18n/errorCodes";
 
 const FORMAT = "promptary-backup";
 const FORMAT_VERSION = 1;
@@ -32,8 +33,8 @@ function allImageRefs(collections: Collection[]) {
   return refs;
 }
 
-function fail(message = "備份格式不完整或不支援，請選擇 Promptary 匯出的 ZIP。原有收藏未變更。"): never {
-  throw new Error(message);
+function fail(code: ErrorCode = ErrorCode.backupInvalid): never {
+  throwCoded(code);
 }
 
 function imagePath(image: ImageRef): string {
@@ -92,14 +93,14 @@ function validateCollections(value: unknown): asserts value is Collection[] {
     for (const image of collectionImages) {
       const signature = `${image.width}:${image.height}:${image.byteSize}:${image.mimeType}:${image.createdAt}`;
       const previous = imageRefs.get(image.id);
-      if (previous !== undefined && previous !== signature) fail("備份內含重複但中繼資料不同的圖片 ID，原有收藏未變更。");
+      if (previous !== undefined && previous !== signature) fail(ErrorCode.backupDuplicateMeta);
       imageRefs.set(image.id, signature);
     }
   }
 }
 
 function inspectZip(bytes: Uint8Array) {
-  if (bytes.byteLength > MAX_ZIP_BYTES) fail("備份 ZIP 超過 500 MB，原有收藏未變更。");
+  if (bytes.byteLength > MAX_ZIP_BYTES) fail(ErrorCode.backupZipTooLarge);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let eocd = -1;
   for (let offset = bytes.byteLength - 22; offset >= Math.max(0, bytes.byteLength - 65_557); offset--) {
@@ -109,7 +110,7 @@ function inspectZip(bytes: Uint8Array) {
   const entries = view.getUint16(eocd + 10, true);
   const centralSize = view.getUint32(eocd + 12, true);
   const centralOffset = view.getUint32(eocd + 16, true);
-  if (entries > MAX_ENTRY_COUNT || centralOffset + centralSize > bytes.byteLength) fail("備份 ZIP 內容過大，原有收藏未變更。");
+  if (entries > MAX_ENTRY_COUNT || centralOffset + centralSize > bytes.byteLength) fail(ErrorCode.backupZipTooMany);
   let cursor = centralOffset;
   let total = 0;
   const names = new Set<string>();
@@ -121,15 +122,15 @@ function inspectZip(bytes: Uint8Array) {
     const nameLength = view.getUint16(cursor + 28, true);
     const extraLength = view.getUint16(cursor + 30, true);
     const commentLength = view.getUint16(cursor + 32, true);
-    if ((flags & 1) !== 0 || (method !== 0 && method !== 8)) fail("備份 ZIP 使用不支援的加密或壓縮格式，原有收藏未變更。");
+    if ((flags & 1) !== 0 || (method !== 0 && method !== 8)) fail(ErrorCode.backupZipUnsupported);
     const name = strFromU8(bytes.subarray(cursor + 46, cursor + 46 + nameLength));
-    if (!name || name.includes("\\") || name.startsWith("/") || name.split("/").includes("..") || names.has(name)) fail("備份 ZIP 內含不安全的檔案路徑，原有收藏未變更。");
+    if (!name || name.includes("\\") || name.startsWith("/") || name.split("/").includes("..") || names.has(name)) fail(ErrorCode.backupZipUnsafePath);
     names.add(name);
     if ((name === "manifest.json" && size > MAX_MANIFEST_BYTES) || (name.startsWith("images/") && size > MAX_CANONICAL_BYTES)) {
-      fail("備份 ZIP 內含過大的檔案，原有收藏未變更。");
+      fail(ErrorCode.backupZipEntryTooLarge);
     }
     total += size;
-    if (total > MAX_UNCOMPRESSED_BYTES) fail("備份 ZIP 解壓後內容過大，原有收藏未變更。");
+    if (total > MAX_UNCOMPRESSED_BYTES) fail(ErrorCode.backupZipUncompressed);
     cursor += 46 + nameLength + extraLength + commentLength;
   }
 }
@@ -172,7 +173,7 @@ export async function parseBackup(file: File): Promise<BackupBundle> {
   const images = new Map<string, Blob>();
   for (const [id, ref] of refs) {
     const imageBytes = files[imagePath(ref)];
-    if (!imageBytes || imageBytes.byteLength > MAX_CANONICAL_BYTES) fail("備份內的圖片遺失或過大，原有收藏未變更。");
+    if (!imageBytes || imageBytes.byteLength > MAX_CANONICAL_BYTES) fail(ErrorCode.backupImageMissing);
     const blob = new Blob([imageBytes.slice().buffer], { type: ref.mimeType });
     await validateCanonicalBlob(blob, ref);
     images.set(id, blob);

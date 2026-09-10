@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400&family=Noto+Sans+TC:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@600&display=swap');
 @import 'tailwindcss';
 
 @theme {
@@ -25,8 +25,7 @@
   --font-body: var(--font-ui);
   --font-technical: 'JetBrains Mono', 'Noto Sans TC', sans-serif;
   --font-mono: var(--font-technical);
-  --font-kai: 'LXGW WenKai TC', serif;
-  --font-brand-subtitle: var(--font-kai);
+  --font-brand-subtitle: 'Noto Serif TC', serif;
 }
 
 html, body, #root {

@@ -4,12 +4,7 @@ import { createCanonicalImage } from "./imageUpload";
 import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
 import StoredImage from "./StoredImage";
 import ResizableTextarea from "./ResizableTextarea";
-
-const STATUS_OPTS: { value: Status; label: string }[] = [
-  { value: "want", label: "想試" },
-  { value: "tried", label: "試過" },
-  { value: "ref", label: "靈感" },
-];
+import { ErrorCode, translateError, useLocale } from "./i18n";
 
 // ── 圖片暫存：以固定 ID 對應非同步結果，移除或追加圖片不會錯位 ──
 interface UploadItem {
@@ -69,6 +64,8 @@ interface Props {
 }
 
 export default function CollectionModal({ existing, onSave, onClose }: Props) {
+  const { t } = useLocale();
+  const statusOpts: { value: Status }[] = [{ value: "want" }, { value: "tried" }, { value: "ref" }];
   const [form, setForm] = useState<FormState>(() => initForm(existing));
   const [isSaving, setIsSaving] = useState(false);
   const savingRef = useRef(false);
@@ -96,7 +93,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
       newImageIds.current.add(item.id);
       patch({ image: result.ref, status: "done", progress: 100, isNew: true });
     } catch (error) {
-      patch({ status: "error", error: error instanceof Error ? error.message : "圖片讀取失敗，請重試。" });
+      patch({ status: "error", error: error instanceof Error ? error.message : ErrorCode.imageReadFailed });
     }
   }
 
@@ -161,7 +158,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
       >
         <div className="px-5 py-4 flex items-center justify-between border-b border-[#1e1e21]">
           <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
-            {existing ? "編輯收藏" : "新增收藏"}
+            {existing ? t.editCollection : t.newCollection}
           </h2>
           <button onClick={close} className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors w-7 h-7 flex items-center justify-center">
             ×
@@ -172,7 +169,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           {/* 收藏名稱：選填；空白時不建立名稱欄位 */}
           <div>
             <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-              名稱（選填）
+              {t.nameOptional}
             </label>
             <input
               type="text"
@@ -185,7 +182,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           {/* Reference images */}
           <div>
             <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-              參考圖片（可不填）
+              {t.referenceImagesOptional}
             </label>
             <input
               ref={fileRef}
@@ -205,7 +202,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
                   {img.status === "loading" ? (
                     <div role="status" className="w-full h-full flex items-center justify-center text-xs text-[#c8c4bc]">{img.progress}%</div>
                   ) : img.status === "error" ? (
-                    <button type="button" onClick={() => void readImage(img)} title={img.error} aria-label={`重試 ${img.name}`} className="w-full h-full bg-[#2a1010] text-[#e06e6e] text-xs">重試</button>
+                    <button type="button" onClick={() => void readImage(img)} title={img.error ? translateError(img.error, t) : undefined} aria-label={t.retryNamed(img.name)} className="w-full h-full bg-[#2a1010] text-[#e06e6e] text-xs">{t.retry}</button>
                   ) : (
                     img.image && <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover" />
                   )}
@@ -226,20 +223,20 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
             </div>
           </div>
 
-          <p className="text-xs leading-relaxed text-[#b8b5af]">本機圖庫：支援 JPG、PNG、WebP，每張圖片最多 10 MB。<br />匯入後會自動最佳化，並僅儲存在此裝置。</p>
+          <p className="text-xs leading-relaxed text-[#b8b5af]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
           {hasImageError && <div role="alert" className="text-xs text-[#e06e6e]">
-            {form.referenceImages.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error}</p>)}
-            請重試或移除失敗圖片後再儲存，已填內容會保留。
+            {form.referenceImages.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error ? translateError(image.error, t) : ""}</p>)}
+            {t.imageSaveBlocked}
           </div>}
 
           {/* Prompt */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal">
-                原始咒語（可之後補）
+                {t.originalPromptOptional}
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <span className="text-xs text-[#b8b5af] font-ui">待補</span>
+                <span className="text-xs text-[#b8b5af] font-ui">{t.skipForNow}</span>
                 <div
                   onClick={() => set("promptPending", !form.promptPending)}
                   className={`w-7 h-4 rounded-full transition-colors cursor-pointer ${form.promptPending ? "bg-[#c9a96e]" : "bg-[#2e2e32]"}`}
@@ -251,7 +248,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
             <ResizableTextarea
               value={form.originalPrompt}
               onChange={(e) => set("originalPrompt", e.target.value)}
-              placeholder="貼上或輸入咒語"
+              placeholder={t.promptPlaceholder}
               rows={3}
               disabled={form.promptPending}
               className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors disabled:opacity-40 font-technical"
@@ -262,13 +259,13 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           {/* Tags */}
           <div>
             <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-              標籤（逗號分隔）
+              {t.tagsComma}
             </label>
             <input
               type="text"
               value={form.tags}
               onChange={(e) => set("tags", e.target.value)}
-              placeholder="portrait, cosmic, cinematic"
+              placeholder={t.tagsPlaceholder}
               className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
             />
           </div>
@@ -277,29 +274,29 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-                狀態
+                {t.status}
               </label>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                {STATUS_OPTS.map((o) => (
+                {statusOpts.map((o) => (
                   <label key={o.value} className="flex items-center gap-2 cursor-pointer">
                     <div
                       onClick={() => set("status", o.value)}
                       className={`w-3.5 h-3.5 rounded-full border-2 transition-colors ${form.status === o.value ? "border-[#c9a96e] bg-[#c9a96e]" : "border-[#2e2e32]"}`}
                     />
-                    <span className="text-xs text-[#b8b5af]">{o.label}</span>
+                    <span className="text-xs text-[#b8b5af]">{t.statusLabel[o.value]}</span>
                   </label>
                 ))}
               </div>
             </div>
             <div>
               <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-                來源連結
+                {t.sourceUrl}
               </label>
               <input
                 type="text"
                 value={form.source}
                 onChange={(e) => set("source", e.target.value)}
-                placeholder="填入網址"
+                placeholder={t.urlPlaceholder}
                 className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
               />
             </div>
@@ -308,12 +305,12 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           {/* Notes */}
           <div>
             <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-              收藏筆記
+              {t.collectionNotes}
             </label>
             <ResizableTextarea
               value={form.collectionNotes}
               onChange={(e) => set("collectionNotes", e.target.value)}
-              placeholder="記錄心得與想法"
+              placeholder={t.notesPlaceholder}
               rows={2}
               className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
             />
@@ -324,7 +321,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
             <button
               type="button"
               onClick={() => set("isFavorite", !form.isFavorite)}
-              aria-label={form.isFavorite ? "取消最愛" : "加入最愛"}
+              aria-label={form.isFavorite ? t.removeFavorite : t.addFavorite}
               aria-pressed={form.isFavorite}
               className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${form.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
             >
@@ -332,20 +329,20 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
                 <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
               </svg>
             </button>
-            <span className="text-xs text-[#b8b5af]">加入最愛</span>
+            <span className="text-xs text-[#b8b5af]">{t.addFavorite}</span>
           </div>
         </fieldset>
 
         <div className="px-5 py-4 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
           <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-ui transition-colors">
-            取消
+            {t.cancel}
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSaving || isLoading || hasImageError}
             className="px-4 py-2 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors disabled:opacity-40"
           >
-            {isSaving ? "儲存中……" : isLoading ? "讀取中……" : existing ? "儲存變更" : "新增收藏"}
+            {isSaving ? t.saving : isLoading ? t.reading : existing ? t.saveChanges : t.newCollection}
           </button>
         </div>
       </div>

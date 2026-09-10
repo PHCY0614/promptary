@@ -1,12 +1,12 @@
 export const PROMPT_CATEGORIES = [
-  { id: "appearance", label: "人物外表", hint: "頭髮、眼睛、五官、身形" },
-  { id: "clothing", label: "服裝與配件", hint: "衣服、鞋子、飾品" },
-  { id: "pose", label: "姿勢與表情", hint: "動作、視線、情緒" },
-  { id: "background", label: "背景與場景", hint: "地點、環境、物件" },
-  { id: "composition", label: "構圖與鏡頭", hint: "景別、角度、鏡頭" },
-  { id: "lighting", label: "光線與色彩", hint: "照明、色調、配色" },
-  { id: "style", label: "畫風與品質", hint: "風格、媒材、品質詞" },
-  { id: "other", label: "未分類", hint: "未辨識或同時涉及多個分類" },
+  { id: "appearance" },
+  { id: "clothing" },
+  { id: "pose" },
+  { id: "background" },
+  { id: "composition" },
+  { id: "lighting" },
+  { id: "style" },
+  { id: "other" },
 ] as const;
 export type PromptCategory = typeof PROMPT_CATEGORIES[number]["id"];
 export interface PromptClassification {
