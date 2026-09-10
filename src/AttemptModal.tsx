@@ -206,7 +206,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
         <fieldset disabled={isSaving} className="ios-form-zoom-fix px-5 py-4 flex flex-col gap-4">
           {/* 嘗試名稱：選填；與收藏名稱分開保存 */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
               名稱（選填）
             </label>
             <input
@@ -219,7 +219,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
 
           {/* Images */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
               成果圖片（可多張）
             </label>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
@@ -257,11 +257,11 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           {/* Platform + model */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">平台</label>
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">平台</label>
               <select
                 value={form.platform}
                 onChange={(e) => set("platform", e.target.value)}
-                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] font-mono"
+                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] font-technical"
               >
                 {[...PLATFORMS.slice(0, -1), ...customPlatforms, "自訂"].map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
@@ -272,7 +272,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
                   value={form.customPlatform}
                   onChange={(e) => set("customPlatform", e.target.value)}
                   placeholder="平台名稱"
-                  className="mt-1.5 w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] font-mono"
+                  className="mt-1.5 w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] font-technical"
                 />
                 <button type="button" onClick={addPlatform} className="mt-2 text-xs text-[#c9a96e]">加入平台選單</button>
                 </div>
@@ -295,12 +295,12 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
               {platformError && <p role="alert" className="mt-2 text-xs text-[#f19b9b]">{platformError}</p>}
             </div>
             <div>
-              <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">模型版本（選填）</label>
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">模型版本（選填）</label>
               <input
                 type="text"
                 value={form.model}
                 onChange={(e) => set("model", e.target.value)}
-                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] font-mono"
+                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] font-technical"
               />
             </div>
           </div>
@@ -308,11 +308,11 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           {/* Prompt */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest">
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal">
                 實際使用的咒語
               </label>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-[#b8b5af] font-mono">無修改</span>
+                <span className="text-xs text-[#b8b5af] font-ui">無修改</span>
                 <button
                   type="button"
                   role="switch"
@@ -330,13 +330,13 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
               onChange={(e) => set("prompt", e.target.value)}
               placeholder="貼上或輸入咒語"
               rows={3}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
-              style={{ fontFamily: "'JetBrains Mono', monospace", height: 56 }}
+              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
+              style={{ height: 56 }}
             />}
             {promptDiffers && (
               <button
                 onClick={() => set("prompt", originalPrompt)}
-                className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-mono mt-1 transition-colors"
+                className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-ui mt-1 transition-colors"
               >
                 恢復原始咒語
               </button>
@@ -345,7 +345,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
 
           {/* Notes */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">筆記</label>
+            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">筆記</label>
             <ResizableTextarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
@@ -358,7 +358,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           {/* Rating + date */}
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">評分</label>
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">評分</label>
               <div className="flex gap-1">
                 {([1, 2, 3, 4, 5] as const).map((s) => (
                   <button
@@ -372,19 +372,19 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
               </div>
             </div>
             <div>
-              <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">生成日期</label>
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">生成日期</label>
               <input
                 type="date"
                 value={form.date}
                 onChange={(e) => set("date", e.target.value)}
-                className="bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] font-mono"
+                className="bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] font-technical"
               />
             </div>
           </div>
         </fieldset>
 
         <div className="px-5 py-4 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
-          <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-mono transition-colors">取消</button>
+          <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-ui transition-colors">取消</button>
           <button
             onClick={handleSubmit}
             disabled={isSaving || isLoading || hasImageError}

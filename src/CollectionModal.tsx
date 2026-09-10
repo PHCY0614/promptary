@@ -171,7 +171,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
         <fieldset disabled={isSaving} className="ios-form-zoom-fix px-5 py-4 flex flex-col gap-4">
           {/* 收藏名稱：選填；空白時不建立名稱欄位 */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
               名稱（選填）
             </label>
             <input
@@ -184,7 +184,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
 
           {/* Reference images */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
               參考圖片（可不填）
             </label>
             <input
@@ -235,11 +235,11 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           {/* Prompt */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest">
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal">
                 原始咒語（可之後補）
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <span className="text-xs text-[#b8b5af] font-mono">待補</span>
+                <span className="text-xs text-[#b8b5af] font-ui">待補</span>
                 <div
                   onClick={() => set("promptPending", !form.promptPending)}
                   className={`w-7 h-4 rounded-full transition-colors cursor-pointer ${form.promptPending ? "bg-[#c9a96e]" : "bg-[#2e2e32]"}`}
@@ -254,14 +254,14 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
               placeholder="貼上或輸入咒語"
               rows={3}
               disabled={form.promptPending}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors disabled:opacity-40"
-              style={{ fontFamily: "'JetBrains Mono', monospace", height: 56 }}
+              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors disabled:opacity-40 font-technical"
+              style={{ height: 56 }}
             />
           </div>
 
           {/* Tags */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
               標籤（逗號分隔）
             </label>
             <input
@@ -269,14 +269,14 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
               value={form.tags}
               onChange={(e) => set("tags", e.target.value)}
               placeholder="portrait, cosmic, cinematic"
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-mono"
+              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
             />
           </div>
 
           {/* Status + source in a row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
                 狀態
               </label>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -292,7 +292,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
               </div>
             </div>
             <div>
-              <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
                 來源連結
               </label>
               <input
@@ -300,14 +300,14 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
                 value={form.source}
                 onChange={(e) => set("source", e.target.value)}
                 placeholder="填入網址"
-                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-mono"
+                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
               />
             </div>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest block mb-1.5">
+            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
               收藏筆記
             </label>
             <ResizableTextarea
@@ -337,7 +337,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
         </fieldset>
 
         <div className="px-5 py-4 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
-          <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-mono transition-colors">
+          <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-ui transition-colors">
             取消
           </button>
           <button

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400&family=Noto+Sans+TC:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 
 @theme {
@@ -21,15 +21,19 @@
   --color-ref-dim: #2a2010;
 
   --font-display: 'Fraunces', serif;
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-ui: 'Inter', 'Noto Sans TC', sans-serif;
+  --font-body: var(--font-ui);
+  --font-technical: 'JetBrains Mono', 'Noto Sans TC', sans-serif;
+  --font-mono: var(--font-technical);
+  --font-kai: 'LXGW WenKai TC', serif;
+  --font-brand-subtitle: var(--font-kai);
 }
 
 html, body, #root {
   height: 100%;
   background-color: #0d0d0e;
   color: #f0ede8;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
 }
 

@@ -113,7 +113,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             >
               Promptary
             </h1>
-            <p className="text-sm italic text-[#9f9b95] whitespace-nowrap">你的咒語收藏庫 <span className="font-normal text-[#e8e1d7]">—☆ﾟ.*･</span></p>
+            <p className="text-sm text-[#9f9b95] whitespace-nowrap" style={{ fontFamily: "var(--font-kai)" }}>你的咒語收藏庫 <span className="font-normal text-[#e8e1d7]">—☆ﾟ.*･</span></p>
           </div>
 
           {/* Search */}
@@ -125,8 +125,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
                 placeholder="搜尋咒語、筆記、標籤……"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-[#161618] border border-[#2e2e32] rounded-lg pl-9 pr-3 py-1.5 text-sm text-[#f0ede8] placeholder:text-[11px] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                className="w-full bg-[#161618] border border-[#2e2e32] rounded-lg pl-9 pr-3 py-1.5 text-sm text-[#f0ede8] placeholder:text-[11px] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-ui"
               />
             </div>
           </div>
@@ -174,7 +173,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             <button
               key={t}
               onClick={() => chooseTag(t)}
-              className={`flex-shrink-0 text-[11px] font-mono px-2 py-0.5 rounded transition-colors ${
+              className={`flex-shrink-0 text-[11px] font-technical px-2 py-0.5 rounded transition-colors ${
                 activeTags.includes(t)
                   ? "bg-[#2a2010] text-[#c9a96e]"
                   : "text-[#b8b5af] hover:text-[#b8b5af]"
@@ -208,11 +207,11 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
-            <p className="text-[#b8b5af] font-mono text-sm">沒有符合的收藏</p>
+            <p className="text-[#b8b5af] font-ui text-sm">沒有符合的收藏</p>
             {(search || filter !== "all" || activeTags.length > 0) && (
               <button
                 onClick={() => { setSearch(""); setFilter("all"); setActiveTags([]); }}
-                className="text-xs text-[#c9a96e] hover:underline font-mono"
+                className="text-xs text-[#c9a96e] hover:underline font-ui"
               >
                 清除篩選
               </button>
@@ -220,7 +219,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
           </div>
         ) : (
           <>
-            <p className="text-[11px] text-[#b8b5af] font-mono mb-4">
+            <p className="text-[11px] text-[#b8b5af] font-ui mb-4">
               {filtered.length} / {collections.length} 張收藏
             </p>
             <div
@@ -286,14 +285,14 @@ function CollectionCard({
 
         {/* Pending badge */}
         {c.promptPending && (
-          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[11px] font-mono bg-[#2a1a00] text-[#c9a96e] border border-[#8a6e4244]">
+          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[11px] font-ui bg-[#2a1a00] text-[#c9a96e] border border-[#8a6e4244]">
             咒語待補
           </div>
         )}
 
         {/* Attempt count */}
         {attemptCount > 0 && (
-          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[11px] font-mono bg-black/50 text-[#b8b5af]">
+          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[11px] font-ui bg-black/50 text-[#b8b5af]">
             {attemptCount} 次嘗試
           </div>
         )}
@@ -310,8 +309,7 @@ function CollectionCard({
           )}
           {!c.promptPending && c.originalPrompt && (
             <p
-              className="text-[10px] text-[#b0aca5] leading-[1.5] line-clamp-2 mb-1.5"
-              style={{ fontFamily: "'Inter', 'Microsoft JhengHei', sans-serif" }}
+              className="text-[10px] text-[#b0aca5] leading-[1.5] line-clamp-2 mb-1.5 font-technical"
             >
               {c.originalPrompt}
             </p>
@@ -324,7 +322,7 @@ function CollectionCard({
               {STATUS_LABEL[c.status]}
             </span>
             {bestRating > 0 && (
-              <span className="text-[#c9a96e] text-[11px] font-mono">{bestRating}★</span>
+              <span className="text-[#c9a96e] text-[11px] font-technical">{bestRating}★</span>
             )}
           </div>
         </div>
@@ -334,7 +332,7 @@ function CollectionCard({
       <div className="px-2.5 py-2 flex items-center justify-between">
         <div className="flex flex-wrap gap-1 flex-1 min-w-0">
           {c.tags.slice(0, 2).map((t) => (
-            <span key={t} className="text-[11px] text-[#b8b5af] font-mono truncate">
+            <span key={t} className="text-[11px] text-[#b8b5af] font-technical truncate">
               #{t}
             </span>
           ))}

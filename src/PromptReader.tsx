@@ -112,7 +112,7 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
   return (
     <section aria-label={title} className="min-w-0">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="min-w-0 flex-1 font-bold text-xs text-[#c8c4bc] font-mono uppercase tracking-widest">{title}</h3>
+        <h3 className="min-w-0 flex-1 font-bold text-xs text-[#c8c4bc] font-ui normal-case tracking-normal">{title}</h3>
         {text.trim() && <div className="flex shrink-0 items-center gap-2" aria-label={`${title}閱讀方式`}>
           {(["original", "categories"] as const).map((mode) => {
             const blockedByDraft = mode === "original" && view === "categories" && (dirty || showResetConfirm);
@@ -137,7 +137,7 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
           <div className="relative rounded-lg border border-[#2e2e32] bg-[#111113] p-3 pt-11">
             <div className="absolute right-2 top-2"><CopyPromptButton text={text} /></div>
             <div tabIndex={0} aria-label={`${title}原文內容`} className={fullHeight || expanded ? "max-h-[min(55vh,480px)] overflow-y-auto overscroll-contain pr-2" : ""}>
-              <p className={`whitespace-pre-wrap break-words [overflow-wrap:anywhere] font-mono text-xs leading-relaxed text-[#c8c4bc] ${fullHeight || expanded ? "" : "line-clamp-5"}`}>{text}</p>
+              <p className={`whitespace-pre-wrap break-words [overflow-wrap:anywhere] font-technical text-xs leading-relaxed text-[#c8c4bc] ${fullHeight || expanded ? "" : "line-clamp-5"}`}>{text}</p>
             </div>
             {!fullHeight && <button type="button" onClick={() => setExpanded(!expanded)} className="mt-2 text-xs text-[#c9a96e]">{expanded ? "收起咒語" : "展開完整咒語"}</button>}
           </div>
@@ -181,7 +181,7 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
                   <ul className="flex flex-wrap gap-2">
                     {group.parts.map((part) => (
                       <li key={part.id} className={`min-w-0 max-w-full rounded border border-[#2e2e32] bg-[#161618] px-2.5 py-1.5 ${editing ? "basis-[200px] grow" : ""}`}>
-                        <p className="whitespace-pre-wrap [overflow-wrap:anywhere] font-mono text-xs leading-relaxed text-[#c8c4bc]">{part.text}</p>
+                        <p className="whitespace-pre-wrap [overflow-wrap:anywhere] font-technical text-xs leading-relaxed text-[#c8c4bc]">{part.text}</p>
                         {editing && <div className="mt-2 flex flex-wrap items-center gap-2">
                           <CategorySelect
                             label={`分類：${part.text}`}

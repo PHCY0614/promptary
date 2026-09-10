@@ -99,7 +99,7 @@ export default function DetailView({
       <div className="sticky top-0 z-30 bg-[#0d0d0e]/95 backdrop-blur-md border-b border-[#1e1e21] px-4 sm:px-6 py-3 flex items-center gap-3">
         <button
           onClick={onBack}
-          className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors text-sm font-mono flex items-center gap-1.5"
+          className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors text-sm font-ui flex items-center gap-1.5"
         >
           ← 返回
         </button>
@@ -127,15 +127,15 @@ export default function DetailView({
         {!showDeleteConfirm ? (
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] hover:border-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-mono"
+            className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] hover:border-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-ui"
           >
             刪除
           </button>
         ) : (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-[#e06e6e] font-mono">確認刪除？</span>
-            <button onClick={handleDelete} className="px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-mono">確認</button>
-            <button onClick={() => setShowDeleteConfirm(false)} className="px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-mono">取消</button>
+            <span className="text-xs text-[#e06e6e] font-ui">確認刪除？</span>
+            <button onClick={handleDelete} className="px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-ui">確認</button>
+            <button onClick={() => setShowDeleteConfirm(false)} className="px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-ui">取消</button>
           </div>
         )}
       </div>
@@ -149,7 +149,7 @@ export default function DetailView({
               {STATUS_LABEL[c.status]}
             </span>
             {c.tags.map((t) => (
-              <span key={t} className="text-xs font-mono text-[#c9a96e] bg-[#2a2010] px-2 py-0.5 rounded-full">
+              <span key={t} className="text-xs font-technical text-[#c9a96e] bg-[#2a2010] px-2 py-0.5 rounded-full">
                 #{t}
               </span>
             ))}
@@ -161,7 +161,7 @@ export default function DetailView({
                 <button
                   key={m}
                   onClick={() => setCompareMode(m)}
-                  className={`px-2.5 py-1 text-xs font-mono rounded-md transition-colors ${
+                  className={`px-2.5 py-1 text-xs font-ui rounded-md transition-colors ${
                     compareMode === m
                       ? "bg-[#c9a96e] text-[#0d0d0e]"
                       : "text-[#b8b5af] hover:text-[#f0ede8] border border-[#2e2e32]"
@@ -193,7 +193,7 @@ export default function DetailView({
             <div>
               <button
                 onClick={() => setShowCoverPicker(!showCoverPicker)}
-                className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-mono transition-colors"
+                className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-ui transition-colors"
               >
                 {showCoverPicker ? "▲ 收起" : "▼ 更換封面"}
               </button>
@@ -229,7 +229,7 @@ export default function DetailView({
           {/* Collection notes */}
           {c.collectionNotes && (
             <div>
-              <p className="text-xs font-bold text-[#c8c4bc] font-mono uppercase tracking-widest mb-1.5">收藏筆記</p>
+              <p className="text-xs font-bold text-[#c8c4bc] font-ui normal-case tracking-normal mb-1.5">收藏筆記</p>
               <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">
                 {c.collectionNotes}
               </p>
@@ -237,9 +237,9 @@ export default function DetailView({
           )}
 
           {c.source && (
-            <p className="text-xs text-[#b8b5af] font-mono break-all">
+            <p className="text-xs text-[#b8b5af] font-ui break-all">
               來源：{sourceHref ? (
-                <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-[#c9a96e]">
+                <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="font-technical underline underline-offset-2 hover:text-[#c9a96e]">
                   {c.source}
                 </a>
               ) : c.source}
@@ -253,7 +253,7 @@ export default function DetailView({
           {/* Attempts */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold text-[#b8b5af] font-mono uppercase tracking-widest">
+              <p className="text-xs font-bold text-[#b8b5af] font-ui normal-case tracking-normal">
                 嘗試紀錄 ({c.attempts.length})
               </p>
               <button
@@ -266,8 +266,8 @@ export default function DetailView({
 
             {c.attempts.length === 0 ? (
               <div className="text-center py-8 border border-dashed border-[#2e2e32] rounded-lg">
-                <p className="text-xs text-[#b8b5af] font-mono mb-2">還沒有嘗試紀錄</p>
-                <button onClick={onAddAttempt} className="text-xs text-[#c9a96e] hover:underline font-mono">
+                <p className="text-xs text-[#b8b5af] font-ui mb-2">還沒有嘗試紀錄</p>
+                <button onClick={onAddAttempt} className="text-xs text-[#c9a96e] hover:underline font-ui">
                   新增第一次嘗試
                 </button>
               </div>
@@ -324,7 +324,7 @@ function ImagePane({
 
   if (images.length === 0) {
     return (
-      <div className="flex flex-col gap-1.5">{heading}<div className="h-[min(65vh,640px)] bg-[#161618] rounded-lg flex items-center justify-center border border-[#2e2e32]"><p className="text-xs text-[#b8b5af] font-mono">{emptyText}</p></div></div>
+      <div className="flex flex-col gap-1.5">{heading}<div className="h-[min(65vh,640px)] bg-[#161618] rounded-lg flex items-center justify-center border border-[#2e2e32]"><p className="text-xs text-[#b8b5af] font-ui">{emptyText}</p></div></div>
     );
   }
 
@@ -394,9 +394,9 @@ function AttemptCard({
               </p>
             )}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={`text-xs font-mono font-bold ${platformColor}`}>{a.platform}</span>
-              {a.model && <span className="text-xs text-[#b8b5af] font-mono">{a.model}</span>}
-              <span className="text-xs text-[#b8b5af] font-mono">{a.date}</span>
+              <span className={`text-xs font-technical font-bold ${platformColor}`}>{a.platform}</span>
+              {a.model && <span className="text-xs text-[#b8b5af] font-technical">{a.model}</span>}
+              <span className="text-xs text-[#b8b5af] font-technical">{a.date}</span>
             </div>
           </div>
           {a.rating && (
@@ -427,13 +427,13 @@ function AttemptCard({
         {/* Notes */}
         {a.notes && (
           <div className="mb-3">
-            <p className="mb-1.5 text-xs font-bold text-[#c8c4bc] font-mono uppercase tracking-widest">筆記</p>
+            <p className="mb-1.5 text-xs font-bold text-[#c8c4bc] font-ui normal-case tracking-normal">筆記</p>
             <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">{a.notes}</p>
           </div>
         )}
 
         {a.promptMode === "original" ? (
-          <p className="text-xs font-bold text-[#c8c4bc] font-mono uppercase tracking-widest">無修改</p>
+          <p className="text-xs font-bold text-[#c8c4bc] font-ui normal-case tracking-normal">無修改</p>
         ) : (
           <PromptReader
             title="這次嘗試的咒語"
@@ -449,11 +449,11 @@ function AttemptCard({
         <div className="flex-1" />
         <button onClick={onEdit} className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors">編輯</button>
         {!showDelConfirm ? (
-          <button onClick={() => setShowDelConfirm(true)} className="text-xs text-[#b8b5af] hover:text-[#e06e6e] font-mono transition-colors">刪除</button>
+          <button onClick={() => setShowDelConfirm(true)} className="text-xs text-[#b8b5af] hover:text-[#e06e6e] font-ui transition-colors">刪除</button>
         ) : (
           <>
-            <button onClick={onDelete} className="text-xs text-[#e06e6e] font-mono">確認</button>
-            <button onClick={() => setShowDelConfirm(false)} className="text-xs text-[#b8b5af] font-mono">取消</button>
+            <button onClick={onDelete} className="text-xs text-[#e06e6e] font-ui">確認</button>
+            <button onClick={() => setShowDelConfirm(false)} className="text-xs text-[#b8b5af] font-ui">取消</button>
           </>
         )}
       </div>

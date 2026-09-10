@@ -42,7 +42,7 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
           : store.editAttempt(collection.id, attempt.id, { promptClassification })}
       />
       {(attempt?.notes || (!attempt && collection.collectionNotes)) && <div>
-        <p className="mb-1.5 text-xs font-bold text-[#c8c4bc] font-mono uppercase tracking-widest">{attempt ? "筆記" : "收藏筆記"}</p>
+        <p className="mb-1.5 text-xs font-bold text-[#c8c4bc] font-ui normal-case tracking-normal">{attempt ? "筆記" : "收藏筆記"}</p>
         <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">{attempt ? attempt.notes : collection.collectionNotes}</p>
       </div>}
     </>;
