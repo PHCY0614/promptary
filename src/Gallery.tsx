@@ -122,7 +122,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b8b5af] text-xs select-none">⌕</span>
               <input
                 type="text"
-                placeholder="搜尋 prompt、筆記、標籤…"
+                placeholder="搜尋咒語、筆記、標籤……"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-[#161618] border border-[#2e2e32] rounded-lg pl-9 pr-3 py-1.5 text-sm text-[#f0ede8] placeholder:text-[11px] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
@@ -196,7 +196,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             <h2 className="text-sm font-bold text-[#f0ede8]">所有標籤</h2>
             <button onClick={() => setShowTags(false)} className="text-xs text-[#b8b5af] p-2">關閉</button>
           </div>
-          <input autoFocus value={tagSearch} onChange={(e) => setTagSearch(e.target.value)} aria-label="搜尋標籤" placeholder="搜尋標籤…" className="w-full rounded-lg bg-[#0d0d0e] border border-[#2e2e32] p-2 text-xs text-[#f0ede8] placeholder:text-[#9d9a94]" />
+          <input autoFocus value={tagSearch} onChange={(e) => setTagSearch(e.target.value)} aria-label="搜尋標籤" placeholder="搜尋標籤……" className="w-full rounded-lg bg-[#0d0d0e] border border-[#2e2e32] p-2 text-xs text-[#f0ede8] placeholder:text-[#9d9a94]" />
           <div className="mt-3 max-h-[50vh] overflow-y-auto flex flex-wrap gap-2">
             {allTags.filter((t) => t.toLowerCase().includes(tagSearch.trim().toLowerCase())).map((t) => <button key={t} aria-pressed={activeTags.includes(t)} onClick={() => chooseTag(t)} className={`max-w-full break-all rounded px-2 py-1 text-xs ${activeTags.includes(t) ? "bg-[#2a2010] text-[#c9a96e]" : "bg-[#242427] text-[#c8c4bc]"}`}>#{t}</button>)}
             {!allTags.some((t) => t.toLowerCase().includes(tagSearch.trim().toLowerCase())) && <p className="text-xs text-[#b8b5af]">沒有符合的標籤</p>}
@@ -287,7 +287,7 @@ function CollectionCard({
         {/* Pending badge */}
         {c.promptPending && (
           <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[11px] font-mono bg-[#2a1a00] text-[#c9a96e] border border-[#8a6e4244]">
-            待補 prompt
+            咒語待補
           </div>
         )}
 

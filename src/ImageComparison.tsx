@@ -27,8 +27,8 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
     const model = attempt?.model?.trim();
     const usesOriginalPrompt = attempt?.promptMode === "original";
     const promptTitle = attempt
-      ? `嘗試 ${attemptIndex + 1} · ${attempt.platform}${model ? ` · ${model}` : ""}${usesOriginalPrompt ? " · 無修改" : " 的 PROMPT"}`
-      : "原始 Prompt";
+      ? `嘗試 ${attemptIndex + 1} · ${attempt.platform}${model ? ` · ${model}` : ""}${usesOriginalPrompt ? " · 無修改" : " 的咒語"}`
+      : "原始咒語";
     return <>
       <PromptReader
         key={image.id}
@@ -48,7 +48,7 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
     </>;
   }
   return (
-    <section aria-label="圖片與 Prompt 並排比較" className="min-w-0">
+    <section aria-label="圖片與咒語並排比較" className="min-w-0">
       {/* 共用縮圖 filmstrip：44 × 58px；超出寬度時可橫向捲動。 */}
       <div aria-label="比較選圖" className="mb-4 overflow-x-auto py-1">
         <div className="mx-auto flex w-max items-center gap-2 whitespace-nowrap">

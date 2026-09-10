@@ -42,7 +42,7 @@ export default function App() {
       )}
       {store.loadState !== "ready" && (
         <div className="flex h-full flex-col items-center justify-center gap-4 text-sm text-[#c8c4bc]">
-          <p role="status">{store.loadState === "loading" ? "正在載入本機收藏（首次開啟會搬移舊資料）…" : "收藏載入失敗，原有資料仍保留。"}</p>
+          <p role="status">{store.loadState === "loading" ? "正在載入本機收藏（首次開啟會搬移舊資料）……" : "收藏載入失敗，原有資料仍保留。"}</p>
           {store.loadState === "error" && <button onClick={() => void store.reload()} className="rounded bg-[#c9a96e] px-4 py-2 text-black">重試載入</button>}
         </div>
       )}

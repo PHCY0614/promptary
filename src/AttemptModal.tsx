@@ -63,7 +63,7 @@ function initForm(originalPrompt: string, existing?: Attempt): FormState {
     images: [],
     platform: "PixAI",
     customPlatform: "",
-    prompt: originalPrompt,
+    prompt: "",
     unmodified: false,
     model: "",
     notes: "",
@@ -186,7 +186,6 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
     setForm((current) => ({
       ...current,
       unmodified: !current.unmodified,
-      prompt: current.unmodified ? originalPrompt : current.prompt,
     }));
   }
 
@@ -310,7 +309,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest">
-                實際使用的 Prompt
+                實際使用的咒語
               </label>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-[#b8b5af] font-mono">無修改</span>
@@ -318,7 +317,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
                   type="button"
                   role="switch"
                   aria-checked={form.unmodified}
-                  aria-label="使用原始 Prompt，無修改"
+                  aria-label="使用原始咒語，無修改"
                   onClick={toggleUnmodified}
                   className={`h-4 w-7 rounded-full transition-colors ${form.unmodified ? "bg-[#c9a96e]" : "bg-[#2e2e32]"}`}
                 >
@@ -329,7 +328,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
             {!form.unmodified && <ResizableTextarea
               value={form.prompt}
               onChange={(e) => set("prompt", e.target.value)}
-              placeholder="貼上或輸入 Prompt"
+              placeholder="貼上或輸入咒語"
               rows={3}
               className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
               style={{ fontFamily: "'JetBrains Mono', monospace", height: 56 }}
@@ -339,7 +338,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
                 onClick={() => set("prompt", originalPrompt)}
                 className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-mono mt-1 transition-colors"
               >
-                恢復原始 prompt
+                恢復原始咒語
               </button>
             )}
           </div>
@@ -391,7 +390,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
             disabled={isSaving || isLoading || hasImageError}
             className="px-4 py-2 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors disabled:opacity-40"
           >
-            {isSaving ? "儲存中…" : isLoading ? "上傳中…" : existing ? "儲存變更" : "新增嘗試"}
+            {isSaving ? "儲存中……" : isLoading ? "上傳中……" : existing ? "儲存變更" : "新增嘗試"}
           </button>
         </div>
       </div>

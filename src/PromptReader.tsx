@@ -202,12 +202,12 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
               <span role="status" className="text-xs text-[#c8c4bc]">{message || (dirty ? "有未儲存的分類調整" : "")}</span>
               <div className="ml-auto flex items-center gap-2">
                 <button type="button" disabled={saving || showResetConfirm || !dirty} onClick={cancelChanges} className="rounded border border-[#2e2e32] px-3 py-2 text-xs text-[#a09c95] disabled:opacity-40">取消</button>
-                <button type="button" disabled={saving || showResetConfirm || !dirty} onClick={() => void save()} className="rounded bg-[#c9a96e] px-3 py-2 text-xs text-[#0d0d0e] disabled:opacity-40">{saving ? "儲存中…" : "儲存分類"}</button>
+                <button type="button" disabled={saving || showResetConfirm || !dirty} onClick={() => void save()} className="rounded bg-[#c9a96e] px-3 py-2 text-xs text-[#0d0d0e] disabled:opacity-40">{saving ? "儲存中……" : "儲存分類"}</button>
               </div>
             </div>}
           </div>
         )}
-      </> : <p className="rounded-lg border border-[#2e2e32] p-3 text-xs text-[#c9a96e]">待補 Prompt</p>}
+      </> : <p className="rounded-lg border border-[#2e2e32] p-3 text-xs text-[#c9a96e]">咒語待補</p>}
     </section>
   );
 }

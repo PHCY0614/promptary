@@ -220,7 +220,7 @@ export default function DetailView({
 
           {/* 原始 Prompt：完整原文與獨立的分類閱讀視圖。 */}
           <PromptReader
-            title="原始 Prompt"
+            title="原始咒語"
             text={c.originalPrompt}
             saved={c.promptClassification}
             onSave={(promptClassification) => store.editCollection(c.id, { promptClassification })}
@@ -436,7 +436,7 @@ function AttemptCard({
           <p className="text-xs font-bold text-[#c8c4bc] font-mono uppercase tracking-widest">無修改</p>
         ) : (
           <PromptReader
-            title="這次嘗試的 Prompt"
+            title="這次嘗試的咒語"
             text={a.prompt}
             saved={a.promptClassification}
             onSave={onSaveClassification}

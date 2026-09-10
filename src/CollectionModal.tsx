@@ -236,7 +236,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs text-[#b8b5af] font-mono uppercase tracking-widest">
-                原始 Prompt（可之後補）
+                原始咒語（可之後補）
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <span className="text-xs text-[#b8b5af] font-mono">待補</span>
@@ -251,7 +251,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
             <ResizableTextarea
               value={form.originalPrompt}
               onChange={(e) => set("originalPrompt", e.target.value)}
-              placeholder="貼上或輸入 Prompt"
+              placeholder="貼上或輸入咒語"
               rows={3}
               disabled={form.promptPending}
               className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors disabled:opacity-40"
@@ -345,7 +345,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
             disabled={isSaving || isLoading || hasImageError}
             className="px-4 py-2 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors disabled:opacity-40"
           >
-            {isSaving ? "儲存中…" : isLoading ? "讀取中…" : existing ? "儲存變更" : "新增收藏"}
+            {isSaving ? "儲存中……" : isLoading ? "讀取中……" : existing ? "儲存變更" : "新增收藏"}
           </button>
         </div>
       </div>

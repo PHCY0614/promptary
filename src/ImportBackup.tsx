@@ -67,7 +67,7 @@ export default function ImportBackup({ store }: { store: Store }) {
         {message && <p role="status" className="mt-4 text-xs text-[#e1c48e]">{message}</p>}
         <div className="mt-5 flex justify-end gap-3">
           <button disabled={busy} onClick={() => setOpen(false)} className="text-xs text-[#b8b5af] p-2">關閉</button>
-          {pending && <button disabled={busy} onClick={() => void submit()} className="text-xs bg-[#c9a96e] text-black rounded px-3 py-2 disabled:opacity-50">{busy ? "處理中…" : "確認匯入"}</button>}
+          {pending && <button disabled={busy} onClick={() => void submit()} className="text-xs bg-[#c9a96e] text-black rounded px-3 py-2 disabled:opacity-50">{busy ? "處理中……" : "確認匯入"}</button>}
         </div>
       </section>
     </div>, document.body)}
