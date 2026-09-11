@@ -1,104 +1,99 @@
 # Promptary
 
-*你的咒語收藏庫 —☆ﾟ.*･*
+[English](./README.md) | [正體中文](./README.zh-TW.md)
 
-Promptary 是一個收藏 AI 生圖 prompt 與實測紀錄的小工具。
+*Your AI image prompt library —☆ﾟ.*･*
 
-常常在網路上看到好看的 prompt，卻沒有一個方便保存和整理的地方，所以趁 Codex 重置前燒 token 做了 Promptary，把參考圖片、原始 prompt、來源，以及自己的生成結果和心得都放在一起。
+Promptary is a small tool for collecting AI image generation prompts and keeping track of your own experiments with them.
 
-🔗 [線上使用 Promptary](https://phcy0614.github.io/promptary/)
+I kept finding great prompts online without having a convenient place to save and organise them, so I burned some tokens before my Codex reset and built Promptary — a place where reference images, original prompts, sources, generated results, and personal notes can all live together.
 
-目前資料都保存在使用者自己的瀏覽器裡，不需要登入，也還不支援跨裝置同步。
+🔗 [Try Promptary online](https://phcy0614.github.io/promptary/)
 
-## 使用流程
+No sign-in is required. Collections and images are stored locally in your browser. The interface supports Traditional Chinese and English. Cloud storage and automatic cross-device syncing are not currently available.
 
-1. 上傳參考圖片，貼上 prompt、來源與收藏筆記；也可以先存圖片，之後補文字。
-2. 在首頁透過搜尋、標籤與狀態篩選找回收藏。
-3. 複製 prompt 到生圖平台使用。
-4. 在收藏內新增「我的嘗試」，保存實際 prompt、成果圖片、平台與心得。
-5. 選取兩張圖片並排比較。
+## Current Version
 
-## 目前功能
+Last updated: 11 September 2026.
 
-- 收藏參考圖片、prompt、來源、標籤與筆記，可搜尋、篩選、排序及標記最愛。
-- 每筆收藏可記錄多次生成嘗試，保存實際 prompt、成果圖、平台、模型、評分與心得。
-- 可將參考圖或成果圖設為封面，並挑選兩張圖片並排比較。
-- Prompt 可依本機中英文關鍵字分類閱讀，也能手動調整分類；不會改動原文或複製順序。
-- 支援 JSON 匯出與匯入備份；相同收藏 ID 會跳過，不會覆蓋既有資料。
+Promptary currently supports collection management, experiment tracking, categorised prompt reading, side-by-side image comparison, ZIP backups, and local storage information. Recent updates also introduced a limit of 10 images per selection, with up to 2 images processed concurrently, along with size limits for backup imports.
 
-## 資料保存與備份
+The current code version is `1ff3877` and has been pushed to the GitHub `main` branch. The live site reflects the most recent successful deployment.
 
-資料只保存在目前瀏覽器的本機空間，不需登入，也不會跨裝置同步。清除網站資料、使用無痕模式，或改用其他瀏覽器／網址，都可能看不到原本的收藏，請定期匯出備份。
+## Workflow
 
-參考圖片支援 JPG、PNG、WebP，單張上限 2 MB；成果圖目前未設統一格式與大小限制。圖片與收藏一起匯出為 JSON，但自訂平台選單不包含在備份內。
+1. Create a collection with reference images, prompts, sources, and notes. You can also save images first and add the text later.
+2. Find collections using search, tags, status filters, and favourites.
+3. Copy a prompt and use it on your preferred image generation platform.
+4. Add experiments to a collection to record generated images, the prompt actually used, platform, model, rating, and notes.
+5. Select any two images for side-by-side comparison and review the prompt and experiment details associated with each one.
 
-1. 點「管理 → 匯出」下載 JSON。
-2. 在另一個瀏覽器或裝置開啟 Promptary，點「管理 → 匯入」。
-3. 選擇備份，查看預計新增與跳過的數量，再確認匯入。
+## Features
 
-匯入檔案上限為 **100 MB**。匯入前會預覽新增與跳過數量；相同收藏 ID 不會合併或覆蓋。
+* **Collection management**: Name collections and experiments, and organise them with tags, search, status filters, sorting, and favourites.
+* **Experiment tracking**: Each collection can contain multiple experiments with generated images, platform, model, date, rating, and notes. Custom platforms can also be managed.
+* **Prompt reading**: Switch between the original prompt and a categorised view, with categories that can be adjusted manually. Categorisation is based on local Chinese and English keyword matching. It does not modify the original prompt or copied text, and does not call any AI service.
+* **Image comparison**: Reference images and generated results can both be used as cover images. Any two images can be compared side by side, including on mobile, with controls for switching the information shown for each side.
+* **Form protection**: If a form contains unsaved changes, Promptary asks for confirmation before closing it. If saving fails, your input is preserved so you can retry.
+* **Bilingual interface**: Switch between Traditional Chinese and English. Your language preference is stored in the current browser.
 
-## 本機開發
+## Image Processing
 
-技術組合：
+Reference images and generated results follow the same rules:
 
-- React 19
-- TypeScript
-- Vite 8
-- Tailwind CSS v4
-- IndexedDB
+* JPEG, PNG, and WebP are supported.
+* Maximum file size: 10 MiB per image, with a maximum decoded resolution of 40 megapixels.
+* Up to 10 images can be selected at once. If the limit is exceeded, the entire selection is rejected and the images can instead be added in smaller batches.
+* Each form processes up to 2 images concurrently. Additional images are queued.
+* There is no fixed limit on the total number of images in a collection or experiment, but browser storage limits still apply.
 
-以 Figma Make 產出的介面為基礎，並在開發與除錯過程中使用 OpenAI Codex 協助。
+Images are resized and re-encoded locally before being stored. The longest side of the saved version is limited to 2048 pixels. WebP is preferred, with JPEG or PNG used as fallbacks when necessary.
 
-使用 Node.js 22 與 pnpm 10.34.3，請使用近期的 Node.js 22 修補版本。
+**Promptary stores processed copies of images. It is not intended to be an archive for original files. If you need to preserve the original resolution or quality, keep a separate copy of the original image.**
 
-```sh
+## Data Storage and Backups
+
+Collections and images are stored in the current browser using IndexedDB. Data is stored separately for each device, browser, and site origin. The live website and a local development URL, for example, do not share the same library.
+
+Clearing site data may delete your collections, and private or incognito browsing is not suitable for long-term storage. Regularly download a ZIP backup through **Manage → Export**.
+
+The ZIP backup contains collections, experiment records, processed images, and the custom platform list.
+
+To import a backup:
+
+1. Open **Manage → Import** and select a ZIP file exported by Promptary.
+2. Review the number of collections that will be added, updated, or kept unchanged.
+3. Confirm the import before anything is written to the local library.
+
+When the same collection ID exists both locally and in the backup, Promptary compares their last-updated timestamps. If the backup is newer, the entire collection is updated. If the local copy is newer or both timestamps are identical, the local version is kept.
+
+This is not a field-by-field merge. Custom platform lists, however, are merged and deduplicated.
+
+The current ZIP import limit is **100 MiB**, with a maximum declared uncompressed size of **200 MiB**. Legacy JSON backups cannot be restored directly through the current import interface.
+
+**Manage → Local Data** shows the storage usage reported by the browser and the current data protection status. Storage protection is still controlled by the browser. It does not replace ZIP backups and does not provide automatic syncing.
+
+## Local Development
+
+Built with React 19, TypeScript, Vite 8, Tailwind CSS v4, and IndexedDB.
+
+The interface is based on a design originally created in Figma Make, with OpenAI Codex used during development and debugging.
+
+The project is configured for Node.js 22 and pnpm 10.34.3.
+
+```bash
 pnpm install
 pnpm dev
 ```
 
-### 檢查與建置
+Open the local URL shown in the terminal to preview the app.
 
-```sh
+To run checks and create a production build:
+
+```bash
 pnpm typecheck
 pnpm test
 pnpm build
 ```
 
-更詳細的資料結構、測試與開發紀錄放在：
-
-`docs/開發說明.md`
-
-## 關鍵程式與資料流
-
-```text
-新增／編輯表單
-  → store.ts：序列化資料更新
-  → archiveStorage.ts：圖片轉 Blob、版本檢查、IndexedDB 交易
-  → 寫入成功後更新 React 畫面
-
-匯入 JSON
-  → backup.ts：格式檢查、依 ID 去重
-  → ImportBackup.tsx：顯示預覽並等待確認
-  → store.ts → archiveStorage.ts → 更新卡片
-```
-
-| 檔案 | 用途 |
-| --- | --- |
-| `src/App.tsx` | 頁面切換、表單與儲存錯誤提示 |
-| `src/Gallery.tsx` | 首頁搜尋、排序、篩選與卡片 |
-| `src/DetailView.tsx` | 收藏詳情與嘗試紀錄 |
-| `src/CollectionModal.tsx`、`src/AttemptModal.tsx` | 新增與編輯表單 |
-| `src/PromptReader.tsx`、`src/promptClassification.ts` | Prompt 閱讀、分類規則與手動調整 |
-| `src/ImageComparison.tsx`、`src/comparisonImages.ts` | 圖片與 prompt 對照、選取邏輯 |
-| `src/store.ts`、`src/archiveStorage.ts` | 狀態更新與本機持久化 |
-| `src/ImportBackup.tsx`、`src/backup.ts` | 管理選單、備份匯入與檢查 |
-| `src/types.ts`、`src/seed.ts` | 資料型別與首次使用的起始收藏 |
-| `tests/` | 行為與資料可靠性測試 |
-| `docs/開發說明.md` | 分階段開發紀錄，較早段落可能描述舊版行為 |
-
-## 部署
-
-Promptary 目前使用 GitHub Pages：
-
-[https://phcy0614.github.io/promptary/](https://phcy0614.github.io/promptary/)
+Architecture notes and the dated development log will be added separately.
