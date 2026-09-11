@@ -415,7 +415,7 @@ const en: Messages = {
   discardChangesPrompt: "Discard your current changes?",
   continueEditing: "Continue editing",
   discardChanges: "Discard",
-  brandSubtitle: "Your prompt library",
+  brandSubtitle: "Your AI image prompt library",
   languageSwitcher: "Language",
   languageZhTW: "正體中文",
   languageEn: "English",

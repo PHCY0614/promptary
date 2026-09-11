@@ -120,7 +120,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
 
           {/* Search */}
           <div className="min-w-0 w-full max-w-sm justify-self-center lg:max-w-none">
-            <div className="relative">
+            <div className="ios-form-zoom-fix relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b8b5af] text-xs select-none">⌕</span>
               <input
                 type="text"
@@ -195,7 +195,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
 
       {/* 所有標籤：搜尋與限高清單，避免大量標籤撐長首頁。 */}
       {showTags && <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setShowTags(false)} onKeyDown={(e) => { if (e.key === "Escape") setShowTags(false); }}>
-        <section role="dialog" aria-modal="true" aria-label={t.allTags} className="w-full max-w-md rounded-xl bg-[#161618] border border-[#2e2e32] p-4" onClick={(e) => e.stopPropagation()}>
+        <section role="dialog" aria-modal="true" aria-label={t.allTags} className="ios-form-zoom-fix w-full max-w-md rounded-xl bg-[#161618] border border-[#2e2e32] p-4" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-[#f0ede8]">{t.allTags}</h2>
             <button onClick={() => setShowTags(false)} className="text-xs text-[#b8b5af] p-2">{t.close}</button>
