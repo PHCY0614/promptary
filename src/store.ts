@@ -28,10 +28,14 @@ export function useStore() {
       setStorageError(null);
       setLoadState("ready");
       console.info("[Promptary startup] ready");
+      // starter seed 與使用者寫入共用 staging，必須排進同一條寫入佇列；
+      // 成功或失敗都要讓佇列繼續，否則後續操作會永久卡住。
       if (result.seedStarter) {
-        void seedStarterArchive().then((seeded) => {
+        queue.current = queue.current.then(async () => {
+          const seeded = await seedStarterArchive();
           if (seeded && revision.current === 0) revision.current = seeded.revision;
-        });
+          return true;
+        }).catch(() => true);
       }
     } catch (error) {
       setStorageError(storageErrorMessage(error));

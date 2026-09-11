@@ -12,6 +12,9 @@ function loadModule(path, globals) {
 
 let failWrite = true;
 let persisted = [];
+let seedStarter = false;
+let seedGate = null;
+const writeOrder = [];
 const states = [];
 let serial = 0;
 const staged = new Map();
@@ -50,8 +53,9 @@ const { useStore } = loadModule('src/store.ts', {
   require(name) {
     if (name === './backup') return { mergeBackup, createBackup: async () => new Blob(['zip']) };
     if (name === './archiveStorage') return {
-      loadArchive: async () => ({ collections: persisted, revision: 1 }),
-      saveArchive: async (next, revision) => { if (failWrite) throw new DOMException('full', 'QuotaExceededError'); persisted = next; return revision + 1; },
+      loadArchive: async () => ({ collections: persisted, revision: 1, seedStarter }),
+      seedStarterArchive: async () => { await seedGate; writeOrder.push('seed'); return null; },
+      saveArchive: async (next, revision) => { if (failWrite) throw new DOMException('full', 'QuotaExceededError'); writeOrder.push('save'); persisted = next; return revision + 1; },
       clearArchive: async (revision) => { if (failWrite) throw new DOMException('full', 'QuotaExceededError'); persisted = []; staged.clear(); return revision + 1; },
       stageCanonicalImage: (ref, blob) => staged.set(ref.id, blob),
       getCanonicalBlob: async (id) => staged.get(id),
@@ -150,4 +154,19 @@ assert.equal(JSON.stringify(customPlatforms), JSON.stringify(['Local', 'Backup']
 assert.equal(await store.clearData(), true);
 assert.equal(persisted.length, 0);
 assert.equal(JSON.stringify(customPlatforms), JSON.stringify([]));
-console.log('PASS: save retry, serialized mutations, persistent-storage request, newer-wins import, image replacement, platform union and clear');
+// starter seed 與使用者寫入共用 staging，必須排在同一條佇列；seed 失敗也不得讓佇列永久卡住。
+seedStarter = true;
+let openSeedGate;
+seedGate = new Promise((resolve) => { openSeedGate = resolve; });
+const fresh = useStore();
+await fresh.reload();
+writeOrder.length = 0;
+const queuedWrite = fresh.addCollection(draft);
+await new Promise((resolve) => setTimeout(resolve, 0));
+assert.deepEqual(writeOrder, []);
+openSeedGate();
+assert.equal(typeof await queuedWrite, 'string');
+assert.deepEqual(writeOrder, ['seed', 'save']);
+assert.equal(persisted.length, 1);
+
+console.log('PASS: save retry, serialized mutations, starter seed queued ahead of user writes, persistent-storage request, newer-wins import, image replacement, platform union and clear');

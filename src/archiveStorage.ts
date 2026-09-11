@@ -28,15 +28,19 @@ type LegacyCollection = Omit<Collection, "referenceImages" | "attempts" | "cover
 };
 
 const stagedCanonical = new Map<string, CanonicalImageRecord>();
+const stagedOverwrite = new Set<string>();
 const thumbnailJobs = new Map<string, Promise<Blob>>();
 let cacheGeneration = 0;
 
-export function stageCanonicalImage(ref: ImageRef, blob: Blob) {
+export function stageCanonicalImage(ref: ImageRef, blob: Blob, options?: { overwrite?: boolean }) {
   stagedCanonical.set(ref.id, { ...ref, blob });
+  if (options?.overwrite) stagedOverwrite.add(ref.id);
+  else stagedOverwrite.delete(ref.id);
 }
 
 export function discardStagedImage(id: string) {
   stagedCanonical.delete(id);
+  stagedOverwrite.delete(id);
 }
 
 function requestResult<T>(request: IDBRequest<T>): Promise<T> {
@@ -48,9 +52,12 @@ function requestResult<T>(request: IDBRequest<T>): Promise<T> {
 
 function transactionDone(transaction: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
-    transaction.oncomplete = () => resolve();
-    transaction.onabort = () => reject(transaction.error ?? new Error(ErrorCode.transactionAborted));
-    transaction.onerror = () => { /* onabort 會提供一致的錯誤。 */ };
+    // WebKit 的 Blob 寫入失敗時可能只送出 error 而不再送出可依賴的 abort，
+    // 因此兩個事件都要能讓 Promise settle；重複 reject 由 Promise 自行忽略。
+    const settleFailure = () => reject(transaction.error ?? new Error(ErrorCode.transactionAborted));
+    transaction.addEventListener("complete", () => resolve(), { once: true });
+    transaction.addEventListener("error", settleFailure, { once: true });
+    transaction.addEventListener("abort", settleFailure, { once: true });
   });
 }
 
@@ -86,20 +93,55 @@ async function commitSnapshot(collections: Collection[], expected: number | unde
   const nextRevision = (expected ?? 0) + 1;
   const refs = allImageRefs(collections);
   const referenced = new Set(refs.map((image) => image.id));
-  const staged = refs.map((ref) => stagedCanonical.get(ref.id)).filter((record): record is CanonicalImageRecord => Boolean(record));
+  const staged = [...stagedCanonical.values()].filter((record) => referenced.has(record.id));
   try {
     const transaction = db.transaction([ARCHIVE_TABLE, IMAGE_TABLE, THUMBNAIL_TABLE], "readwrite");
     const done = transactionDone(transaction);
     const archive = transaction.objectStore(ARCHIVE_TABLE);
     const images = transaction.objectStore(IMAGE_TABLE);
     const thumbnails = transaction.objectStore(THUMBNAIL_TABLE);
-    for (const record of staged) {
-      images.put(record, record.id);
-      thumbnails.delete(record.id);
-    }
-    const currentRequest = archive.get("current");
-    const imageKeysRequest = images.getAllKeys();
-    const thumbnailKeysRequest = thumbnails.getAllKeys();
+    let currentReady = false;
+    let imageKeysReady = false;
+    let thumbnailKeysReady = false;
+    let thumbnailKeys: IDBValidKey[] = [];
+    let finished = false;
+    let currentRequest!: IDBRequest<Snapshot | undefined>;
+    let imageKeysRequest!: IDBRequest<IDBValidKey[]>;
+    let thumbnailKeysRequest!: IDBRequest<IDBValidKey[]>;
+    const finish = () => {
+      if (finished || !currentReady || !imageKeysReady || !thumbnailKeysReady) return;
+      finished = true;
+      const current = currentRequest.result as Snapshot | undefined;
+      if (current?.revision !== expected || (expected === undefined && current)) {
+        transaction.abort();
+        return;
+      }
+      const storedIds = new Set(imageKeysRequest.result.map(String));
+      const missing = refs.find((ref) => !storedIds.has(ref.id) && !staged.some((record) => record.id === ref.id));
+      if (missing) {
+        transaction.abort();
+        return;
+      }
+      // 只寫入資料庫還沒有的圖片，metadata-only 變更（例如換封面）不重寫既有 Blob。
+      const toPut = staged.filter((record) => !storedIds.has(record.id) || stagedOverwrite.has(record.id));
+      for (const record of toPut) {
+        images.put(record, record.id);
+        thumbnails.delete(record.id);
+      }
+      archive.put({ revision: nextRevision, collections } satisfies Snapshot, "current");
+      for (const key of imageKeysRequest.result) if (!referenced.has(String(key))) images.delete(key);
+      for (const key of thumbnailKeys) if (!referenced.has(String(key))) thumbnails.delete(key);
+    };
+    currentRequest = archive.get("current");
+    currentRequest.addEventListener("success", () => { currentReady = true; finish(); }, { once: true });
+    imageKeysRequest = images.getAllKeys();
+    imageKeysRequest.addEventListener("success", () => { imageKeysReady = true; finish(); }, { once: true });
+    thumbnailKeysRequest = thumbnails.getAllKeys();
+    thumbnailKeysRequest.addEventListener("success", () => {
+      thumbnailKeys = thumbnailKeysRequest.result;
+      thumbnailKeysReady = true;
+      finish();
+    }, { once: true });
     const completion = done.catch((error) => {
       const current = currentRequest.result as Snapshot | undefined;
       if (current?.revision !== expected || (expected === undefined && current)) {
@@ -110,34 +152,11 @@ async function commitSnapshot(collections: Collection[], expected: number | unde
       if (missing) fail(ErrorCode.imageMissingRetry);
       throw error;
     });
-    let currentReady = false;
-    let imageKeysReady = false;
-    let thumbnailKeysReady = false;
-    let thumbnailKeys: IDBValidKey[] = [];
-    let finished = false;
-    const finish = () => {
-      if (finished || !currentReady || !imageKeysReady || !thumbnailKeysReady) return;
-      finished = true;
-      const current = currentRequest.result as Snapshot | undefined;
-      if (current?.revision !== expected || (expected === undefined && current)) {
-        transaction.abort();
-        return;
-      }
-      const storedIds = new Set(imageKeysRequest.result.map(String));
-      const missing = refs.find((ref) => !storedIds.has(ref.id));
-      if (missing) {
-        transaction.abort();
-        return;
-      }
-      archive.put({ revision: nextRevision, collections } satisfies Snapshot, "current");
-      for (const key of imageKeysRequest.result) if (!referenced.has(String(key))) images.delete(key);
-      for (const key of thumbnailKeys) if (!referenced.has(String(key))) thumbnails.delete(key);
-    };
-    currentRequest.onsuccess = () => { currentReady = true; finish(); };
-    imageKeysRequest.onsuccess = () => { imageKeysReady = true; finish(); };
-    thumbnailKeysRequest.onsuccess = () => { thumbnailKeys = thumbnailKeysRequest.result; thumbnailKeysReady = true; finish(); };
     await completion;
-    for (const record of staged) if (stagedCanonical.get(record.id) === record) stagedCanonical.delete(record.id);
+    for (const record of staged) {
+      if (stagedCanonical.get(record.id) === record) stagedCanonical.delete(record.id);
+      stagedOverwrite.delete(record.id);
+    }
     return nextRevision;
   } finally { db.close(); }
 }
@@ -188,7 +207,7 @@ async function migrateCollections(value: unknown, experimental: Map<string, { di
     }
     const file = new File([blob], "legacy-image", { type: blob.type || "image/webp" });
     const canonical = await createCanonicalImage(file, id);
-    stageCanonicalImage(canonical.ref, canonical.blob);
+    stageCanonicalImage(canonical.ref, canonical.blob, { overwrite: true });
     return canonical.ref;
   };
   const migrated: Collection[] = [];
@@ -358,6 +377,7 @@ export function saveArchive(collections: Collection[], revision: number): Promis
 export function clearArchive(revision: number): Promise<number> {
   cacheGeneration++;
   stagedCanonical.clear();
+  stagedOverwrite.clear();
   thumbnailJobs.clear();
   return commitSnapshot([], revision);
 }
