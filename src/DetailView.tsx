@@ -382,11 +382,7 @@ function AttemptCard({
   const platformColor = PLATFORM_COLORS[a.platform] ?? "text-[#b8b5af]";
 
   return (
-    <div
-      className={`rounded-lg border transition-colors ${
-        isSelected ? "border-[#c9a96e44] bg-[#161618]" : "border-[#1e1e21] bg-[#0d0d0e] hover:border-[#2e2e32]"
-      }`}
-    >
+    <div className="rounded-lg border border-[#c9a96e44] bg-[#161618]">
       <div className="p-3">
         {/* Header row */}
         <div className="flex items-start gap-2 mb-2.5">
