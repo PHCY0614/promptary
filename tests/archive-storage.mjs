@@ -17,12 +17,13 @@ function setup() {
   const indexedDB = new IDBFactory();
   const code = ts.transpileModule(readFileSync('src/archiveStorage.ts', 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
+  }).outputText.replaceAll('import.meta.env.BASE_URL', '"/"');
   vm.runInNewContext(code, {
     exports, indexedDB, Blob, File: FileStub, atob, crypto: { randomUUID: () => 'migrated-id' }, Error, DOMException, Map, Set, Date,
     localStorage: { getItem: () => null, removeItem() {} },
+    fetch: async () => { throw new Error('starter fetch should not run'); },
     require(name) {
-      if (name === './seed') return { SEED: [] };
+      if (name === './starterData') return { STARTER_COLLECTIONS: [], starterImageUrl: () => '/starter/missing.webp' };
       if (name === './i18n/errorCodes') {
         const errorExports = {};
         vm.runInNewContext(ts.transpileModule(readFileSync('src/i18n/errorCodes.ts', 'utf8'), {
@@ -34,6 +35,7 @@ function setup() {
         THUMBNAIL_VERSION: 1,
         createCanonicalImage: async (file, id) => ({ ref: { ...image(id), byteSize: file.size }, blob: new Blob([await file.arrayBuffer()], { type: 'image/webp' }) }),
         createThumbnail: async () => ({ blob: new Blob(['thumb'], { type: 'image/webp' }), width: 800, height: 533 }),
+        validateCanonicalBlob: async () => ({ width: 1200, height: 800 }),
       };
       return {};
     },

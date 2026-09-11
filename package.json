@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "format": "oxfmt",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/image-processing.mjs && node tests/image-batch.mjs && node tests/archive-storage.mjs && node tests/backup-zip.mjs && node tests/collection-flow.mjs && node tests/storage-platforms.mjs && node tests/prompt-classification.mjs && node tests/comparison-images.mjs && node tests/modal-close-guard.mjs"
+    "test": "node tests/image-processing.mjs && node tests/image-batch.mjs && node tests/archive-storage.mjs && node tests/backup-zip.mjs && node tests/collection-flow.mjs && node tests/storage-platforms.mjs && node tests/prompt-classification.mjs && node tests/comparison-images.mjs && node tests/modal-close-guard.mjs && node tests/starter-data.mjs"
   },
   "dependencies": {
     "fflate": "^0.8.3",

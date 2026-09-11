@@ -1,6 +1,6 @@
 import type { Attempt, Collection, CoverSource, ImageRef } from "./types";
-import { SEED } from "./seed";
-import { createCanonicalImage, createThumbnail, THUMBNAIL_VERSION } from "./imageProcessing";
+import { STARTER_COLLECTIONS, starterImageUrl } from "./starterData";
+import { createCanonicalImage, createThumbnail, THUMBNAIL_VERSION, validateCanonicalBlob } from "./imageProcessing";
 import { ErrorCode, fail, isErrorCode } from "./i18n/errorCodes";
 
 const LEGACY_KEY = "prompt-archive-v2";
@@ -226,6 +226,60 @@ async function readExperimentalImages(db: IDBDatabase) {
   return records;
 }
 
+async function recoverConcurrentInit(error: unknown): Promise<Snapshot> {
+  const retryDb = await openDatabase();
+  try {
+    const transaction = retryDb.transaction(ARCHIVE_TABLE, "readonly");
+    const done = transactionDone(transaction);
+    const current = await requestResult<Snapshot | undefined>(transaction.objectStore(ARCHIVE_TABLE).get("current"));
+    await done;
+    if (!current || !isCurrentCollections(current.collections)) throw error;
+    return current;
+  } finally { retryDb.close(); }
+}
+
+async function commitInitialSnapshot(collections: Collection[]): Promise<Snapshot> {
+  try {
+    const revision = await commitSnapshot(collections, undefined);
+    return { collections, revision };
+  } catch (error) {
+    // 兩個分頁同時首次啟動時，採用已完成的那份原子寫入，不把正常競爭顯示成載入失敗。
+    return recoverConcurrentInit(error);
+  }
+}
+
+async function fetchStarterCanonical(ref: ImageRef): Promise<Blob> {
+  const url = starterImageUrl(ref, import.meta.env.BASE_URL);
+  let buffer: ArrayBuffer;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) fail(ErrorCode.storageFailed);
+    buffer = await response.arrayBuffer();
+  } catch (error) {
+    if (error instanceof Error && isErrorCode(error.message)) throw error;
+    fail(ErrorCode.storageFailed);
+  }
+  const blob = new Blob([buffer], { type: ref.mimeType });
+  await validateCanonicalBlob(blob, ref);
+  return blob;
+}
+
+async function installStarterCollections(): Promise<Snapshot> {
+  const collections = STARTER_COLLECTIONS;
+  const refs = allImageRefs(collections);
+  const stagedIds: string[] = [];
+  try {
+    for (const ref of refs) {
+      const blob = await fetchStarterCanonical(ref);
+      stageCanonicalImage(ref, blob);
+      stagedIds.push(ref.id);
+    }
+    return await commitInitialSnapshot(collections);
+  } finally {
+    for (const id of stagedIds) discardStagedImage(id);
+  }
+}
+
 export async function loadArchive(): Promise<{ collections: Collection[]; revision: number }> {
   const db = await openDatabase();
   let snapshot: Snapshot | undefined;
@@ -238,33 +292,19 @@ export async function loadArchive(): Promise<{ collections: Collection[]; revisi
     if (snapshot && !isCurrentCollections(snapshot.collections)) experimental = await readExperimentalImages(db);
   } finally { db.close(); }
   if (snapshot && isCurrentCollections(snapshot.collections)) return snapshot;
-  let value: unknown;
-  let expected: number | undefined;
-  if (snapshot) { value = snapshot.collections; expected = snapshot.revision; }
-  else {
-    const raw = localStorage.getItem(LEGACY_KEY);
-    value = raw === null ? SEED : JSON.parse(raw);
-    expected = undefined;
+  if (snapshot) {
+    const collections = await migrateCollections(snapshot.collections, experimental);
+    const revision = await commitSnapshot(collections, snapshot.revision);
+    return { collections, revision };
   }
-  const collections = await migrateCollections(value, experimental);
-  let revision: number;
-  try {
-    revision = await commitSnapshot(collections, expected);
-  } catch (error) {
-    // 兩個分頁同時首次啟動時，採用已完成的那份原子遷移，不把正常競爭顯示成載入失敗。
-    if (expected !== undefined) throw error;
-    const retryDb = await openDatabase();
-    try {
-      const transaction = retryDb.transaction(ARCHIVE_TABLE, "readonly");
-      const done = transactionDone(transaction);
-      const current = await requestResult<Snapshot | undefined>(transaction.objectStore(ARCHIVE_TABLE).get("current"));
-      await done;
-      if (!current || !isCurrentCollections(current.collections)) throw error;
-      return current;
-    } finally { retryDb.close(); }
+  const raw = localStorage.getItem(LEGACY_KEY);
+  if (raw !== null) {
+    const collections = await migrateCollections(JSON.parse(raw), experimental);
+    const result = await commitInitialSnapshot(collections);
+    try { localStorage.removeItem(LEGACY_KEY); } catch { /* IndexedDB 已成功，不讓清理副本阻斷載入。 */ }
+    return result;
   }
-  try { localStorage.removeItem(LEGACY_KEY); } catch { /* IndexedDB 已成功，不讓清理副本阻斷載入。 */ }
-  return { collections, revision };
+  return installStarterCollections();
 }
 
 export function saveArchive(collections: Collection[], revision: number): Promise<number> {
