@@ -28,7 +28,7 @@ function CategorySelect({ label, value, disabled, onChange }: {
   return (
     <details
       ref={detailsRef}
-      className="relative max-w-full"
+      className="group relative max-w-full"
       onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.open = false; }}
       onKeyDown={(event) => { if (event.key === "Escape") event.currentTarget.open = false; }}
     >
@@ -39,7 +39,7 @@ function CategorySelect({ label, value, disabled, onChange }: {
         className={`flex list-none items-center gap-2 rounded border border-[#2e2e32] bg-[#0d0d0e] py-1 pl-2 pr-2 text-xs text-[#a09c95] [&::-webkit-details-marker]:hidden ${disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
       >
         <span className="min-w-0 flex-1 truncate">{t.promptCategory[selected.id]}</span>
-        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3 shrink-0 fill-current"><path d="m5.5 7.5 4.5 4.5 4.5-4.5Z" /></svg>
+        <span aria-hidden="true" className="inline-block shrink-0 text-[14px] transition-transform duration-150 motion-reduce:transition-none group-open:rotate-180">▾</span>
       </summary>
       <div className="absolute left-0 top-[calc(100%-1px)] z-20 min-w-full overflow-hidden rounded border border-[#2e2e32] bg-[#0d0d0e] shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
         {PROMPT_CATEGORIES.map((category) => (

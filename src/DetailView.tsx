@@ -198,6 +198,7 @@ export default function DetailView({
                 onClick={() => setShowCoverPicker(!showCoverPicker)}
                 className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-ui transition-colors"
               >
+                <span aria-hidden="true" className={`inline-block text-[14px] transition-transform duration-150 motion-reduce:transition-none ${showCoverPicker ? "rotate-180" : ""}`}>▾</span>{" "}
                 {showCoverPicker ? t.collapse : t.changeCover}
               </button>
               {showCoverPicker && (
