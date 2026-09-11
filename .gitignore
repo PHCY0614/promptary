@@ -21,3 +21,7 @@ logs/
 
 # Local package-manager cache
 .pnpm-store/
+
+# Figma Make environment-generated command wrappers and local runtime config
+/.figma/make/*
+!/.figma/make/site.json

@@ -3,7 +3,7 @@
   "language": "zh-Hant",
   "description": "你的咒語收藏庫 —☆ﾟ.*･ 記錄你翻到的咒語和每一次嘗試",
   "robots": {
-    "index": false
+    "index": true
   },
   "accessibility": {
     "addBypassLinks": false,
