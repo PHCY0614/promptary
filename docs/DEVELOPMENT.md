@@ -1,6 +1,6 @@
 # Promptary Development Notes
 
-[English](./DEVELOPMENT.md) | [繁體中文](./DEVELOPMENT.zh-TW.md)
+[English](./DEVELOPMENT.md) | 正體中文](./DEVELOPMENT.zh-TW.md)
 
 Last updated: 11 September 2026  
 Current code version: `1ff3877`
