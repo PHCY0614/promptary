@@ -593,7 +593,7 @@ const en: Messages = {
   loadingStorage: "Loading…",
   resizeHandle: "Resize field",
   resizeHint: "Drag up or down to resize",
-  statusLabel: { tried: "Tried", want: "To Try", ref: "Inspiration" },
+  statusLabel: { tried: "Tried", want: "To Try", ref: "Inspo" },
   errors: {
     transactionAborted: "Save was interrupted. Retry.",
     dbBlocked: "The database is in use in another tab. Close other gallery tabs and retry.",
