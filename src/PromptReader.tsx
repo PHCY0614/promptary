@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import CopyPromptButton from "./CopyPromptButton";
 import { classifyPrompt, classificationOverrides, PROMPT_CATEGORIES, PromptCategory, PromptClassification } from "./promptClassification";
 import { sectionLabelClass, useLocale } from "./i18n";
@@ -23,38 +23,60 @@ function CategorySelect({ label, value, disabled, onChange }: {
   onChange: (category: PromptCategory) => void;
 }) {
   const { t } = useLocale();
-  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const selected = PROMPT_CATEGORIES.find((category) => category.id === value)!;
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeMenu = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", closeMenu);
+    return () => document.removeEventListener("pointerdown", closeMenu);
+  }, [menuOpen]);
+
   return (
-    <details
-      ref={detailsRef}
-      className="group relative max-w-full"
-      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.open = false; }}
-      onKeyDown={(event) => { if (event.key === "Escape") event.currentTarget.open = false; }}
+    <div
+      ref={menuRef}
+      className="relative max-w-full"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          setMenuOpen(false);
+          buttonRef.current?.focus();
+        }
+      }}
     >
-      <summary
+      <button
+        ref={buttonRef}
+        type="button"
         aria-label={label}
-        aria-disabled={disabled}
-        onClick={(event) => { if (disabled) event.preventDefault(); }}
-        className={`flex list-none items-center gap-2 rounded border border-[#2e2e32] bg-[#0d0d0e] py-1 pl-2 pr-2 text-xs text-[#a09c95] [&::-webkit-details-marker]:hidden ${disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+        aria-haspopup="true"
+        aria-expanded={menuOpen}
+        disabled={disabled}
+        onClick={() => setMenuOpen((current) => !current)}
+        className={`flex w-full items-center gap-2 rounded border border-[#2e2e32] bg-[#0d0d0e] py-1 pl-2 pr-2 text-xs text-[#a09c95] ${disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
       >
         <span className="min-w-0 flex-1 truncate">{t.promptCategory[selected.id]}</span>
-        <span aria-hidden="true" className="inline-block shrink-0 text-[14px] transition-transform duration-150 motion-reduce:transition-none group-open:rotate-180">▾</span>
-      </summary>
-      <div className="absolute left-0 top-[calc(100%-1px)] z-20 min-w-full overflow-hidden rounded border border-[#2e2e32] bg-[#0d0d0e] shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
-        {PROMPT_CATEGORIES.map((category) => (
-          <button
-            key={category.id}
-            type="button"
-            aria-pressed={category.id === value}
-            onClick={() => { onChange(category.id); if (detailsRef.current) detailsRef.current.open = false; }}
-            className={`block w-full whitespace-nowrap px-2 py-1.5 text-left text-xs transition-colors ${category.id === value ? "bg-[#2a2010] text-[#e4c68f]" : "text-[#a09c95] hover:bg-[#1e1e21] hover:text-[#f0ede8]"}`}
-          >
-            {t.promptCategory[category.id]}
-          </button>
-        ))}
-      </div>
-    </details>
+        <span aria-hidden="true" className={`inline-block shrink-0 text-[14px] transition-transform duration-150 motion-reduce:transition-none ${menuOpen ? "rotate-180" : ""}`}>▾</span>
+      </button>
+      {menuOpen && (
+        <div className="absolute left-0 top-[calc(100%-1px)] z-20 min-w-full overflow-hidden rounded border border-[#2e2e32] bg-[#0d0d0e] shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
+          {PROMPT_CATEGORIES.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              aria-pressed={category.id === value}
+              onClick={() => { onChange(category.id); setMenuOpen(false); }}
+              className={`block w-full whitespace-nowrap px-2 py-1.5 text-left text-xs transition-colors ${category.id === value ? "bg-[#2a2010] text-[#e4c68f]" : "text-[#a09c95] hover:bg-[#1e1e21] hover:text-[#f0ede8]"}`}
+            >
+              {t.promptCategory[category.id]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
