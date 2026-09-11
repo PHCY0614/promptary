@@ -7,6 +7,7 @@ import ResizableTextarea from "./ResizableTextarea";
 import { ErrorCode, translateError, useLocale } from "./i18n";
 import { readCustomPlatforms, writeCustomPlatforms } from "./platformStorage";
 import { UnsavedChangesDialog, useModalCloseGuard } from "./ModalCloseGuard";
+import { enqueueImageBatch, MAX_IMAGES_PER_BATCH } from "./imageBatch";
 
 // 平台選單是獨立的本機偏好；移除選項不會改寫已保存的嘗試。
 interface UploadItem {
@@ -116,6 +117,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
     }
   }
   const [isSaving, setIsSaving] = useState(false);
+  const [imageBatchError, setImageBatchError] = useState("");
   const savingRef = useRef(false);
   const closeGuard = useModalCloseGuard({
     isDirty: !sameForm(initialFormRef.current, form),
@@ -126,9 +128,13 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
   const fileRef = useRef<HTMLInputElement>(null);
   const newImageIds = useRef(new Set<string>());
   const mountedRef = useRef(true);
-  useEffect(() => () => {
-    mountedRef.current = false;
-    for (const id of newImageIds.current) discardStagedImage(id);
+  const imageQueueRef = useRef<Promise<void>>(Promise.resolve());
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      for (const id of newImageIds.current) discardStagedImage(id);
+    };
   }, []);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
@@ -154,11 +160,21 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
     }
   }
 
+  function enqueueImages(items: readonly UploadItem[]) {
+    imageQueueRef.current = enqueueImageBatch(imageQueueRef.current, items, processImage, () => mountedRef.current);
+  }
+
   function handleFiles(files: FileList | null) {
     if (!files) return;
+    if (files.length > MAX_IMAGES_PER_BATCH) {
+      setImageBatchError(ErrorCode.imageBatchTooLarge);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+    setImageBatchError("");
     const placeholders: UploadItem[] = Array.from(files).map((file) => ({ id: crypto.randomUUID(), file, name: file.name, status: "loading" }));
     setForm((form) => ({ ...form, images: [...form.images, ...placeholders] }));
-    placeholders.forEach((item) => { void processImage(item); });
+    enqueueImages(placeholders);
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -248,7 +264,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
                       <div className="w-4 h-4 border-2 border-[#c9a96e] border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : img.status === "error" ? (
-                    <button type="button" onClick={() => void processImage(img)} className="w-full h-full flex items-center justify-center bg-[#2a1010] text-[#e06e6e] text-xs" title={img.error ? translateError(img.error, t) : undefined}>{t.retry}</button>
+                    <button type="button" onClick={() => enqueueImages([img])} className="w-full h-full flex items-center justify-center bg-[#2a1010] text-[#e06e6e] text-xs" title={img.error ? translateError(img.error, t) : undefined}>{t.retry}</button>
                   ) : (
                     img.image && <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover" />
                   )}
@@ -263,6 +279,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
                 className="w-16 h-16 rounded border border-dashed border-[#2e2e32] text-[#b8b5af] hover:border-[#c9a96e55] hover:text-[#b8b5af] flex items-center justify-center text-xl transition-colors flex-shrink-0"
               >+</button>
             </div>
+            {imageBatchError && <p role="alert" className="mt-2 text-xs text-[#e06e6e]">{translateError(imageBatchError, t)}</p>}
           </div>
 
           <p className="text-xs leading-relaxed text-[#b8b5af]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>

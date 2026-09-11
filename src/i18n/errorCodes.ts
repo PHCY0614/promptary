@@ -28,6 +28,7 @@ export const ErrorCode = {
   importFailed: "importFailed",
   imageReadFailed: "imageReadFailed",
   imageProcessFailed: "imageProcessFailed",
+  imageBatchTooLarge: "imageBatchTooLarge",
   imageParseFailed: "imageParseFailed",
   imageEncodeFailed: "imageEncodeFailed",
   imageSizeUnknown: "imageSizeUnknown",

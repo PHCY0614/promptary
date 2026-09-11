@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import type { Store } from "./store";
-import { mergeBackup, parseBackup, type BackupBundle } from "./backup";
+import { MAX_ZIP_BYTES, mergeBackup, parseBackup, type BackupBundle } from "./backup";
 import { ErrorCode, translateError, useLocale } from "./i18n";
 import { formatStorageUsage, readLocalStorageStatus, type LocalStorageStatus } from "./storagePersistence";
 
@@ -76,7 +76,7 @@ export default function ImportBackup({ store }: { store: Store }) {
     if (!file || lock.current) return;
     lock.current = true; setBusy(true); setPending(null); setMessage(null);
     try {
-      if (file.size > 500 * 1024 * 1024) throw new Error(ErrorCode.importZipTooLarge);
+      if (file.size > MAX_ZIP_BYTES) throw new Error(ErrorCode.importZipTooLarge);
       setPending(await parseBackup(file));
     } catch (error) {
       setMessage({ code: error instanceof Error ? error.message : ErrorCode.importReadFailed });

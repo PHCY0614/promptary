@@ -7,8 +7,8 @@ import { normalizeCustomPlatforms } from "./platformStorage";
 
 const FORMAT = "promptary-backup";
 const FORMAT_VERSION = 1;
-const MAX_ZIP_BYTES = 500 * 1024 * 1024;
-const MAX_UNCOMPRESSED_BYTES = 750 * 1024 * 1024;
+export const MAX_ZIP_BYTES = 100 * 1024 * 1024;
+export const MAX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024;
 const MAX_ENTRY_COUNT = 10_001;
 const MAX_MANIFEST_BYTES = 5 * 1024 * 1024;
 const MAX_CANONICAL_BYTES = 20 * 1024 * 1024;

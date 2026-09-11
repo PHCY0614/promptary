@@ -6,6 +6,7 @@ import StoredImage from "./StoredImage";
 import ResizableTextarea from "./ResizableTextarea";
 import { ErrorCode, translateError, useLocale } from "./i18n";
 import { UnsavedChangesDialog, useModalCloseGuard } from "./ModalCloseGuard";
+import { enqueueImageBatch, MAX_IMAGES_PER_BATCH } from "./imageBatch";
 
 // ── 圖片暫存：以固定 ID 對應非同步結果，移除或追加圖片不會錯位 ──
 interface UploadItem {
@@ -82,15 +83,20 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
   const [form, setForm] = useState<FormState>(() => initForm(existing));
   const initialFormRef = useRef(form);
   const [isSaving, setIsSaving] = useState(false);
+  const [imageBatchError, setImageBatchError] = useState("");
   const savingRef = useRef(false);
   const closeGuard = useModalCloseGuard({ isDirty: !sameForm(initialFormRef.current, form), isBusy: isSaving, onClose });
   const close = closeGuard.requestClose;
   const fileRef = useRef<HTMLInputElement>(null);
   const newImageIds = useRef(new Set<string>());
   const mountedRef = useRef(true);
-  useEffect(() => () => {
-    mountedRef.current = false;
-    for (const id of newImageIds.current) discardStagedImage(id);
+  const imageQueueRef = useRef<Promise<void>>(Promise.resolve());
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      for (const id of newImageIds.current) discardStagedImage(id);
+    };
   }, []);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
@@ -118,13 +124,23 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
     }
   }
 
+  function enqueueImages(items: readonly UploadItem[]) {
+    imageQueueRef.current = enqueueImageBatch(imageQueueRef.current, items, readImage, () => mountedRef.current);
+  }
+
   function handleFiles(files: FileList | null) {
     if (!files) return;
+    if (files.length > MAX_IMAGES_PER_BATCH) {
+      setImageBatchError(ErrorCode.imageBatchTooLarge);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+    setImageBatchError("");
     const items: UploadItem[] = Array.from(files).map((file) => ({
       id: crypto.randomUUID(), file, name: file.name, status: "loading", progress: 0,
     }));
     setForm((f) => ({ ...f, referenceImages: [...f.referenceImages, ...items] }));
-    items.forEach((item) => { void readImage(item); });
+    enqueueImages(items);
     // 允許移除或讀取失敗後再次選取同一個檔案。
     if (fileRef.current) fileRef.current.value = "";
   }
@@ -222,7 +238,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
                   {img.status === "loading" ? (
                     <div role="status" className="w-full h-full flex items-center justify-center text-xs text-[#c8c4bc]">{img.progress}%</div>
                   ) : img.status === "error" ? (
-                    <button type="button" onClick={() => void readImage(img)} title={img.error ? translateError(img.error, t) : undefined} aria-label={t.retryNamed(img.name)} className="w-full h-full bg-[#2a1010] text-[#e06e6e] text-xs">{t.retry}</button>
+                    <button type="button" onClick={() => enqueueImages([img])} title={img.error ? translateError(img.error, t) : undefined} aria-label={t.retryNamed(img.name)} className="w-full h-full bg-[#2a1010] text-[#e06e6e] text-xs">{t.retry}</button>
                   ) : (
                     img.image && <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover" />
                   )}
@@ -241,6 +257,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
                 +
               </button>
             </div>
+            {imageBatchError && <p role="alert" className="mt-2 text-xs text-[#e06e6e]">{translateError(imageBatchError, t)}</p>}
           </div>
 
           <p className="text-xs leading-relaxed text-[#b8b5af]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>

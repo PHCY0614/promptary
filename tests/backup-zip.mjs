@@ -65,6 +65,32 @@ assert.equal(previousParsed.collections[0].createdAt, '2026-09-09T00:00:00.000Z'
 assert.equal(previousParsed.collections[0].updatedAt, '2026-09-09T00:00:00.000Z');
 assert.equal(previousParsed.customPlatforms, undefined);
 
+assert.equal(exports.MAX_ZIP_BYTES, 100 * 1024 * 1024);
+assert.equal(exports.MAX_UNCOMPRESSED_BYTES, 200 * 1024 * 1024);
+await assert.rejects(
+  exports.parseBackup({ arrayBuffer: async () => new ArrayBuffer(exports.MAX_ZIP_BYTES + 1) }),
+  /backupZipTooLarge/,
+);
+
+const declaredLarge = zipSync(Object.fromEntries(
+  Array.from({ length: 21 }, (_, index) => [`padding/${index}.bin`, new Uint8Array()]),
+));
+const declaredLargeView = new DataView(declaredLarge.buffer, declaredLarge.byteOffset, declaredLarge.byteLength);
+let declaredLargeEocd = declaredLarge.byteLength - 22;
+while (declaredLargeView.getUint32(declaredLargeEocd, true) !== 0x06054b50) declaredLargeEocd--;
+let declaredLargeCursor = declaredLargeView.getUint32(declaredLargeEocd + 16, true);
+for (let index = 0; index < 21; index++) {
+  declaredLargeView.setUint32(declaredLargeCursor + 24, 10 * 1024 * 1024, true);
+  const nameLength = declaredLargeView.getUint16(declaredLargeCursor + 28, true);
+  const extraLength = declaredLargeView.getUint16(declaredLargeCursor + 30, true);
+  const commentLength = declaredLargeView.getUint16(declaredLargeCursor + 32, true);
+  declaredLargeCursor += 46 + nameLength + extraLength + commentLength;
+}
+await assert.rejects(
+  exports.parseBackup(new FileStub([declaredLarge], 'declared-large.zip', { type: 'application/zip' })),
+  /backupZipUncompressed/,
+);
+
 const local = { ...collection, originalPrompt: 'local', updatedAt: '2026-09-10T00:00:00.000Z' };
 const backupNewer = { ...collection, originalPrompt: 'backup', updatedAt: '2026-09-11T00:00:00.000Z' };
 const newerResult = exports.mergeBackup([local], [backupNewer]);
@@ -85,4 +111,4 @@ await assert.rejects(exports.parseBackup(new FileStub([traversal], 'bad.zip')), 
 const missingImageManifest = { format: 'promptary-backup', version: 1, exportedAt: '2026-09-09T00:00:00.000Z', collections: [collection] };
 const missing = new Blob([zipSync({ 'manifest.json': strToU8(JSON.stringify(missingImageManifest)) })]);
 await assert.rejects(exports.parseBackup(new FileStub([missing], 'missing.zip')), /backupInvalid/);
-console.log('PASS: ZIP-only round trip includes canonical images and manifest, excludes Base64/thumbnails, and rejects unsafe or incomplete archives');
+console.log('PASS: ZIP round trip and existing validation remain intact; 100 MiB archive and 200 MiB declared-size limits are enforced');
