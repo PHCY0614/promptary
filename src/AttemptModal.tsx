@@ -6,6 +6,7 @@ import StoredImage from "./StoredImage";
 import ResizableTextarea from "./ResizableTextarea";
 import { ErrorCode, translateError, useLocale } from "./i18n";
 import { readCustomPlatforms, writeCustomPlatforms } from "./platformStorage";
+import { UnsavedChangesDialog, useModalCloseGuard } from "./ModalCloseGuard";
 
 // 平台選單是獨立的本機偏好；移除選項不會改寫已保存的嘗試。
 interface UploadItem {
@@ -65,6 +66,19 @@ function initForm(originalPrompt: string, existing?: Attempt): FormState {
   };
 }
 
+function sameForm(a: FormState, b: FormState) {
+  return a.name === b.name &&
+    a.images.map((image) => image.id).join("\u0000") === b.images.map((image) => image.id).join("\u0000") &&
+    a.platform === b.platform &&
+    a.customPlatform === b.customPlatform &&
+    a.prompt === b.prompt &&
+    a.unmodified === b.unmodified &&
+    a.model === b.model &&
+    a.notes === b.notes &&
+    a.rating === b.rating &&
+    a.date === b.date;
+}
+
 interface Props {
   originalPrompt: string;
   existing?: Attempt;
@@ -75,6 +89,7 @@ interface Props {
 export default function AttemptModal({ originalPrompt, existing, onSave, onClose }: Props) {
   const { t } = useLocale();
   const [form, setForm] = useState<FormState>(() => initForm(originalPrompt, existing));
+  const initialFormRef = useRef(form);
   const [customPlatforms, setCustomPlatforms] = useState(readCustomPlatforms);
   const [platformError, setPlatformError] = useState("");
   function savePlatformOptions(next: string[]): boolean {
@@ -102,10 +117,19 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
   }
   const [isSaving, setIsSaving] = useState(false);
   const savingRef = useRef(false);
-  const close = () => { if (!savingRef.current) onClose(); };
+  const closeGuard = useModalCloseGuard({
+    isDirty: !sameForm(initialFormRef.current, form),
+    isBusy: isSaving,
+    onClose,
+  });
+  const close = closeGuard.requestClose;
   const fileRef = useRef<HTMLInputElement>(null);
   const newImageIds = useRef(new Set<string>());
-  useEffect(() => () => { for (const id of newImageIds.current) discardStagedImage(id); }, []);
+  const mountedRef = useRef(true);
+  useEffect(() => () => {
+    mountedRef.current = false;
+    for (const id of newImageIds.current) discardStagedImage(id);
+  }, []);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -120,10 +144,12 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
     patchItem({ status: "loading", error: undefined });
     try {
       const result = await createCanonicalImage(item.file, item.id);
+      if (!mountedRef.current) return;
       stageCanonicalImage(result.ref, result.blob);
       newImageIds.current.add(item.id);
       patchItem({ image: result.ref, status: "done", isNew: true });
     } catch (error) {
+      if (!mountedRef.current) return;
       patchItem({ status: "error", error: error instanceof Error ? error.message : ErrorCode.imageProcessFailed });
     }
   }
@@ -182,11 +208,10 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={close}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
         className="relative z-10 w-full sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-xl bg-[#161618] border border-[#2e2e32] shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 flex items-center justify-between border-b border-[#1e1e21]">
           <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
@@ -386,6 +411,11 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
           </button>
         </div>
       </div>
+      <UnsavedChangesDialog
+        open={closeGuard.confirmationOpen}
+        onContinueEditing={closeGuard.continueEditing}
+        onDiscard={closeGuard.discardChanges}
+      />
     </div>
   );
 }

@@ -44,6 +44,10 @@ export type Messages = {
   confirmDelete: string;
   confirm: string;
   cancel: string;
+  unsavedChangesTitle: string;
+  discardChangesPrompt: string;
+  continueEditing: string;
+  discardChanges: string;
   myResults: string;
   compare: string;
   referenceOriginal: string;
@@ -176,6 +180,10 @@ export type Messages = {
 };
 
 const zhTW: Messages = {
+  unsavedChangesTitle: "尚未儲存",
+  discardChangesPrompt: "要捨棄目前的變更嗎？",
+  continueEditing: "繼續編輯",
+  discardChanges: "捨棄",
   brandSubtitle: "你的咒語收藏庫",
   languageSwitcher: "語言",
   languageZhTW: "正體中文",
@@ -238,13 +246,13 @@ const zhTW: Messages = {
   attemptPrompt: "這次嘗試的咒語",
   newCollection: "新增收藏",
   editCollection: "編輯收藏",
-  nameOptional: "名稱（選填）",
-  referenceImagesOptional: "參考圖片（可不填）",
+  nameOptional: "名稱",
+  referenceImagesOptional: "參考圖片",
   retry: "重試",
   retryNamed: (name) => `重試 ${name}`,
   localLibraryHint: "本機圖庫：支援 JPG、PNG、WebP，每張圖片最多 10 MB。\n匯入後會自動最佳化，並僅儲存在此裝置。",
   imageSaveBlocked: "請重試或移除失敗圖片後再儲存，已填內容會保留。",
-  originalPromptOptional: "原始咒語（可之後補）",
+  originalPromptOptional: "原始咒語",
   skipForNow: "待補",
   promptPlaceholder: "貼上或輸入咒語",
   tagsComma: "標籤（逗號分隔）",
@@ -403,6 +411,10 @@ const zhTW: Messages = {
 };
 
 const en: Messages = {
+  unsavedChangesTitle: "Unsaved changes",
+  discardChangesPrompt: "Discard your current changes?",
+  continueEditing: "Continue editing",
+  discardChanges: "Discard",
   brandSubtitle: "Your prompt library",
   languageSwitcher: "Language",
   languageZhTW: "正體中文",

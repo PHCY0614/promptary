@@ -14,6 +14,7 @@ export interface ImageRef {
 // 常用平台選單；其他既有平台在編輯時保留為「自訂」，不刪除歷史紀錄。
 export const PLATFORMS = [
   "PixAI",
+  "NovelAI",
   "Gemini",
   "ChatGPT",
   "自訂",

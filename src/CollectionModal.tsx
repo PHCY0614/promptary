@@ -5,6 +5,7 @@ import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
 import StoredImage from "./StoredImage";
 import ResizableTextarea from "./ResizableTextarea";
 import { ErrorCode, translateError, useLocale } from "./i18n";
+import { UnsavedChangesDialog, useModalCloseGuard } from "./ModalCloseGuard";
 
 // ── 圖片暫存：以固定 ID 對應非同步結果，移除或追加圖片不會錯位 ──
 interface UploadItem {
@@ -57,6 +58,18 @@ function initForm(c?: Collection): FormState {
   };
 }
 
+function sameForm(a: FormState, b: FormState) {
+  return a.name === b.name &&
+    a.referenceImages.map((image) => image.id).join("\u0000") === b.referenceImages.map((image) => image.id).join("\u0000") &&
+    a.originalPrompt === b.originalPrompt &&
+    a.promptPending === b.promptPending &&
+    a.tags === b.tags &&
+    a.status === b.status &&
+    a.isFavorite === b.isFavorite &&
+    a.collectionNotes === b.collectionNotes &&
+    a.source === b.source;
+}
+
 interface Props {
   existing?: Collection;
   onSave: (data: Omit<Collection, "id" | "createdAt" | "updatedAt" | "attempts">) => Promise<void>;
@@ -67,12 +80,18 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
   const { t } = useLocale();
   const statusOpts: { value: Status }[] = [{ value: "want" }, { value: "tried" }, { value: "ref" }];
   const [form, setForm] = useState<FormState>(() => initForm(existing));
+  const initialFormRef = useRef(form);
   const [isSaving, setIsSaving] = useState(false);
   const savingRef = useRef(false);
-  const close = () => { if (!savingRef.current) onClose(); };
+  const closeGuard = useModalCloseGuard({ isDirty: !sameForm(initialFormRef.current, form), isBusy: isSaving, onClose });
+  const close = closeGuard.requestClose;
   const fileRef = useRef<HTMLInputElement>(null);
   const newImageIds = useRef(new Set<string>());
-  useEffect(() => () => { for (const id of newImageIds.current) discardStagedImage(id); }, []);
+  const mountedRef = useRef(true);
+  useEffect(() => () => {
+    mountedRef.current = false;
+    for (const id of newImageIds.current) discardStagedImage(id);
+  }, []);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -89,10 +108,12 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
     try {
       patch({ progress: 20 });
       const result = await createCanonicalImage(item.file, item.id);
+      if (!mountedRef.current) return;
       stageCanonicalImage(result.ref, result.blob);
       newImageIds.current.add(item.id);
       patch({ image: result.ref, status: "done", progress: 100, isNew: true });
     } catch (error) {
+      if (!mountedRef.current) return;
       patch({ status: "error", error: error instanceof Error ? error.message : ErrorCode.imageReadFailed });
     }
   }
@@ -150,11 +171,10 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
   const isLoading = form.referenceImages.some((i) => i.status === "loading");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={close}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
         className="relative z-10 w-full sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-xl bg-[#161618] border border-[#2e2e32] shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 flex items-center justify-between border-b border-[#1e1e21]">
           <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
@@ -346,6 +366,11 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           </button>
         </div>
       </div>
+      <UnsavedChangesDialog
+        open={closeGuard.confirmationOpen}
+        onContinueEditing={closeGuard.continueEditing}
+        onDiscard={closeGuard.discardChanges}
+      />
     </div>
   );
 }

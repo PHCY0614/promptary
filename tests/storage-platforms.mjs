@@ -9,6 +9,10 @@ function transpile(path) {
   }).outputText;
 }
 
+const typeExports = {};
+vm.runInNewContext(transpile('src/types.ts'), { exports: typeExports });
+assert.equal(typeExports.PLATFORMS.includes('NovelAI'), true);
+
 function loadStorage(navigator) {
   const exports = {};
   vm.runInNewContext(transpile('src/storagePersistence.ts'), { exports, navigator, Number, Intl });
@@ -44,7 +48,7 @@ assert.equal(JSON.stringify(await throws.readLocalStorageStatus()), JSON.stringi
 
 const values = new Map([
   ['promptary-locale', 'en'],
-  ['promptary-custom-platforms', JSON.stringify(['PixAI', 'Midjourney', 'midjourney', ' ChatGPT ', ''])],
+  ['promptary-custom-platforms', JSON.stringify(['PixAI', 'NovelAI', 'Midjourney', 'midjourney', ' ChatGPT ', ''])],
 ]);
 const platformExports = {};
 vm.runInNewContext(transpile('src/platformStorage.ts'), {
@@ -57,7 +61,7 @@ vm.runInNewContext(transpile('src/platformStorage.ts'), {
     removeItem: (key) => values.delete(key),
   },
   require(name) {
-    if (name === './types') return { PLATFORMS: ['PixAI', 'Gemini', 'ChatGPT', '自訂'] };
+    if (name === './types') return { PLATFORMS: ['PixAI', 'NovelAI', 'Gemini', 'ChatGPT', '自訂'] };
     return {};
   },
 });
