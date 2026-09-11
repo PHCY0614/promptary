@@ -1,7 +1,9 @@
 import type { Attempt, Collection, CoverSource, ImageRef } from "./types";
 import { STARTER_COLLECTIONS, starterImageUrl } from "./starterData";
+import { STARTER_DECODE_TIMEOUT_MS, STARTER_FETCH_TIMEOUT_MS } from "./starterInitTimeouts";
 import { createCanonicalImage, createThumbnail, THUMBNAIL_VERSION, validateCanonicalBlob } from "./imageProcessing";
 import { ErrorCode, fail, isErrorCode } from "./i18n/errorCodes";
+import { withTimeout } from "./withTimeout";
 
 const LEGACY_KEY = "prompt-archive-v2";
 const DATABASE = "prompt-archive";
@@ -250,17 +252,18 @@ async function commitInitialSnapshot(collections: Collection[]): Promise<Snapsho
 
 async function fetchStarterCanonical(ref: ImageRef): Promise<Blob> {
   const url = starterImageUrl(ref, import.meta.env.BASE_URL);
+  const fetchTimeout = new Error(ErrorCode.storageFailed);
   let buffer: ArrayBuffer;
   try {
-    const response = await fetch(url);
+    const response = await withTimeout(fetch(url), STARTER_FETCH_TIMEOUT_MS, fetchTimeout);
     if (!response.ok) fail(ErrorCode.storageFailed);
-    buffer = await response.arrayBuffer();
+    buffer = await withTimeout(response.arrayBuffer(), STARTER_FETCH_TIMEOUT_MS, fetchTimeout);
   } catch (error) {
     if (error instanceof Error && isErrorCode(error.message)) throw error;
     fail(ErrorCode.storageFailed);
   }
   const blob = new Blob([buffer], { type: ref.mimeType });
-  await validateCanonicalBlob(blob, ref);
+  await validateCanonicalBlob(blob, ref, STARTER_DECODE_TIMEOUT_MS);
   return blob;
 }
 

@@ -38,7 +38,58 @@ function assetFetch(url) {
   return { ok: true, arrayBuffer: async () => copy.buffer };
 }
 
-function setup({ fetchImpl = assetFetch, localStorageValue = null, failValidate = false } = {}) {
+function loadWithTimeout() {
+  const exports = {};
+  vm.runInNewContext(transpile('src/withTimeout.ts'), { exports, setTimeout, clearTimeout, Promise });
+  return exports;
+}
+
+function loadImageProcessing({ hangingDecode = false, decodeTimeoutMs = 15_000 } = {}) {
+  const errorExports = {};
+  vm.runInNewContext(transpile('src/i18n/errorCodes.ts'), { exports: errorExports, Error });
+  const exports = {};
+  const urls = new Map();
+  let serial = 0;
+  class ImageStub {
+    set src(url) {
+      if (hangingDecode) return;
+      queueMicrotask(() => this.onload());
+    }
+  }
+  vm.runInNewContext(transpile('src/imageProcessing.ts'), {
+    exports,
+    Blob,
+    Error,
+    setTimeout,
+    clearTimeout,
+    URL: {
+      createObjectURL(blob) {
+        const url = `blob:${++serial}`;
+        urls.set(url, blob);
+        return url;
+      },
+      revokeObjectURL(url) { urls.delete(url); },
+    },
+    Image: ImageStub,
+    document: { createElement: () => ({ getContext: () => null }) },
+    queueMicrotask,
+    require(name) {
+      if (name === './i18n/errorCodes') return errorExports;
+      throw new Error(`unexpected ${name}`);
+    },
+  });
+  return { ...exports, decodeTimeoutMs };
+}
+
+function setup({
+  fetchImpl = assetFetch,
+  localStorageValue = null,
+  failValidate = false,
+  fetchTimeoutMs = 20_000,
+  decodeTimeoutMs = 15_000,
+  hangingDecode = false,
+  useRealValidate = false,
+} = {}) {
   const exports = {};
   const indexedDB = new IDBFactory();
   const localStorage = {
@@ -47,35 +98,44 @@ function setup({ fetchImpl = assetFetch, localStorageValue = null, failValidate 
     removeItem() { this.value = null; },
   };
   const fetchCalls = [];
+  const withTimeout = loadWithTimeout().withTimeout;
+  const imageProcessing = useRealValidate
+    ? loadImageProcessing({ hangingDecode, decodeTimeoutMs })
+    : null;
   vm.runInNewContext(transpile('src/archiveStorage.ts'), {
     exports, indexedDB, Blob, File: FileStub, atob, crypto: { randomUUID: () => 'migrated-id' }, Error, DOMException, Map, Set, Date,
-    localStorage,
+    localStorage, setTimeout, clearTimeout, Promise,
     fetch: async (url) => {
       fetchCalls.push(String(url));
       return fetchImpl(url);
     },
     require(name) {
       if (name === './starterData') return starter;
+      if (name === './starterInitTimeouts') return { STARTER_FETCH_TIMEOUT_MS: fetchTimeoutMs, STARTER_DECODE_TIMEOUT_MS: decodeTimeoutMs };
+      if (name === './withTimeout') return { withTimeout };
       if (name === './i18n/errorCodes') {
         const errorExports = {};
         vm.runInNewContext(transpile('src/i18n/errorCodes.ts'), { exports: errorExports, Error });
         return errorExports;
       }
-      if (name === './imageProcessing') return {
-        THUMBNAIL_VERSION: 1,
-        createCanonicalImage: async (file, id) => ({
-          ref: { id, width: 1200, height: 800, mimeType: 'image/webp', byteSize: file.size, createdAt: '2026-09-09T00:00:00.000Z' },
-          blob: new Blob([await file.arrayBuffer()], { type: 'image/webp' }),
-        }),
-        createThumbnail: async () => ({ blob: new Blob(['thumb'], { type: 'image/webp' }), width: 800, height: 533 }),
-        validateCanonicalBlob: async (blob, expected) => {
-          if (failValidate) throw new Error('backupImageManifestMismatch');
-          if (expected && (blob.size !== expected.byteSize || blob.type !== expected.mimeType)) {
-            throw new Error('backupImageManifestMismatch');
-          }
-          return { width: expected?.width ?? 1, height: expected?.height ?? 1 };
-        },
-      };
+      if (name === './imageProcessing') {
+        if (imageProcessing) return imageProcessing;
+        return {
+          THUMBNAIL_VERSION: 1,
+          createCanonicalImage: async (file, id) => ({
+            ref: { id, width: 1200, height: 800, mimeType: 'image/webp', byteSize: file.size, createdAt: '2026-09-09T00:00:00.000Z' },
+            blob: new Blob([await file.arrayBuffer()], { type: 'image/webp' }),
+          }),
+          createThumbnail: async () => ({ blob: new Blob(['thumb'], { type: 'image/webp' }), width: 800, height: 533 }),
+          validateCanonicalBlob: async (blob, expected) => {
+            if (failValidate) throw new Error('backupImageManifestMismatch');
+            if (expected && (blob.size !== expected.byteSize || blob.type !== expected.mimeType)) {
+              throw new Error('backupImageManifestMismatch');
+            }
+            return { width: expected?.width ?? 1, height: expected?.height ?? 1 };
+          },
+        };
+      }
       return {};
     },
   });
@@ -225,4 +285,64 @@ for (const ref of refs) {
   assert.equal(record.blob.size, ref.byteSize);
 }
 
-console.log('PASS: starter collections seed once, images land in IndexedDB, existing data is left alone, and failed init leaves no partial archive');
+const timeoutMs = 50;
+const assertNoPartialArchive = async (api) => {
+  assert.equal(await readStore(api.indexedDB, 'archive', 'current'), undefined);
+  assert.deepEqual(await readStore(api.indexedDB, 'images'), []);
+};
+
+const pendingFetch = setup({
+  fetchTimeoutMs: timeoutMs,
+  fetchImpl: () => new Promise(() => {}),
+});
+const fetchStart = Date.now();
+await assert.rejects(pendingFetch.loadArchive(), /storageFailed/);
+assert.ok(Date.now() - fetchStart < 2_000, 'pending fetch should fail within bounded timeout');
+await assertNoPartialArchive(pendingFetch);
+
+let arrayBufferCount = 0;
+const pendingBuffer = setup({
+  fetchTimeoutMs: timeoutMs,
+  fetchImpl: async (url) => {
+    arrayBufferCount += 1;
+    return {
+      ok: true,
+      arrayBuffer: () => new Promise(() => {}),
+    };
+  },
+});
+const bufferStart = Date.now();
+await assert.rejects(pendingBuffer.loadArchive(), /storageFailed/);
+assert.ok(Date.now() - bufferStart < 2_000, 'pending arrayBuffer should fail within bounded timeout');
+assert.equal(arrayBufferCount, 1);
+await assertNoPartialArchive(pendingBuffer);
+
+const pendingDecode = setup({
+  fetchTimeoutMs: 5_000,
+  decodeTimeoutMs: timeoutMs,
+  useRealValidate: true,
+  hangingDecode: true,
+});
+const decodeStart = Date.now();
+await assert.rejects(pendingDecode.loadArchive(), /imageParseFailed/);
+assert.ok(Date.now() - decodeStart < 2_000, 'pending decode should fail within bounded timeout');
+await assertNoPartialArchive(pendingDecode);
+
+const retryAfterTimeout = setup({
+  fetchTimeoutMs: timeoutMs,
+  fetchImpl: (() => {
+    let calls = 0;
+    return async (url) => {
+      calls += 1;
+      if (calls === 1) return new Promise(() => {});
+      return assetFetch(url);
+    };
+  })(),
+});
+await assert.rejects(retryAfterTimeout.loadArchive(), /storageFailed/);
+await assertNoPartialArchive(retryAfterTimeout);
+const recovered = await retryAfterTimeout.loadArchive();
+assert.equal(recovered.collections.length, 4);
+assert.equal((await readStore(retryAfterTimeout.indexedDB, 'images')).length, 11);
+
+console.log('PASS: starter collections seed once, images land in IndexedDB, existing data is left alone, failed init leaves no partial archive, and starter init timeouts reject instead of hanging');

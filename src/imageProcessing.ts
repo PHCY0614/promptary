@@ -17,12 +17,24 @@ function isAcceptedType(type: string): type is ImageRef["mimeType"] {
   return ACCEPTED_TYPES.has(type);
 }
 
-function decode(blob: Blob): Promise<HTMLImageElement> {
+function decode(blob: Blob, timeoutMs?: number): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(blob);
     const image = new Image();
-    image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
-    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error(ErrorCode.imageParseFailed)); };
+    let settled = false;
+    const finish = (outcome: "ok" | "err", value?: HTMLImageElement | Error) => {
+      if (settled) return;
+      settled = true;
+      if (timer !== undefined) clearTimeout(timer);
+      URL.revokeObjectURL(url);
+      if (outcome === "ok") resolve(value as HTMLImageElement);
+      else reject(value);
+    };
+    const timer = timeoutMs !== undefined && timeoutMs > 0
+      ? setTimeout(() => finish("err", new Error(ErrorCode.imageParseFailed)), timeoutMs)
+      : undefined;
+    image.onload = () => finish("ok", image);
+    image.onerror = () => finish("err", new Error(ErrorCode.imageParseFailed));
     image.src = url;
   });
 }
@@ -95,9 +107,9 @@ export async function createThumbnail(blob: Blob) {
   return render(blob, THUMBNAIL_MAX_EDGE, THUMBNAIL_WEBP_QUALITY, THUMBNAIL_JPEG_QUALITY, false);
 }
 
-export async function validateCanonicalBlob(blob: Blob, expected?: ImageRef): Promise<{ width: number; height: number }> {
+export async function validateCanonicalBlob(blob: Blob, expected?: ImageRef, decodeTimeoutMs?: number): Promise<{ width: number; height: number }> {
   if (!isAcceptedType(blob.type)) throw new Error(ErrorCode.backupImageTypeUnsupported);
-  const image = await decode(blob);
+  const image = await decode(blob, decodeTimeoutMs);
   const width = image.naturalWidth;
   const height = image.naturalHeight;
   if (!width || !height || width * height > MAX_DECODED_IMAGE_PIXELS || Math.max(width, height) > CANONICAL_MAX_EDGE) {

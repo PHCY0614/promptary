@@ -1,0 +1,2 @@
+export const STARTER_FETCH_TIMEOUT_MS = 20_000;
+export const STARTER_DECODE_TIMEOUT_MS = 15_000;
