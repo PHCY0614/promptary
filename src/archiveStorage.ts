@@ -1,6 +1,6 @@
 import type { Attempt, Collection, CoverSource, ImageRef } from "./types";
 import { STARTER_COLLECTIONS, starterImageUrl } from "./starterData";
-import { STARTER_DECODE_TIMEOUT_MS, STARTER_FETCH_TIMEOUT_MS } from "./starterInitTimeouts";
+import { STARTER_DECODE_TIMEOUT_MS, STARTER_FETCH_TIMEOUT_MS, STARTUP_IDB_OPEN_TIMEOUT_MS, STARTUP_IDB_READ_TIMEOUT_MS } from "./starterInitTimeouts";
 import { createCanonicalImage, createThumbnail, THUMBNAIL_VERSION, validateCanonicalBlob } from "./imageProcessing";
 import { ErrorCode, fail, isErrorCode } from "./i18n/errorCodes";
 import { withTimeout } from "./withTimeout";
@@ -13,6 +13,7 @@ const IMAGE_TABLE = "images";
 const THUMBNAIL_TABLE = "imageThumbnails";
 
 interface Snapshot { revision: number; collections: Collection[] }
+export interface ArchiveLoadResult { collections: Collection[]; revision: number; seedStarter?: boolean }
 export interface CanonicalImageRecord extends ImageRef { blob: Blob }
 export interface ThumbnailRecord { id: string; blob: Blob; width: number; height: number; thumbnailVersion: number; generatedAt: string }
 type LegacyImage = string | Blob | { id: string; sourceUrl?: string; width?: number; height?: number };
@@ -228,6 +229,17 @@ async function readExperimentalImages(db: IDBDatabase) {
   return records;
 }
 
+async function readCurrentArchiveSnapshot(): Promise<Snapshot | undefined> {
+  const db = await openDatabase();
+  try {
+    const transaction = db.transaction(ARCHIVE_TABLE, "readonly");
+    const done = transactionDone(transaction);
+    const current = await requestResult<Snapshot | undefined>(transaction.objectStore(ARCHIVE_TABLE).get("current"));
+    await done;
+    return current;
+  } finally { db.close(); }
+}
+
 async function recoverConcurrentInit(error: unknown): Promise<Snapshot> {
   const retryDb = await openDatabase();
   try {
@@ -268,6 +280,12 @@ async function fetchStarterCanonical(ref: ImageRef): Promise<Blob> {
 }
 
 async function installStarterCollections(): Promise<Snapshot> {
+  const existing = await readCurrentArchiveSnapshot();
+  if (existing && isCurrentCollections(existing.collections)) {
+    console.info("[Promptary startup] starter-skipped-existing");
+    return existing;
+  }
+
   const collections = STARTER_COLLECTIONS;
   const refs = allImageRefs(collections);
   const stagedIds: string[] = [];
@@ -277,21 +295,43 @@ async function installStarterCollections(): Promise<Snapshot> {
       stageCanonicalImage(ref, blob);
       stagedIds.push(ref.id);
     }
+    const beforeCommit = await readCurrentArchiveSnapshot();
+    if (beforeCommit && isCurrentCollections(beforeCommit.collections)) {
+      console.info("[Promptary startup] starter-skipped-existing");
+      return beforeCommit;
+    }
     return await commitInitialSnapshot(collections);
   } finally {
     for (const id of stagedIds) discardStagedImage(id);
   }
 }
 
-export async function loadArchive(): Promise<{ collections: Collection[]; revision: number }> {
-  const db = await openDatabase();
+export async function seedStarterArchive(): Promise<{ revision: number } | null> {
+  console.info("[Promptary startup] starter-seed");
+  try {
+    const snapshot = await installStarterCollections();
+    console.info("[Promptary startup] starter-complete");
+    return { revision: snapshot.revision };
+  } catch (error) {
+    console.warn("[Promptary startup] starter-failed", error);
+    return null;
+  }
+}
+
+export async function loadArchive(): Promise<ArchiveLoadResult> {
+  const probeError = new Error(ErrorCode.storageFailed);
+  console.info("[Promptary startup] open-db");
+  const db = await withTimeout(openDatabase(), STARTUP_IDB_OPEN_TIMEOUT_MS, probeError);
   let snapshot: Snapshot | undefined;
   let experimental = new Map<string, { display: Blob }>();
   try {
-    const transaction = db.transaction(ARCHIVE_TABLE, "readonly");
-    const done = transactionDone(transaction);
-    snapshot = await requestResult(transaction.objectStore(ARCHIVE_TABLE).get("current"));
-    await done;
+    console.info("[Promptary startup] read-archive");
+    await withTimeout((async () => {
+      const transaction = db.transaction(ARCHIVE_TABLE, "readonly");
+      const done = transactionDone(transaction);
+      snapshot = await requestResult(transaction.objectStore(ARCHIVE_TABLE).get("current"));
+      await done;
+    })(), STARTUP_IDB_READ_TIMEOUT_MS, probeError);
     if (snapshot && !isCurrentCollections(snapshot.collections)) experimental = await readExperimentalImages(db);
   } finally { db.close(); }
   if (snapshot && isCurrentCollections(snapshot.collections)) return snapshot;
@@ -307,7 +347,8 @@ export async function loadArchive(): Promise<{ collections: Collection[]; revisi
     try { localStorage.removeItem(LEGACY_KEY); } catch { /* IndexedDB 已成功，不讓清理副本阻斷載入。 */ }
     return result;
   }
-  return installStarterCollections();
+  console.info("[Promptary startup] fresh-install");
+  return { collections: STARTER_COLLECTIONS, revision: 0, seedStarter: true };
 }
 
 export function saveArchive(collections: Collection[], revision: number): Promise<number> {

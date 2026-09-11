@@ -25,6 +25,8 @@ assert.equal(starter.STARTER_COLLECTIONS.length, 4);
 assert.equal(refs.length, 11);
 assert.equal(starter.starterImageUrl(refs[0], '/'), `/starter/${refs[0].id}.webp`);
 assert.equal(starter.starterImageUrl(refs[0], '/app'), `/app/starter/${refs[0].id}.webp`);
+for (const ref of refs) assert.equal(starter.isStarterImageRef(ref), true);
+assert.equal(starter.isStarterImageRef({ ...refs[0], id: 'not-a-starter' }), false);
 for (const ref of refs) {
   const file = `public/${starter.starterImageAssetPath(ref)}`;
   assert.equal(existsSync(file), true, `missing ${file}`);
@@ -104,14 +106,19 @@ function setup({
     : null;
   vm.runInNewContext(transpile('src/archiveStorage.ts'), {
     exports, indexedDB, Blob, File: FileStub, atob, crypto: { randomUUID: () => 'migrated-id' }, Error, DOMException, Map, Set, Date,
-    localStorage, setTimeout, clearTimeout, Promise,
+    localStorage, setTimeout, clearTimeout, Promise, console,
     fetch: async (url) => {
       fetchCalls.push(String(url));
       return fetchImpl(url);
     },
     require(name) {
       if (name === './starterData') return starter;
-      if (name === './starterInitTimeouts') return { STARTER_FETCH_TIMEOUT_MS: fetchTimeoutMs, STARTER_DECODE_TIMEOUT_MS: decodeTimeoutMs };
+      if (name === './starterInitTimeouts') return {
+        STARTER_FETCH_TIMEOUT_MS: fetchTimeoutMs,
+        STARTER_DECODE_TIMEOUT_MS: decodeTimeoutMs,
+        STARTUP_IDB_OPEN_TIMEOUT_MS: 15_000,
+        STARTUP_IDB_READ_TIMEOUT_MS: 10_000,
+      };
       if (name === './withTimeout') return { withTimeout };
       if (name === './i18n/errorCodes') {
         const errorExports = {};
@@ -194,16 +201,22 @@ const existingCollection = {
 };
 
 const fresh = setup();
+const loaded = await fresh.loadArchive();
+assert.equal(loaded.revision, 0);
+assert.equal(loaded.seedStarter, true);
+assert.equal(loaded.collections.length, 4);
+assert.deepEqual(loaded.collections.map((collection) => collection.id), starter.STARTER_COLLECTIONS.map((collection) => collection.id));
+assert.equal(loaded.collections[0].name, 'Miniature Worlds');
+assert.equal(loaded.collections[1].name, '天文館學者');
+assert.equal(loaded.collections[1].promptClassification.overrides['519'], 'clothing');
+assert.equal(loaded.collections[2].isFavorite, true);
+assert.equal(loaded.collections[3].attempts[0].rating, 4);
+assert.equal(fresh.fetchCalls.length, 0);
+const seededResult = await fresh.seedStarterArchive();
+assert.equal(seededResult.revision, 1);
+assert.equal(fresh.fetchCalls.length, 11);
 const seeded = await fresh.loadArchive();
 assert.equal(seeded.revision, 1);
-assert.equal(seeded.collections.length, 4);
-assert.deepEqual(seeded.collections.map((collection) => collection.id), starter.STARTER_COLLECTIONS.map((collection) => collection.id));
-assert.equal(seeded.collections[0].name, 'Miniature Worlds');
-assert.equal(seeded.collections[1].name, '天文館學者');
-assert.equal(seeded.collections[1].promptClassification.overrides['519'], 'clothing');
-assert.equal(seeded.collections[2].isFavorite, true);
-assert.equal(seeded.collections[3].attempts[0].rating, 4);
-assert.equal(fresh.fetchCalls.length, 11);
 const storedIds = await readStore(fresh.indexedDB, 'images');
 assert.equal(storedIds.length, 11);
 for (const ref of refs) {
@@ -249,12 +262,16 @@ assert.equal(migrated.localStorage.value, null);
 
 const cleared = setup();
 const beforeClear = await cleared.loadArchive();
-assert.equal(beforeClear.collections.length, 4);
-await cleared.clearArchive(beforeClear.revision);
+assert.equal(beforeClear.seedStarter, true);
+await cleared.seedStarterArchive();
+const persisted = await cleared.loadArchive();
+assert.equal(persisted.collections.length, 4);
+await cleared.clearArchive(persisted.revision);
 const afterClear = await cleared.loadArchive();
 assert.equal(afterClear.collections.length, 0);
+assert.equal(afterClear.seedStarter, undefined);
 assert.deepEqual(await readStore(cleared.indexedDB, 'images'), []);
-assert.equal(afterClear.revision, beforeClear.revision + 1);
+assert.equal(afterClear.revision, persisted.revision + 1);
 
 let fetchCount = 0;
 let failAt = 3;
@@ -265,17 +282,24 @@ const failing = setup({
     return assetFetch(url);
   },
 });
-await assert.rejects(failing.loadArchive(), /storageFailed/);
+const failingLoad = await failing.loadArchive();
+assert.equal(failingLoad.seedStarter, true);
+assert.equal(await failing.seedStarterArchive(), null);
 assert.equal(await readStore(failing.indexedDB, 'archive', 'current'), undefined);
 assert.deepEqual(await readStore(failing.indexedDB, 'images'), []);
 await assert.rejects(failing.getCanonicalBlob(refs[0].id), /imageMissing/);
 
 const invalid = setup({ failValidate: true });
-await assert.rejects(invalid.loadArchive(), /backupImageManifestMismatch/);
+const invalidLoad = await invalid.loadArchive();
+assert.equal(invalidLoad.seedStarter, true);
+assert.equal(await invalid.seedStarterArchive(), null);
 assert.equal(await readStore(invalid.indexedDB, 'archive', 'current'), undefined);
 assert.deepEqual(await readStore(invalid.indexedDB, 'images'), []);
 
 failAt = -1;
+const retryLoad = await failing.loadArchive();
+assert.equal(retryLoad.seedStarter, true);
+await failing.seedStarterArchive();
 const retry = await failing.loadArchive();
 assert.equal(retry.collections.length, 4);
 assert.equal((await readStore(failing.indexedDB, 'images')).length, 11);
@@ -296,7 +320,9 @@ const pendingFetch = setup({
   fetchImpl: () => new Promise(() => {}),
 });
 const fetchStart = Date.now();
-await assert.rejects(pendingFetch.loadArchive(), /storageFailed/);
+const pendingFetchLoad = await pendingFetch.loadArchive();
+assert.equal(pendingFetchLoad.seedStarter, true);
+assert.equal(await pendingFetch.seedStarterArchive(), null);
 assert.ok(Date.now() - fetchStart < 2_000, 'pending fetch should fail within bounded timeout');
 await assertNoPartialArchive(pendingFetch);
 
@@ -312,7 +338,9 @@ const pendingBuffer = setup({
   },
 });
 const bufferStart = Date.now();
-await assert.rejects(pendingBuffer.loadArchive(), /storageFailed/);
+const pendingBufferLoad = await pendingBuffer.loadArchive();
+assert.equal(pendingBufferLoad.seedStarter, true);
+assert.equal(await pendingBuffer.seedStarterArchive(), null);
 assert.ok(Date.now() - bufferStart < 2_000, 'pending arrayBuffer should fail within bounded timeout');
 assert.equal(arrayBufferCount, 1);
 await assertNoPartialArchive(pendingBuffer);
@@ -324,7 +352,9 @@ const pendingDecode = setup({
   hangingDecode: true,
 });
 const decodeStart = Date.now();
-await assert.rejects(pendingDecode.loadArchive(), /imageParseFailed/);
+const pendingDecodeLoad = await pendingDecode.loadArchive();
+assert.equal(pendingDecodeLoad.seedStarter, true);
+assert.equal(await pendingDecode.seedStarterArchive(), null);
 assert.ok(Date.now() - decodeStart < 2_000, 'pending decode should fail within bounded timeout');
 await assertNoPartialArchive(pendingDecode);
 
@@ -339,8 +369,11 @@ const retryAfterTimeout = setup({
     };
   })(),
 });
-await assert.rejects(retryAfterTimeout.loadArchive(), /storageFailed/);
+const retryAfterTimeoutLoad = await retryAfterTimeout.loadArchive();
+assert.equal(retryAfterTimeoutLoad.seedStarter, true);
+assert.equal(await retryAfterTimeout.seedStarterArchive(), null);
 await assertNoPartialArchive(retryAfterTimeout);
+await retryAfterTimeout.seedStarterArchive();
 const recovered = await retryAfterTimeout.loadArchive();
 assert.equal(recovered.collections.length, 4);
 assert.equal((await readStore(retryAfterTimeout.indexedDB, 'images')).length, 11);

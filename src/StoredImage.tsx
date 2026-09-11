@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ImgHTMLAttributes } from "react";
 import type { ImageRef } from "./types";
 import { getCanonicalBlob, getThumbnailBlob } from "./archiveStorage";
+import { isStarterImageRef, starterImageUrl } from "./starterData";
 import { THUMBNAIL_MAX_EDGE } from "./imageProcessing";
 
 type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
@@ -35,7 +36,11 @@ export default function StoredImage({ image, variant, adaptiveThumbnail = false,
       if (!active) return;
       url = URL.createObjectURL(blob);
       setSrc(url);
-    }).catch(() => { if (active) setSrc(""); });
+    }).catch(() => {
+      if (!active) return;
+      if (isStarterImageRef(image)) setSrc(starterImageUrl(image, import.meta.env.BASE_URL));
+      else setSrc("");
+    });
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
   }, [image, useCanonical]);
 

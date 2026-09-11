@@ -20,6 +20,8 @@ function setup() {
   }).outputText.replaceAll('import.meta.env.BASE_URL', '"/"');
   vm.runInNewContext(code, {
     exports, indexedDB, Blob, File: FileStub, atob, crypto: { randomUUID: () => 'migrated-id' }, Error, DOMException, Map, Set, Date,
+    setTimeout, clearTimeout, Promise,
+    console,
     localStorage: { getItem: () => null, removeItem() {} },
     fetch: async () => { throw new Error('starter fetch should not run'); },
     require(name) {
@@ -37,6 +39,19 @@ function setup() {
         createThumbnail: async () => ({ blob: new Blob(['thumb'], { type: 'image/webp' }), width: 800, height: 533 }),
         validateCanonicalBlob: async () => ({ width: 1200, height: 800 }),
       };
+      if (name === './starterInitTimeouts') return {
+        STARTER_FETCH_TIMEOUT_MS: 20_000,
+        STARTER_DECODE_TIMEOUT_MS: 15_000,
+        STARTUP_IDB_OPEN_TIMEOUT_MS: 15_000,
+        STARTUP_IDB_READ_TIMEOUT_MS: 10_000,
+      };
+      if (name === './withTimeout') {
+        const timeoutExports = {};
+        vm.runInNewContext(ts.transpileModule(readFileSync('src/withTimeout.ts', 'utf8'), {
+          compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+        }).outputText, { exports: timeoutExports, setTimeout, clearTimeout, Promise });
+        return timeoutExports;
+      }
       return {};
     },
   });
@@ -57,11 +72,15 @@ async function readStore(indexedDB, name, key) {
 
 const api = setup();
 const initial = await api.loadArchive();
-assert.equal(initial.revision, 1);
+assert.equal(initial.revision, 0);
+assert.equal(initial.seedStarter, true);
+await api.seedStarterArchive();
+const seeded = await api.loadArchive();
+assert.equal(seeded.revision, 1);
 const ref = image('stable-image');
 const canonical = new Blob(['canonical'], { type: 'image/webp' });
 api.stageCanonicalImage(ref, canonical);
-let revision = await api.saveArchive([collection(ref)], initial.revision);
+let revision = await api.saveArchive([collection(ref)], seeded.revision);
 const snapshot = await readStore(api.indexedDB, 'archive', 'current');
 assert.equal(snapshot.collections[0].referenceImages[0].id, 'stable-image');
 assert.equal('blob' in snapshot.collections[0].referenceImages[0], false);
@@ -84,7 +103,7 @@ revision = await api.saveArchive([collection(replacementRef)], revision);
 assert.equal(await (await api.getCanonicalBlob(ref.id)).text(), 'replacement');
 assert.deepEqual(await readStore(api.indexedDB, 'imageThumbnails'), []);
 
-await assert.rejects(api.saveArchive([], initial.revision), /revisionConflict/);
+await assert.rejects(api.saveArchive([], seeded.revision), /revisionConflict/);
 assert.equal((await api.loadArchive()).collections.length, 1);
 await api.clearArchive(revision);
 assert.deepEqual(await readStore(api.indexedDB, 'images'), []);

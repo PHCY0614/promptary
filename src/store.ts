@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Collection, Attempt, CoverSource, ImageRef } from "./types";
-import { clearArchive, getCanonicalBlob, loadArchive, saveArchive, stageCanonicalImage, storageErrorMessage } from "./archiveStorage";
+import { clearArchive, getCanonicalBlob, loadArchive, saveArchive, seedStarterArchive, stageCanonicalImage, storageErrorMessage } from "./archiveStorage";
 import { createBackup, mergeBackup, type BackupBundle } from "./backup";
 import { ErrorCode } from "./i18n/errorCodes";
 import { clearCustomPlatforms, normalizeCustomPlatforms, readCustomPlatforms, writeCustomPlatforms } from "./platformStorage";
@@ -27,6 +27,12 @@ export function useStore() {
       setCollections(result.collections);
       setStorageError(null);
       setLoadState("ready");
+      console.info("[Promptary startup] ready");
+      if (result.seedStarter) {
+        void seedStarterArchive().then((seeded) => {
+          if (seeded && revision.current === 0) revision.current = seeded.revision;
+        });
+      }
     } catch (error) {
       setStorageError(storageErrorMessage(error));
       setLoadState("error");

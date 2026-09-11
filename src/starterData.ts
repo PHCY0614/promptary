@@ -273,3 +273,9 @@ export function starterImageRefs(collections: Collection[] = STARTER_COLLECTIONS
   }
   return [...refs.values()];
 }
+
+const STARTER_IMAGE_IDS = new Set(starterImageRefs().map((ref) => ref.id));
+
+export function isStarterImageRef(image: ImageRef): boolean {
+  return STARTER_IMAGE_IDS.has(image.id);
+}
