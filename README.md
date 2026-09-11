@@ -96,4 +96,4 @@ pnpm test
 pnpm build
 ```
 
-See [Development Notes](./DEVELOPMENT.md) for the architecture overview and dated development log.
+See [Development Notes](./docs/DEVELOPMENT.md) for the architecture overview and dated development log.
