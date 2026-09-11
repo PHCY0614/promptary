@@ -96,52 +96,54 @@ export default function DetailView({
   return (
     <div ref={detailRef} className="h-full overflow-y-auto bg-[#0d0d0e]">
       {/* Nav bar */}
-      <div className="sticky top-0 z-30 bg-[#0d0d0e]/95 backdrop-blur-md border-b border-[#1e1e21] px-4 sm:px-6 py-3 flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors text-sm font-ui flex items-center gap-1.5"
-        >
-          {t.back}
-        </button>
-        {c.name && (
-          <p
-            className="min-w-0 truncate text-sm font-normal not-italic text-[#f0ede8]"
-            style={{ fontFamily: "'Fraunces', serif" }}
-          >
-            {c.name}
-          </p>
-        )}
-        <div className="flex-1" />
-        <div className="hidden md:block">
-          <LanguageSwitcher />
-        </div>
-        <button
-          onClick={() => toggleFavorite(c.id)}
-          aria-label={c.isFavorite ? t.removeFavorite : t.addFavorite} aria-pressed={c.isFavorite} className={`text-xs w-9 h-9 flex items-center justify-center transition-colors ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill={c.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
-        </button>
-        <button
-          onClick={onEditCollection}
-          className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
-        >
-          {t.edit}
-        </button>
-        {!showDeleteConfirm ? (
+      <header className="sticky top-0 z-30 bg-[#0d0d0e]/95 backdrop-blur-md border-b border-[#1e1e21]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] hover:border-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-ui"
+            onClick={onBack}
+            className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors text-sm font-ui flex items-center gap-1.5"
           >
-            {t.delete}
+            {t.back}
           </button>
-        ) : (
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-[#e06e6e] font-ui">{t.confirmDelete}</span>
-            <button onClick={handleDelete} className="px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-ui">{t.confirm}</button>
-            <button onClick={() => setShowDeleteConfirm(false)} className="px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-ui">{t.cancel}</button>
+          {c.name && (
+            <p
+              className="min-w-0 truncate text-sm font-normal not-italic text-[#f0ede8]"
+              style={{ fontFamily: "'Fraunces', serif" }}
+            >
+              {c.name}
+            </p>
+          )}
+          <div className="flex-1" />
+          <div className="hidden md:block">
+            <LanguageSwitcher />
           </div>
-        )}
-      </div>
+          <button
+            onClick={() => toggleFavorite(c.id)}
+            aria-label={c.isFavorite ? t.removeFavorite : t.addFavorite} aria-pressed={c.isFavorite} className={`text-xs w-9 h-9 flex items-center justify-center transition-colors ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={c.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
+          </button>
+          <button
+            onClick={onEditCollection}
+            className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
+          >
+            {t.edit}
+          </button>
+          {!showDeleteConfirm ? (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] hover:border-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-ui"
+            >
+              {t.delete}
+            </button>
+          ) : (
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-[#e06e6e] font-ui">{t.confirmDelete}</span>
+              <button onClick={handleDelete} className="px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-ui">{t.confirm}</button>
+              <button onClick={() => setShowDeleteConfirm(false)} className="px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-ui">{t.cancel}</button>
+            </div>
+          )}
+        </div>
+      </header>
 
       {/* 模式入口位置固定；主頁左窄右寬，並排模式左右等寬。 */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-3 grid grid-cols-1 md:grid-cols-[1fr_1.4fr] gap-3 md:gap-6 items-start">
