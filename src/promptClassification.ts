@@ -56,3 +56,43 @@ export function classificationOverrides(prompt: string, saved?: PromptClassifica
   const ids = new Set(classifyPrompt(prompt).map((part) => part.id));
   return Object.fromEntries(Object.entries(saved.overrides ?? {}).filter(([id, category]) => ids.has(id) && PROMPT_CATEGORIES.some((item) => item.id === category)));
 }
+
+function manualOverridesByText(prompt: string, saved?: PromptClassification): Map<string, PromptCategory> {
+  const manualByText = new Map<string, PromptCategory>();
+  const manualOverrides = classificationOverrides(prompt, saved);
+  for (const part of classifyPrompt(prompt)) {
+    const category = manualOverrides[part.id];
+    if (category !== undefined && !manualByText.has(part.text)) manualByText.set(part.text, category);
+  }
+  return manualByText;
+}
+
+// 建立 custom Attempt 時，依 trim 後相同片段從 Original 一次繼承分類；編輯時保留 Attempt 既有手動分類。
+export function inheritPromptClassification(
+  originalPrompt: string,
+  originalClassification: PromptClassification | undefined,
+  attemptPrompt: string,
+  existingAttemptPrompt?: string,
+  existingAttemptClassification?: PromptClassification,
+): PromptClassification {
+  const originalOverrides = classificationOverrides(originalPrompt, originalClassification);
+  const inheritedByText = new Map<string, PromptCategory>();
+  for (const part of classifyPrompt(originalPrompt)) {
+    if (inheritedByText.has(part.text)) continue;
+    inheritedByText.set(part.text, originalOverrides[part.id] ?? part.category);
+  }
+  const attemptManualByText = existingAttemptPrompt
+    ? manualOverridesByText(existingAttemptPrompt, existingAttemptClassification)
+    : new Map<string, PromptCategory>();
+  const overrides: Record<string, PromptCategory> = {};
+  for (const part of classifyPrompt(attemptPrompt)) {
+    const attemptManual = attemptManualByText.get(part.text);
+    if (attemptManual !== undefined) {
+      overrides[part.id] = attemptManual;
+      continue;
+    }
+    const originalCategory = inheritedByText.get(part.text);
+    if (originalCategory !== undefined) overrides[part.id] = originalCategory;
+  }
+  return { sourcePrompt: attemptPrompt, overrides };
+}

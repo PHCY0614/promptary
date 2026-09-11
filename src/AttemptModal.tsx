@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { inheritPromptClassification, type PromptClassification } from "./promptClassification";
 import { Attempt, ImageRef, PLATFORMS } from "./types";
 import { createCanonicalImage } from "./imageUpload";
 import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
@@ -82,12 +83,13 @@ function sameForm(a: FormState, b: FormState) {
 
 interface Props {
   originalPrompt: string;
+  originalClassification?: PromptClassification;
   existing?: Attempt;
   onSave: (data: Omit<Attempt, "id" | "createdAt">) => Promise<void>;
   onClose: () => void;
 }
 
-export default function AttemptModal({ originalPrompt, existing, onSave, onClose }: Props) {
+export default function AttemptModal({ originalPrompt, originalClassification, existing, onSave, onClose }: Props) {
   const { t } = useLocale();
   const [form, setForm] = useState<FormState>(() => initForm(originalPrompt, existing));
   const initialFormRef = useRef(form);
@@ -188,6 +190,20 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
     set("rating", form.rating === r ? null : r);
   }
 
+  // 未修改咒語沿用 Original；custom 只在建立或咒語變更時一次繼承相同片段分類。
+  function customAttemptClassification(prompt: string) {
+    if (existing?.promptMode === "custom" && existing.prompt === prompt && existing.promptClassification) {
+      return existing.promptClassification;
+    }
+    return inheritPromptClassification(
+      originalPrompt,
+      originalClassification,
+      prompt,
+      existing?.promptMode === "custom" ? existing.prompt : undefined,
+      existing?.promptMode === "custom" ? existing.promptClassification : undefined,
+    );
+  }
+
   async function handleSubmit() {
     if (savingRef.current) return;
     const effectivePlatform = form.platform === "自訂" ? form.customPlatform.trim() || "自訂" : form.platform;
@@ -204,7 +220,7 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
       platform: effectivePlatform,
       promptMode: form.unmodified ? "original" : "custom",
       prompt: form.unmodified ? originalPrompt.trim() : form.prompt.trim(),
-      promptClassification: form.unmodified ? undefined : existing?.promptClassification,
+      promptClassification: form.unmodified ? undefined : customAttemptClassification(form.prompt.trim()),
       model: form.model.trim() || undefined,
       notes: form.notes.trim(),
       rating: form.rating,

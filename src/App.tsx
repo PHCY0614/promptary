@@ -104,6 +104,7 @@ export default function App() {
       {modal?.type === "addAttempt" && (
         <AttemptModal
           originalPrompt={modal.collection.originalPrompt}
+          originalClassification={modal.collection.promptClassification}
           onSave={async (data) => {
             if (!await store.addAttempt(modal.collection.id, data)) return;
             setModal(null);
@@ -115,6 +116,7 @@ export default function App() {
       {modal?.type === "editAttempt" && (
         <AttemptModal
           originalPrompt={modal.collection.originalPrompt}
+          originalClassification={modal.collection.promptClassification}
           existing={modal.attempt}
           onSave={async (data) => {
             if (!await store.editAttempt(modal.collection.id, modal.attempt.id, data)) return;
