@@ -8,7 +8,7 @@ const image = (id) => ({ id, width: 1200, height: 800, mimeType: 'image/webp', b
 const collection = (ref) => ({
   id: 'collection', name: '藍色', originalPrompt: 'original', collectionNotes: '', tags: [], status: 'want',
   isFavorite: false, promptPending: false, coverSource: { type: 'reference', imageId: ref.id },
-  addedAt: '2026-09-09T00:00:00.000Z', updatedAt: '2026-09-09T00:00:00.000Z', referenceImages: [ref], attempts: [],
+  createdAt: '2026-09-09T00:00:00.000Z', updatedAt: '2026-09-09T00:00:00.000Z', referenceImages: [ref], attempts: [],
 });
 class FileStub extends Blob { constructor(parts, name, options) { super(parts, options); this.name = name; } }
 
@@ -59,7 +59,7 @@ assert.equal(initial.revision, 1);
 const ref = image('stable-image');
 const canonical = new Blob(['canonical'], { type: 'image/webp' });
 api.stageCanonicalImage(ref, canonical);
-const revision = await api.saveArchive([collection(ref)], initial.revision);
+let revision = await api.saveArchive([collection(ref)], initial.revision);
 const snapshot = await readStore(api.indexedDB, 'archive', 'current');
 assert.equal(snapshot.collections[0].referenceImages[0].id, 'stable-image');
 assert.equal('blob' in snapshot.collections[0].referenceImages[0], false);
@@ -75,9 +75,16 @@ const thumbnailRecord = await readStore(api.indexedDB, 'imageThumbnails', 'stabl
 assert.equal(thumbnailRecord.thumbnailVersion, 1);
 assert.equal(await (await api.getThumbnailBlob(ref)).text(), 'thumb');
 
+const replacement = new Blob(['replacement'], { type: 'image/webp' });
+const replacementRef = { ...ref, byteSize: replacement.size };
+api.stageCanonicalImage(replacementRef, replacement);
+revision = await api.saveArchive([collection(replacementRef)], revision);
+assert.equal(await (await api.getCanonicalBlob(ref.id)).text(), 'replacement');
+assert.deepEqual(await readStore(api.indexedDB, 'imageThumbnails'), []);
+
 await assert.rejects(api.saveArchive([], initial.revision), /revisionConflict/);
 assert.equal((await api.loadArchive()).collections.length, 1);
-await api.saveArchive([], revision);
+await api.clearArchive(revision);
 assert.deepEqual(await readStore(api.indexedDB, 'images'), []);
 assert.deepEqual(await readStore(api.indexedDB, 'imageThumbnails'), []);
 assert.match(api.storageErrorMessage(new DOMException('full', 'QuotaExceededError')), /quotaExceeded/);
@@ -96,7 +103,9 @@ await new Promise((resolve, reject) => {
     { id: 'same', images: [], platform: 'PixAI', prompt: 'original', notes: '', rating: null, date: '2026-09-09', createdAt: '2026-09-09T00:00:00.000Z' },
     { id: 'changed', images: [], platform: 'PixAI', prompt: 'changed', notes: '', rating: null, date: '2026-09-09', createdAt: '2026-09-09T00:00:00.000Z' },
   ];
-  transaction.objectStore('archive').put({ revision: 7, collections: [{ ...collection(image('legacy')), referenceImages: [{ id: 'legacy', width: 1200, height: 800 }], attempts: legacyAttempts, coverSource: { type: 'reference', index: 0 } }] }, 'current');
+  const currentShape = collection(image('legacy'));
+  const { createdAt, updatedAt, ...legacyShape } = currentShape;
+  transaction.objectStore('archive').put({ revision: 7, collections: [{ ...legacyShape, addedAt: createdAt, referenceImages: [{ id: 'legacy', width: 1200, height: 800 }], attempts: legacyAttempts, coverSource: { type: 'reference', index: 0 } }] }, 'current');
   transaction.objectStore('images').put({ display: new Blob(['legacy'], { type: 'image/webp' }), thumbnail: new Blob(['old-thumb'], { type: 'image/webp' }) }, 'legacy');
   transaction.oncomplete = resolve;
   transaction.onabort = () => reject(transaction.error);
@@ -108,6 +117,8 @@ assert.equal(migratedLoad.collections[0].referenceImages[0].id, 'legacy');
 assert.equal(migratedLoad.collections[0].coverSource.imageId, 'legacy');
 assert.equal(migratedLoad.collections[0].attempts[0].promptMode, 'original');
 assert.equal(migratedLoad.collections[0].attempts[1].promptMode, 'custom');
+assert.equal(migratedLoad.collections[0].createdAt, '2026-09-09T00:00:00.000Z');
+assert.equal(migratedLoad.collections[0].updatedAt, '2026-09-09T00:00:00.000Z');
 assert.equal(await (await migrated.getCanonicalBlob('legacy')).text(), 'legacy');
 assert.deepEqual(await readStore(migrated.indexedDB, 'imageThumbnails'), []);
 console.log('PASS: metadata-only snapshots, canonical Blob storage, lazy versioned thumbnails, reference cleanup, stale writes and v2 migration');

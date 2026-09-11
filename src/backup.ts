@@ -3,6 +3,7 @@ import type { Collection, ImageRef } from "./types";
 import { getCanonicalBlob } from "./archiveStorage";
 import { validateCanonicalBlob } from "./imageProcessing";
 import { ErrorCode, fail as throwCoded } from "./i18n/errorCodes";
+import { normalizeCustomPlatforms } from "./platformStorage";
 
 const FORMAT = "promptary-backup";
 const FORMAT_VERSION = 1;
@@ -17,11 +18,21 @@ interface Manifest {
   version: typeof FORMAT_VERSION;
   exportedAt: string;
   collections: Collection[];
+  settings: {
+    customPlatforms: string[];
+  };
 }
+
+type BackupCollection = Omit<Collection, "createdAt" | "updatedAt"> & {
+  createdAt?: string;
+  addedAt?: string;
+  updatedAt?: string;
+};
 
 export interface BackupBundle {
   collections: Collection[];
   images: Map<string, Blob>;
+  customPlatforms?: string[];
 }
 
 function allImageRefs(collections: Collection[]) {
@@ -58,17 +69,20 @@ function validClassification(value: unknown) {
     Object.values(classification.overrides).every((category) => ["appearance", "clothing", "pose", "background", "composition", "lighting", "style", "other"].includes(category as string)));
 }
 
-function validateCollections(value: unknown): asserts value is Collection[] {
+function validateCollections(value: unknown): asserts value is BackupCollection[] {
   if (!Array.isArray(value)) fail();
   const collectionIds = new Set<string>();
   const imageRefs = new Map<string, string>();
   for (const raw of value) {
-    const collection = raw as Collection;
-    if (!collection || typeof collection.id !== "string" || !collection.id || collectionIds.has(collection.id) ||
+    const collection = raw as BackupCollection;
+    if (!collection) fail();
+    const createdAt = collection.createdAt ?? collection.addedAt;
+    const updatedAt = collection.updatedAt ?? createdAt;
+    if (typeof collection.id !== "string" || !collection.id || collectionIds.has(collection.id) ||
       typeof collection.originalPrompt !== "string" || typeof collection.collectionNotes !== "string" ||
       typeof collection.isFavorite !== "boolean" || typeof collection.promptPending !== "boolean" ||
-      !["tried", "want", "ref"].includes(collection.status) || !Number.isFinite(Date.parse(collection.addedAt)) ||
-      !Number.isFinite(Date.parse(collection.updatedAt)) || (collection.name !== undefined && typeof collection.name !== "string") ||
+      !["tried", "want", "ref"].includes(collection.status) || !Number.isFinite(Date.parse(createdAt ?? "")) ||
+      !Number.isFinite(Date.parse(updatedAt ?? "")) || (collection.name !== undefined && typeof collection.name !== "string") ||
       (collection.source !== undefined && typeof collection.source !== "string") || !validClassification(collection.promptClassification) ||
       !Array.isArray(collection.tags) || !collection.tags.every((tag) => typeof tag === "string") ||
       !Array.isArray(collection.referenceImages) || !collection.referenceImages.every(validImageRef) || !Array.isArray(collection.attempts)) fail();
@@ -135,10 +149,16 @@ function inspectZip(bytes: Uint8Array) {
   }
 }
 
-export async function createBackup(collections: Collection[]): Promise<Blob> {
+export async function createBackup(collections: Collection[], customPlatforms: string[]): Promise<Blob> {
   const refs = allImageRefs(collections);
   const files: Record<string, Uint8Array> = {};
-  const manifest: Manifest = { format: FORMAT, version: FORMAT_VERSION, exportedAt: new Date().toISOString(), collections };
+  const manifest: Manifest = {
+    format: FORMAT,
+    version: FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    collections,
+    settings: { customPlatforms: normalizeCustomPlatforms(customPlatforms) },
+  };
   files["manifest.json"] = strToU8(JSON.stringify(manifest, null, 2));
   for (const [id, ref] of refs) {
     const blob = await getCanonicalBlob(id);
@@ -157,16 +177,27 @@ export async function parseBackup(file: File): Promise<BackupBundle> {
   if (!manifestBytes || manifestBytes.byteLength > MAX_MANIFEST_BYTES) fail();
   let manifest: unknown;
   try { manifest = JSON.parse(strFromU8(manifestBytes).replace(/^\uFEFF/, "")); } catch { fail(); }
-  const candidate = manifest as Partial<Manifest>;
+  const candidate = manifest as Partial<Omit<Manifest, "collections" | "settings">> & { collections?: unknown; settings?: unknown };
   if (candidate.format !== FORMAT || candidate.version !== FORMAT_VERSION || !Number.isFinite(Date.parse(candidate.exportedAt ?? ""))) fail();
   validateCollections(candidate.collections);
   const collections = candidate.collections.map((collection) => ({
-    ...collection,
+    ...Object.fromEntries(Object.entries(collection).filter(([key]) => key !== "addedAt")),
+    createdAt: collection.createdAt ?? collection.addedAt!,
+    updatedAt: collection.updatedAt ?? collection.createdAt ?? collection.addedAt!,
     attempts: collection.attempts.map((attempt) => ({
       ...attempt,
       promptMode: attempt.promptMode ?? (attempt.prompt.trim() === collection.originalPrompt.trim() ? "original" : "custom"),
     })),
-  }));
+  })) as Collection[];
+  let customPlatforms: string[] | undefined;
+  if (candidate.settings !== undefined) {
+    if (!candidate.settings || typeof candidate.settings !== "object" || Array.isArray(candidate.settings)) fail();
+    const value = (candidate.settings as { customPlatforms?: unknown }).customPlatforms;
+    if (value !== undefined) {
+      if (!Array.isArray(value) || !value.every((platform) => typeof platform === "string")) fail();
+      customPlatforms = normalizeCustomPlatforms(value);
+    }
+  }
   const refs = allImageRefs(collections);
   const expectedPaths = new Set(["manifest.json", ...[...refs.values()].map(imagePath)]);
   if (Object.keys(files).some((name) => !expectedPaths.has(name)) || Object.keys(files).length !== expectedPaths.size) fail();
@@ -178,17 +209,38 @@ export async function parseBackup(file: File): Promise<BackupBundle> {
     await validateCanonicalBlob(blob, ref);
     images.set(id, blob);
   }
-  return { collections, images };
+  return { collections, images, customPlatforms };
 }
 
 export function mergeBackup(current: Collection[], incoming: Collection[]) {
-  const ids = new Set(current.map((collection) => collection.id));
-  const addedCollections = incoming.filter((collection) => { if (ids.has(collection.id)) return false; ids.add(collection.id); return true; });
-  const requiredImageIds = new Set(allImageRefs(addedCollections).keys());
+  const currentById = new Map(current.map((collection) => [collection.id, collection]));
+  const seenIncoming = new Set<string>();
+  const addedCollections: Collection[] = [];
+  const updatedCollections = new Map<string, Collection>();
+  let kept = 0;
+  for (const collection of incoming) {
+    if (seenIncoming.has(collection.id)) { kept++; continue; }
+    seenIncoming.add(collection.id);
+    const local = currentById.get(collection.id);
+    if (!local) { addedCollections.push(collection); continue; }
+    if (collectionTime(collection) > collectionTime(local)) updatedCollections.set(collection.id, collection);
+    else kept++;
+  }
+  const selectedCollections = [...addedCollections, ...updatedCollections.values()];
+  const requiredImageRefs = allImageRefs(selectedCollections);
+  const requiredImageIds = new Set(requiredImageRefs.keys());
   return {
-    collections: [...addedCollections, ...current],
+    collections: [...addedCollections, ...current.map((collection) => updatedCollections.get(collection.id) ?? collection)],
     added: addedCollections.length,
-    skipped: incoming.length - addedCollections.length,
+    updated: updatedCollections.size,
+    kept,
     requiredImageIds,
+    requiredImageRefs,
+    updatedCollectionIds: new Set(updatedCollections.keys()),
   };
+}
+
+function collectionTime(collection: Collection): number {
+  const legacy = collection as Collection & { addedAt?: string };
+  return Date.parse(collection.updatedAt || collection.createdAt || legacy.addedAt || "");
 }

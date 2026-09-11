@@ -57,6 +57,6 @@ export interface Collection {
 
   attempts: Attempt[];
 
-  addedAt: string; // ISO
+  createdAt: string; // ISO
   updatedAt: string; // ISO
 }

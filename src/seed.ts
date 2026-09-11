@@ -16,7 +16,7 @@ export const SEED: Collection[] = [
     "collectionNotes": "",
     "id": "79443995-646a-4b41-aa0f-d061092689ba",
     "attempts": [],
-    "addedAt": "2026-09-06T18:45:25.870Z",
+    "createdAt": "2026-09-06T18:45:25.870Z",
     "updatedAt": "2026-09-06T18:45:25.870Z"
   }
 ];

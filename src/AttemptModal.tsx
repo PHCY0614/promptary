@@ -5,17 +5,9 @@ import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
 import StoredImage from "./StoredImage";
 import ResizableTextarea from "./ResizableTextarea";
 import { ErrorCode, translateError, useLocale } from "./i18n";
+import { readCustomPlatforms, writeCustomPlatforms } from "./platformStorage";
 
 // 平台選單是獨立的本機偏好；移除選項不會改寫已保存的嘗試。
-const PLATFORM_STORAGE_KEY = "promptary-custom-platforms";
-function readCustomPlatforms(): string[] {
-  try {
-    const value: unknown = JSON.parse(localStorage.getItem(PLATFORM_STORAGE_KEY) ?? "[]");
-    return Array.isArray(value) ? [...new Set(value.filter((p): p is string =>
-      typeof p === "string" && p.trim().length > 0 && !PLATFORMS.some((builtIn) => builtIn === p)))] : [];
-  } catch { return []; }
-}
-
 interface UploadItem {
   id: string;
   file?: File;
@@ -86,15 +78,13 @@ export default function AttemptModal({ originalPrompt, existing, onSave, onClose
   const [customPlatforms, setCustomPlatforms] = useState(readCustomPlatforms);
   const [platformError, setPlatformError] = useState("");
   function savePlatformOptions(next: string[]): boolean {
-    try {
-      localStorage.setItem(PLATFORM_STORAGE_KEY, JSON.stringify(next));
+    if (writeCustomPlatforms(next)) {
       setCustomPlatforms(next);
       setPlatformError("");
       return true;
-    } catch {
-      setPlatformError(ErrorCode.platformSaveFailed);
-      return false;
     }
+    setPlatformError(ErrorCode.platformSaveFailed);
+    return false;
   }
   function addPlatform() {
     const name = form.customPlatform.trim();

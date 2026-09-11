@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Collection, Attempt, CoverSource, ImageRef } from "./types";
-import { getCanonicalBlob, loadArchive, saveArchive, stageCanonicalImage, storageErrorMessage } from "./archiveStorage";
+import { clearArchive, getCanonicalBlob, loadArchive, saveArchive, stageCanonicalImage, storageErrorMessage } from "./archiveStorage";
 import { createBackup, mergeBackup, type BackupBundle } from "./backup";
 import { ErrorCode } from "./i18n/errorCodes";
+import { clearCustomPlatforms, normalizeCustomPlatforms, readCustomPlatforms, writeCustomPlatforms } from "./platformStorage";
+import { requestPersistentStorageOnce } from "./storagePersistence";
 
 export function useStore() {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -52,23 +54,24 @@ export function useStore() {
   }, []);
 
   const addCollection = useCallback(
-    async (data: Omit<Collection, "id" | "addedAt" | "updatedAt" | "attempts">) => {
+    async (data: Omit<Collection, "id" | "createdAt" | "updatedAt" | "attempts">) => {
       const now = new Date().toISOString();
       const c: Collection = {
         ...data,
         id: crypto.randomUUID(),
         attempts: [],
-        addedAt: now,
+        createdAt: now,
         updatedAt: now,
       };
       if (!await update((current) => [c, ...current])) return;
+      void requestPersistentStorageOnce();
       return c.id;
     },
     [update]
   );
 
   const editCollection = useCallback(
-    (id: string, data: Partial<Omit<Collection, "id" | "addedAt" | "attempts">>) => {
+    (id: string, data: Partial<Omit<Collection, "id" | "createdAt" | "updatedAt" | "attempts">>) => {
       return update(
         (current) => current.map((c) =>
           c.id === id ? { ...c, ...data, updatedAt: new Date().toISOString() } : c
@@ -170,17 +173,24 @@ export function useStore() {
 
   // 沿用序列化、原子寫入；成功才更新畫面並回報實際匯入數量。
   const importData = useCallback(async (incoming: BackupBundle) => {
-    let result = { added: 0, skipped: 0 };
+    let result = { added: 0, updated: 0, kept: 0 };
     const merged = mergeBackup(latest.current, incoming.collections);
     try {
-      const currentImageIds = new Set(latest.current.flatMap((collection) => [
-        ...collection.referenceImages.map((image) => image.id),
-        ...collection.attempts.flatMap((attempt) => attempt.images.map((image) => image.id)),
-      ]));
+      const protectedCollections = latest.current.filter((collection) => !merged.updatedCollectionIds.has(collection.id));
+      const protectedRefs = protectedCollections.flatMap((collection) => [
+        ...collection.referenceImages,
+        ...collection.attempts.flatMap((attempt) => attempt.images),
+      ]);
+      const protectedImageRefs = new Map(protectedRefs.map((image) => [image.id, image]));
       for (const id of merged.requiredImageIds) {
         const blob = incoming.images.get(id);
+        const incomingRef = merged.requiredImageRefs.get(id)!;
         if (!blob) throw new Error(ErrorCode.backupImagesIncomplete);
-        if (currentImageIds.has(id)) {
+        const protectedRef = protectedImageRefs.get(id);
+        if (protectedRef) {
+          if (protectedRef.width !== incomingRef.width || protectedRef.height !== incomingRef.height ||
+            protectedRef.byteSize !== incomingRef.byteSize || protectedRef.mimeType !== incomingRef.mimeType ||
+            protectedRef.createdAt !== incomingRef.createdAt) throw new Error(ErrorCode.backupDuplicateMeta);
           const [currentBytes, incomingBytes] = await Promise.all([getCanonicalBlob(id).then((value) => value.arrayBuffer()), blob.arrayBuffer()]);
           const currentView = new Uint8Array(currentBytes);
           const incomingView = new Uint8Array(incomingBytes);
@@ -188,8 +198,7 @@ export function useStore() {
             throw new Error(ErrorCode.backupDuplicateImageId);
           }
         } else {
-          const ref = [...merged.collections.flatMap((collection) => [...collection.referenceImages, ...collection.attempts.flatMap((attempt) => attempt.images)])].find((image) => image.id === id)!;
-          stageCanonicalImage(ref, blob);
+          stageCanonicalImage(incomingRef, blob);
         }
       }
     } catch (error) {
@@ -198,15 +207,20 @@ export function useStore() {
     }
     const success = await update((current) => {
       const latestMerge = mergeBackup(current, incoming.collections);
-      result = { added: latestMerge.added, skipped: latestMerge.skipped };
+      result = { added: latestMerge.added, updated: latestMerge.updated, kept: latestMerge.kept };
       return latestMerge.collections;
     });
-    return success ? result : null;
+    if (!success) return null;
+    if (incoming.customPlatforms !== undefined) {
+      const platforms = normalizeCustomPlatforms([...readCustomPlatforms(), ...incoming.customPlatforms]);
+      if (!writeCustomPlatforms(platforms)) setStorageError(ErrorCode.platformSaveFailed);
+    }
+    return result;
   }, [update]);
 
   const exportData = useCallback(async () => {
     try {
-      const blob = await createBackup(collections);
+      const blob = await createBackup(collections, readCustomPlatforms());
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -220,6 +234,27 @@ export function useStore() {
       return false;
     }
   }, [collections]);
+
+  const clearData = useCallback(() => {
+    const task = queue.current.then(async () => {
+      try {
+        revision.current = await clearArchive(revision.current);
+        latest.current = [];
+        setCollections([]);
+        if (!clearCustomPlatforms()) {
+          setStorageError(ErrorCode.platformSaveFailed);
+          return false;
+        }
+        setStorageError(null);
+        return true;
+      } catch (error) {
+        setStorageError(storageErrorMessage(error));
+        return false;
+      }
+    });
+    queue.current = task;
+    return task;
+  }, []);
 
   return {
     storageError,
@@ -237,6 +272,7 @@ export function useStore() {
     setCover,
     exportData,
     importData,
+    clearData,
   };
 }
 

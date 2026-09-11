@@ -17,6 +17,8 @@ export type Messages = {
   manage: string;
   importAction: string;
   exportAction: string;
+  clearAction: string;
+  storageAction: string;
   statusAll: string;
   statusFavorite: string;
   allTags: string;
@@ -153,10 +155,20 @@ export type Messages = {
   chooseBackupFile: string;
   changeFile: string;
   noFileChosen: string;
-  importPreview: (total: number, added: number, skipped: number) => string;
+  importPreview: (total: number, added: number, updated: number, kept: number) => string;
   confirmImport: string;
   processing: string;
-  importComplete: (added: number, skipped: number) => string;
+  importComplete: (added: number, updated: number, kept: number) => string;
+  clearData: string;
+  clearDataHelp: string;
+  clearing: string;
+  localData: string;
+  storageUsed: string;
+  dataProtection: string;
+  storageEnabled: string;
+  storageNotEnabled: string;
+  storageUnavailable: string;
+  loadingStorage: string;
   resizeHandle: string;
   resizeHint: string;
   statusLabel: Record<Status, string>;
@@ -177,6 +189,8 @@ const zhTW: Messages = {
   manage: "管理",
   importAction: "匯入",
   exportAction: "匯出",
+  clearAction: "清除",
+  storageAction: "空間",
   statusAll: "全部",
   statusFavorite: "最愛",
   allTags: "所有標籤",
@@ -319,15 +333,25 @@ const zhTW: Messages = {
   dismissCopyError: "關閉複製錯誤提示",
   manualCopyPrompt: "手動複製咒語",
   importBackup: "匯入備份",
-  importHelp: "選擇 Promptary 匯出的 ZIP。備份包含收藏資料與 2048 px canonical 圖片，不包含可重建的縮圖；相同收藏 ID 會跳過，不覆蓋現有版本。",
+  importHelp: "相同收藏僅保留最新版本。",
   chooseBackupZip: "選擇備份 ZIP",
   chooseBackupFile: "選擇備份檔案",
   changeFile: "更換檔案",
   noFileChosen: "尚未選擇檔案",
-  importPreview: (total, added, skipped) => `共 ${total} 筆收藏：將新增 ${added} 筆，跳過 ${skipped} 筆。`,
+  importPreview: (_total, added, updated, kept) => `新增 ${added}　更新 ${updated}　保留 ${kept}`,
   confirmImport: "確認匯入",
   processing: "處理中……",
-  importComplete: (added, skipped) => `匯入完成：新增 ${added} 筆，跳過 ${skipped} 筆。`,
+  importComplete: (added, updated, kept) => `匯入完成：新增 ${added}　更新 ${updated}　保留 ${kept}`,
+  clearData: "清除本機資料",
+  clearDataHelp: "永久刪除這個瀏覽器中的所有 Promptary 資料。",
+  clearing: "清除中……",
+  localData: "本機資料",
+  storageUsed: "目前使用空間",
+  dataProtection: "資料保護",
+  storageEnabled: "已啟用",
+  storageNotEnabled: "未啟用",
+  storageUnavailable: "無法確認",
+  loadingStorage: "讀取中……",
   resizeHandle: "調整欄位高度",
   resizeHint: "向上或向下拖曳以調整高度",
   statusLabel: { tried: "試過", want: "想試", ref: "靈感" },
@@ -392,6 +416,8 @@ const en: Messages = {
   manage: "Manage",
   importAction: "Import",
   exportAction: "Export",
+  clearAction: "Clear",
+  storageAction: "Storage",
   statusAll: "All",
   statusFavorite: "Favourites",
   allTags: "All tags",
@@ -534,15 +560,25 @@ const en: Messages = {
   dismissCopyError: "Dismiss copy error",
   manualCopyPrompt: "Prompt to copy",
   importBackup: "Import backup",
-  importHelp: "Choose a ZIP exported from Promptary. It includes collection data and 2048 px canonical images, not rebuildable thumbnails. Matching collection IDs are skipped.",
+  importHelp: "Only the newest version of matching collections is kept.",
   chooseBackupZip: "Choose backup ZIP",
   chooseBackupFile: "Choose backup",
   changeFile: "Change file",
   noFileChosen: "No file chosen",
-  importPreview: (total, added, skipped) => `${total} collections: ${added} will be added, ${skipped} skipped.`,
+  importPreview: (_total, added, updated, kept) => `Added ${added} · Updated ${updated} · Kept ${kept}`,
   confirmImport: "Import",
   processing: "Working…",
-  importComplete: (added, skipped) => `Imported: ${added} added, ${skipped} skipped.`,
+  importComplete: (added, updated, kept) => `Imported: ${added} added · ${updated} updated · ${kept} kept`,
+  clearData: "Clear local data",
+  clearDataHelp: "Permanently delete all Promptary data in this browser.",
+  clearing: "Clearing…",
+  localData: "Local Data",
+  storageUsed: "Storage used",
+  dataProtection: "Data protection",
+  storageEnabled: "Enabled",
+  storageNotEnabled: "Not enabled",
+  storageUnavailable: "Unavailable",
+  loadingStorage: "Loading…",
   resizeHandle: "Resize field",
   resizeHint: "Drag up or down to resize",
   statusLabel: { tried: "Tried", want: "To Try", ref: "Inspiration" },

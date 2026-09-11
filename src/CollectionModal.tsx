@@ -59,7 +59,7 @@ function initForm(c?: Collection): FormState {
 
 interface Props {
   existing?: Collection;
-  onSave: (data: Omit<Collection, "id" | "addedAt" | "updatedAt" | "attempts">) => Promise<void>;
+  onSave: (data: Omit<Collection, "id" | "createdAt" | "updatedAt" | "attempts">) => Promise<void>;
   onClose: () => void;
 }
 

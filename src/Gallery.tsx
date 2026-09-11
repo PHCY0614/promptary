@@ -91,8 +91,8 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
     }
 
     list.sort((a, b) => {
-      if (sort === "newest") return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
-      if (sort === "oldest") return new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime();
+      if (sort === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sort === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
 

@@ -15,14 +15,18 @@ export interface CanonicalImageRecord extends ImageRef { blob: Blob }
 export interface ThumbnailRecord { id: string; blob: Blob; width: number; height: number; thumbnailVersion: number; generatedAt: string }
 type LegacyImage = string | Blob | { id: string; sourceUrl?: string; width?: number; height?: number };
 type LegacyAttempt = Omit<Attempt, "images" | "promptMode"> & { images: LegacyImage[]; promptMode?: Attempt["promptMode"] };
-type LegacyCollection = Omit<Collection, "referenceImages" | "attempts" | "coverSource"> & {
+type LegacyCollection = Omit<Collection, "referenceImages" | "attempts" | "coverSource" | "createdAt" | "updatedAt"> & {
   referenceImages: LegacyImage[];
   attempts: LegacyAttempt[];
   coverSource: { type: "reference"; index: number } | { type: "attempt"; attemptId: string; imageIndex: number } | CoverSource;
+  createdAt?: string;
+  addedAt?: string;
+  updatedAt?: string;
 };
 
 const stagedCanonical = new Map<string, CanonicalImageRecord>();
 const thumbnailJobs = new Map<string, Promise<Blob>>();
+let cacheGeneration = 0;
 
 export function stageCanonicalImage(ref: ImageRef, blob: Blob) {
   stagedCanonical.set(ref.id, { ...ref, blob });
@@ -86,7 +90,10 @@ async function commitSnapshot(collections: Collection[], expected: number | unde
     const archive = transaction.objectStore(ARCHIVE_TABLE);
     const images = transaction.objectStore(IMAGE_TABLE);
     const thumbnails = transaction.objectStore(THUMBNAIL_TABLE);
-    for (const record of staged) images.put(record, record.id);
+    for (const record of staged) {
+      images.put(record, record.id);
+      thumbnails.delete(record.id);
+    }
     const currentRequest = archive.get("current");
     const imageKeysRequest = images.getAllKeys();
     const thumbnailKeysRequest = thumbnails.getAllKeys();
@@ -139,8 +146,13 @@ function isImageRef(value: unknown): value is ImageRef {
     image.byteSize! > 0 && typeof image.createdAt === "string");
 }
 
+function isIsoDate(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
+}
+
 function isCurrentCollections(value: unknown): value is Collection[] {
   return Array.isArray(value) && value.every((collection) => collection &&
+    isIsoDate(collection.createdAt) && isIsoDate(collection.updatedAt) &&
     Array.isArray(collection.referenceImages) && collection.referenceImages.every(isImageRef) &&
     Array.isArray(collection.attempts) && collection.attempts.every((attempt: Collection["attempts"][number]) =>
       (attempt.promptMode === "original" || attempt.promptMode === "custom") &&
@@ -178,6 +190,9 @@ async function migrateCollections(value: unknown, experimental: Map<string, { di
   };
   const migrated: Collection[] = [];
   for (const raw of value as LegacyCollection[]) {
+    const createdAt = isIsoDate(raw.createdAt) ? raw.createdAt : isIsoDate(raw.addedAt) ? raw.addedAt : null;
+    if (!createdAt) fail(ErrorCode.archiveUnrecognized);
+    const updatedAt = isIsoDate(raw.updatedAt) ? raw.updatedAt : createdAt;
     const referenceImages = await Promise.all(raw.referenceImages.map(migrateImage));
     const attempts = await Promise.all(raw.attempts.map(async (attempt) => ({
       ...attempt,
@@ -193,7 +208,8 @@ async function migrateCollections(value: unknown, experimental: Map<string, { di
       const attempt = attempts.find((candidate) => candidate.id === previous.attemptId);
       coverSource = { type: "attempt", attemptId: previous.attemptId, imageId: previous.imageId ?? attempt?.images[previous.imageIndex ?? 0]?.id ?? "" };
     }
-    migrated.push({ ...raw, referenceImages, attempts, coverSource } as Collection);
+    const { addedAt: _legacyAddedAt, ...rest } = raw;
+    migrated.push({ ...rest, createdAt, updatedAt, referenceImages, attempts, coverSource } as Collection);
   }
   return migrated;
 }
@@ -255,6 +271,13 @@ export function saveArchive(collections: Collection[], revision: number): Promis
   return commitSnapshot(collections, revision);
 }
 
+export function clearArchive(revision: number): Promise<number> {
+  cacheGeneration++;
+  stagedCanonical.clear();
+  thumbnailJobs.clear();
+  return commitSnapshot([], revision);
+}
+
 export async function getCanonicalBlob(id: string): Promise<Blob> {
   const staged = stagedCanonical.get(id);
   if (staged) return staged.blob;
@@ -272,6 +295,7 @@ export async function getCanonicalBlob(id: string): Promise<Blob> {
 export function getThumbnailBlob(image: ImageRef): Promise<Blob> {
   const existing = thumbnailJobs.get(image.id);
   if (existing) return existing;
+  const generation = cacheGeneration;
   const job = (async () => {
     const staged = stagedCanonical.get(image.id);
     if (staged) return (await createThumbnail(staged.blob)).blob;
@@ -285,6 +309,7 @@ export function getThumbnailBlob(image: ImageRef): Promise<Blob> {
     } finally { db.close(); }
     const canonical = await getCanonicalBlob(image.id);
     const thumbnail = await createThumbnail(canonical);
+    if (generation !== cacheGeneration) return thumbnail.blob;
     const writeDb = await openDatabase();
     try {
       const write = writeDb.transaction(THUMBNAIL_TABLE, "readwrite");

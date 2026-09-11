@@ -186,7 +186,7 @@ export default function DetailView({
           <ImagePane
             images={c.referenceImages}
             label={t.referenceOriginal}
-            collectedDate={c.addedAt.slice(0, 10)}
+            collectedDate={c.createdAt.slice(0, 10)}
             onZoom={(i) => setViewer({ images: c.referenceImages, index: i })}
             emptyText={t.noReferenceImage}
           />
