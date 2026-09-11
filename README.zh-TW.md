@@ -92,4 +92,4 @@ pnpm test
 pnpm build
 ```
 
-架構概要與日期式開發紀錄請見 [開發說明](./doc/DEVELOPMENT.zh-TW.md)。
+架構概要與日期式開發紀錄請見 [開發說明](./docs/DEVELOPMENT.zh-TW.md)。
