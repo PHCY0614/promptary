@@ -100,46 +100,47 @@ export default function DetailView({
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           <button
             onClick={onBack}
-            className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors text-sm font-ui flex items-center gap-1.5"
+            className="shrink-0 text-[#b8b5af] hover:text-[#f0ede8] transition-colors text-sm font-ui flex items-center gap-1.5"
           >
             {t.back}
           </button>
-          {c.name && (
+          {c.name ? (
             <p
-              className="min-w-0 truncate text-sm font-normal not-italic text-[#f0ede8]"
+              className="min-w-0 flex-1 truncate text-sm font-normal not-italic text-[#f0ede8]"
               style={{ fontFamily: "'Fraunces', serif" }}
             >
               {c.name}
             </p>
+          ) : (
+            <div className="flex-1" />
           )}
-          <div className="flex-1" />
-          <div className="hidden md:block">
+          <div className="hidden md:block shrink-0">
             <LanguageSwitcher />
           </div>
           <button
             onClick={() => toggleFavorite(c.id)}
-            aria-label={c.isFavorite ? t.removeFavorite : t.addFavorite} aria-pressed={c.isFavorite} className={`text-xs w-9 h-9 flex items-center justify-center transition-colors ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
+            aria-label={c.isFavorite ? t.removeFavorite : t.addFavorite} aria-pressed={c.isFavorite} className={`shrink-0 text-xs w-9 h-9 flex items-center justify-center transition-colors ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill={c.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
           </button>
           <button
             onClick={onEditCollection}
-            className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
+            className="shrink-0 whitespace-nowrap px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
           >
             {t.edit}
           </button>
           {!showDeleteConfirm ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] hover:border-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-ui"
+              className="shrink-0 whitespace-nowrap px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] hover:border-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-ui"
             >
               {t.delete}
             </button>
           ) : (
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-[#e06e6e] font-ui">{t.confirmDelete}</span>
-              <button onClick={handleDelete} className="px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-ui">{t.confirm}</button>
-              <button onClick={() => setShowDeleteConfirm(false)} className="px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-ui">{t.cancel}</button>
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="whitespace-nowrap text-xs text-[#e06e6e] font-ui">{t.confirmDelete}</span>
+              <button onClick={handleDelete} className="shrink-0 whitespace-nowrap px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-ui">{t.confirm}</button>
+              <button onClick={() => setShowDeleteConfirm(false)} className="shrink-0 whitespace-nowrap px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-ui">{t.cancel}</button>
             </div>
           )}
         </div>
