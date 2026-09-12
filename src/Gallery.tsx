@@ -143,8 +143,8 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             </div>
           </div>
 
-          <div className="min-w-0 flex flex-wrap items-center justify-end gap-2 lg:justify-self-end">
-            <div className="flex items-center">
+          <div className="min-w-0 flex flex-nowrap items-center justify-end gap-1 lg:flex-wrap lg:gap-2 lg:justify-self-end">
+            <div className="flex shrink-0 items-center">
               <button
                 ref={aboutButton}
                 type="button"
@@ -155,17 +155,17 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
                   setAboutMode("full");
                   setAboutOpen(true);
                 }}
-                className="whitespace-nowrap px-2.5 py-1.5 text-xs font-ui font-normal text-[#b8b5af] hover:text-[#f0ede8] bg-transparent border border-transparent rounded-lg transition-colors"
+                className="whitespace-nowrap px-2 py-1.5 text-xs font-ui font-normal text-[#b8b5af] hover:text-[#f0ede8] bg-transparent border border-transparent rounded-lg transition-colors lg:px-2.5"
               >
                 {t.about}
               </button>
-              <LanguageSwitcher />
+              <LanguageSwitcher buttonClassName="px-2 lg:px-2.5" />
             </div>
             <span aria-hidden="true" className="h-3.5 w-px shrink-0 self-center border-l border-[#2e2e32]" />
-            <ImportBackup store={store} />
+            <ImportBackup store={store} buttonClassName="px-2 lg:px-2.5" />
             {/* 排序與管理使用相同的箭頭、按鈕及等寬下拉選單。 */}
             <div ref={sortMenuRef} className="relative z-40 shrink-0" onKeyDown={(e) => { if (e.key === "Escape") { setSortMenuOpen(false); (e.currentTarget.querySelector("button") as HTMLButtonElement | null)?.focus(); } }}>
-              <button type="button" aria-haspopup="true" aria-expanded={sortMenuOpen} onClick={() => setSortMenuOpen((current) => !current)} className="whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">
+              <button type="button" aria-haspopup="true" aria-expanded={sortMenuOpen} onClick={() => setSortMenuOpen((current) => !current)} className="whitespace-nowrap bg-[#161618] px-2 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg lg:px-2.5">
                 {sortLabels[sort]}{" "}<span aria-hidden="true" className={`inline-block text-xs transition-transform duration-150 motion-reduce:transition-none ${sortMenuOpen ? "rotate-180" : ""}`}>▾</span>
               </button>
               {sortMenuOpen && <div className="absolute right-0 top-full mt-1 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
@@ -176,7 +176,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             </div>
             <button
               onClick={onAdd}
-              className="px-3 py-1.5 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
+              className="shrink-0 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors lg:px-3"
             >
               {t.add}
             </button>
