@@ -120,7 +120,7 @@ export default function ImportBackup({ store }: { store: Store }) {
       if (event.key === "Escape") { setMenuOpen(false); manageButton.current?.focus(); }
     }}>
       <button ref={manageButton} type="button" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen((current) => !current)} className="whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">
-        {t.manage}{" "}<span aria-hidden="true" className={`inline-block text-[14px] transition-transform duration-150 motion-reduce:transition-none ${menuOpen ? "rotate-180" : ""}`}>▾</span>
+        {t.manage}{" "}<span aria-hidden="true" className={`inline-block text-xs transition-transform duration-150 motion-reduce:transition-none ${menuOpen ? "rotate-180" : ""}`}>▾</span>
       </button>
       {menuOpen && <div className="absolute right-0 top-full mt-1 min-w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
         <button type="button" onClick={() => { setMenuOpen(false); void store.exportData(); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">{t.exportAction}</button>

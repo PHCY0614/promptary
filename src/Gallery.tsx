@@ -166,7 +166,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             {/* 排序與管理使用相同的箭頭、按鈕及等寬下拉選單。 */}
             <div ref={sortMenuRef} className="relative z-40 shrink-0" onKeyDown={(e) => { if (e.key === "Escape") { setSortMenuOpen(false); (e.currentTarget.querySelector("button") as HTMLButtonElement | null)?.focus(); } }}>
               <button type="button" aria-haspopup="true" aria-expanded={sortMenuOpen} onClick={() => setSortMenuOpen((current) => !current)} className="whitespace-nowrap bg-[#161618] px-2.5 py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg">
-                {sortLabels[sort]}{" "}<span aria-hidden="true" className={`inline-block text-[14px] transition-transform duration-150 motion-reduce:transition-none ${sortMenuOpen ? "rotate-180" : ""}`}>▾</span>
+                {sortLabels[sort]}{" "}<span aria-hidden="true" className={`inline-block text-xs transition-transform duration-150 motion-reduce:transition-none ${sortMenuOpen ? "rotate-180" : ""}`}>▾</span>
               </button>
               {sortMenuOpen && <div className="absolute right-0 top-full mt-1 w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
                 {(["newest", "updated", "oldest"] as const).map((value) => (
