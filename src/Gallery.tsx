@@ -2,6 +2,7 @@ import { STATUS_STYLE } from "./statusStyles";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Collection, Status } from "./types";
 import { getCoverImage, Store } from "./store";
+import AboutDialog from "./AboutDialog";
 import ImportBackup from "./ImportBackup";
 import StoredImage from "./StoredImage";
 import { LanguageSwitcher, brandSubtitleClass, useLocale } from "./i18n";
@@ -42,6 +43,8 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
   };
   const containerRef = useRef<HTMLDivElement>(null);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const aboutButton = useRef<HTMLButtonElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
 
   // restore scroll on mount
@@ -133,7 +136,20 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
           </div>
 
           <div className="min-w-0 flex flex-wrap items-center justify-end gap-2 lg:justify-self-end">
-            <LanguageSwitcher />
+            <div className="flex items-center">
+              <button
+                ref={aboutButton}
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={aboutOpen}
+                onClick={() => setAboutOpen(true)}
+                className="whitespace-nowrap px-2.5 py-1.5 text-xs font-ui font-normal text-[#b8b5af] hover:text-[#f0ede8] bg-transparent border border-transparent rounded-lg transition-colors"
+              >
+                {t.about}
+              </button>
+              <LanguageSwitcher />
+            </div>
+            <span aria-hidden="true" className="h-3.5 w-px shrink-0 self-center border-l border-[#2e2e32]" />
             <ImportBackup store={store} />
             {/* 排序與管理使用相同的箭頭、按鈕及等寬下拉選單。 */}
             <div ref={sortMenuRef} className="relative z-40 shrink-0" onKeyDown={(e) => { if (e.key === "Escape") { setSortMenuOpen(false); (e.currentTarget.querySelector("button") as HTMLButtonElement | null)?.focus(); } }}>
@@ -192,6 +208,14 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
           <button onClick={() => { setSearch(""); setFilter("all"); setActiveTags([]); setTagSearch(""); }} className="shrink-0 text-xs text-[#b8b5af] px-2 py-1">{t.reset}</button>
         </div>}
       </header>
+
+      <AboutDialog
+        open={aboutOpen}
+        onClose={() => {
+          setAboutOpen(false);
+          requestAnimationFrame(() => aboutButton.current?.focus());
+        }}
+      />
 
       {/* 所有標籤：搜尋與限高清單，避免大量標籤撐長首頁。 */}
       {showTags && <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setShowTags(false)} onKeyDown={(e) => { if (e.key === "Escape") setShowTags(false); }}>

@@ -175,6 +175,18 @@ export type Messages = {
   loadingStorage: string;
   resizeHandle: string;
   resizeHint: string;
+  about: string;
+  aboutIntro: string[];
+  aboutSteps: string[];
+  aboutReminderTitle: string;
+  aboutReminder: string[];
+  aboutWhyTitle: string;
+  aboutWhy: string[];
+  aboutMeTitle: string;
+  aboutMeKaomoji: string;
+  aboutMe: string[];
+  aboutInstagramUrl: string;
+  aboutThreadsUrl: string;
   statusLabel: Record<Status, string>;
   errors: Record<ErrorCode, string>;
 };
@@ -189,6 +201,41 @@ const zhTW: Messages = {
   languageZhTW: "正體中文",
   languageEn: "English",
   switchLanguage: "Switch to English",
+  about: "關於",
+  aboutIntro: [
+    "Promptary 是一個用來收藏 AI 生圖咒語、來源連結和嘗試紀錄的小工具，方便集中檢視以及日後查找與比較。",
+    "不需要登入，資料保存在你的瀏覽器裡。",
+  ],
+  aboutSteps: [
+    "點「新增」建立收藏，加入圖片與咒語（也可以先存圖，之後再補文字）",
+    "用搜尋、標籤或最愛找回收藏，複製咒語到生圖平台",
+    "生成後回到 Promptary，新增「嘗試」記錄成果圖、平台、模型、評分與心得",
+    "選兩張圖並排比較，看不同嘗試的效果差異，並查看各自對應的咒語",
+    "定期到「管理 → 匯出」備份，避免資料遺失，換裝置時也能匯入還原",
+  ],
+  aboutReminderTitle: "使用前的小提醒",
+  aboutReminder: [
+    "Promptary 目前是以本機儲存為主，沒有帳號，也沒有雲端同步。",
+    "你的收藏會存在目前使用的瀏覽器和裝置裡，所以如果換電腦、換手機或換瀏覽器，資料不會自己跟著過去。需要搬家的話，可以使用「匯出」和「匯入」。",
+    "也建議偶爾匯出備份。清除瀏覽器的資料時，Promptary 裡的收藏可能會一起被清掉。",
+    "另外，不建議使用無痕／私密瀏覽模式。這類模式對本機儲存的處理比較不穩定，而且關閉視窗後資料也可能掰掰。",
+  ],
+  aboutWhyTitle: "為什麼做這個？",
+  aboutWhy: [
+    "常常在 Threads 看到有趣咒語就跑去試，但是！每當生出漂亮圖片，或是想找回咒語分享給別人時，就會開始困擾。畢竟 Threads 的收藏功能就是很難用啊 ( •᷄⌓•᷅ )！好想要有地方可以把這些酷東西儲存起來方便查看。",
+    "於是 Promptary 在我 Codex 用量還剩 60%，但隔天就要重置的情況下誕生了。一開始其實只是想燒 Token 做一個自己用的簡單小工具，不知道為什麼突變成現在這樣。",
+    "Promptary 作為我的個人小專案，大概還會持續調整。如果你剛好也覺得它有用，那就太好了。",
+  ],
+  aboutMeTitle: "關於我",
+  aboutMeKaomoji: "(◍•ᴗ•◍)♡ ✧*。",
+  aboutMe: [
+    "這邊是黎晞（Jade），AI RP 玩家，有一點點 IT 背景的文科 I 人。",
+    "Promptary 是我自己發想、 vibe coding 完成的個人專案。",
+    "如果你遇到 bug、有功能建議，或只是想跟我聊天，可以到 Threads 找我！",
+    "我的 Threads 沒有私訊功能，可以直接回覆我貼文，或從 IG 私訊。",
+  ],
+  aboutThreadsUrl: "https://www.threads.com/@jadezzjh",
+  aboutInstagramUrl: "https://www.instagram.com/jadezzjh/",
   searchPlaceholder: "搜尋咒語、筆記、標籤……",
   sortNewest: "最新收藏",
   sortUpdated: "最近更新",
@@ -421,6 +468,43 @@ const en: Messages = {
   languageZhTW: "正體中文",
   languageEn: "English",
   switchLanguage: "切換至正體中文",
+  about: "About",
+  aboutIntro: [
+    "Promptary is a small tool for collecting AI image prompts, source links, and attempt records, so you can browse them in one place and look them up or compare them later.",
+    "No sign-in required. Your data stays in your browser.",
+  ],
+  aboutSteps: [
+    "Click + New to create a collection, then add images and prompts (you can save the images first and fill in the text later)",
+    "Find a collection with search, tags, or favourites, then copy the prompt into an image generator",
+    "After generating, come back to Promptary and add an Attempt with the result images, platform, model, rating, and notes",
+    "Pick two images to compare side by side, see how attempts differ, and check the prompt for each",
+    "Back up regularly via Manage → Export so you don’t lose data, and so you can import it on another device",
+  ],
+  aboutReminderTitle: "A few notes before you start",
+  aboutReminder: [
+    "Promptary currently stores data locally. There is no account and no cloud sync.",
+    "Your collection lives in the browser and device you are using, so it will not follow you if you switch computers, phones, or browsers. To move it, use Export and Import.",
+    "It’s also a good idea to export a backup now and then. Clearing this site’s data in your browser can wipe your Promptary collection too.",
+    "Incognito / private browsing is not recommended. Those modes handle local storage unreliably, and data may not persist after you close the window.",
+  ],
+  aboutWhyTitle: "Why did I make this?",
+  aboutWhy: [
+    "I keep seeing interesting prompts on Threads and going off to try them. But whenever a beautiful image comes out, or I want to find the prompt again to share it, I get stuck. Threads’ bookmarks are just so hard to use ( •᷄⌓•᷅ )!",
+    "I wanted a place where I could keep everything together, organise it properly, and actually find things again when I needed them.",
+    "So Promptary was born when I still had 60% of my Codex usage left, and it was going to reset the next day. At first I just wanted to burn tokens on a simple tool for myself. I’m not sure how it somehow turned into this.",
+    "Promptary is my little personal side project, and I’ll probably keep tinkering with it. If you find it useful too, that’d be great.",
+  ],
+  aboutMeTitle: "About me",
+  aboutMeKaomoji: "(◍•ᴗ•◍)♡ ✧*。",
+  aboutMe: [
+    "This is 黎晞 Lí Hsī (Jade), an AI RP player with a humanities background who somehow wandered into IT, and very much an introvert.",
+    "Promptary is a personal project I came up with and vibe-coded myself.",
+    "If you hit a bug, have a feature idea, or just want to chat, find me on Threads!",
+    "My Threads has no DMs — reply to a post, or message me on Instagram.",
+  ],
+  aboutThreadsLabel: "Threads",
+  aboutThreadsUrl: "https://www.threads.com/@jadezzjh",
+  aboutInstagramUrl: "https://www.instagram.com/jadezzjh/",
   searchPlaceholder: "Search prompts, notes, tags…",
   sortNewest: "Newest",
   sortUpdated: "Edited",
