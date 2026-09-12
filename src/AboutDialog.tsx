@@ -2,12 +2,33 @@ import { useEffect, useRef, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { useLocale } from "./i18n";
 
+export type AboutMode = "intro" | "full";
+
+export const INTRO_SEEN_KEY = "promptary_intro_seen";
+
+export function hasSeenIntro(): boolean {
+  try {
+    return localStorage.getItem(INTRO_SEEN_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function markIntroSeen() {
+  try {
+    localStorage.setItem(INTRO_SEEN_KEY, "true");
+  } catch {
+    /* private mode or blocked storage: skip */
+  }
+}
+
 interface Props {
   open: boolean;
+  mode?: AboutMode;
   onClose: () => void;
 }
 
-export default function AboutDialog({ open, onClose }: Props) {
+export default function AboutDialog({ open, mode = "full", onClose }: Props) {
   const { t } = useLocale();
   const dialogRef = useRef<HTMLElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -87,16 +108,16 @@ export default function AboutDialog({ open, onClose }: Props) {
             </div>
           </section>
 
-          <section>
+          {mode === "full" && <section>
             <h3 className="mb-2 text-sm font-bold text-[#f0ede8]">{t.aboutWhyTitle}</h3>
             <div className="space-y-3">
               {t.aboutWhy.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
             </div>
-          </section>
+          </section>}
 
-          <section>
+          {mode === "full" && <section>
             <h3 className="mb-2 text-sm font-bold text-[#f0ede8]">{t.aboutMeTitle}</h3>
             <div className="space-y-3">
               <p>{t.aboutMeKaomoji}</p>
@@ -146,7 +167,7 @@ export default function AboutDialog({ open, onClose }: Props) {
                 </a>                
               </p>
             </div>
-          </section>
+          </section>}
         </div>
       </section>
     </div>,

@@ -2,7 +2,7 @@ import { STATUS_STYLE } from "./statusStyles";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Collection, Status } from "./types";
 import { getCoverImage, Store } from "./store";
-import AboutDialog from "./AboutDialog";
+import AboutDialog, { hasSeenIntro, markIntroSeen, type AboutMode } from "./AboutDialog";
 import ImportBackup from "./ImportBackup";
 import StoredImage from "./StoredImage";
 import { LanguageSwitcher, brandSubtitleClass, useLocale } from "./i18n";
@@ -44,6 +44,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [aboutMode, setAboutMode] = useState<AboutMode>("full");
   const aboutButton = useRef<HTMLButtonElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +54,13 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
       containerRef.current.scrollTop = scrollPos.current;
     }
   }, []);
+
+  useEffect(() => {
+    if (store.loadState !== "ready") return;
+    if (hasSeenIntro()) return;
+    setAboutMode("intro");
+    setAboutOpen(true);
+  }, [store.loadState]);
 
   useEffect(() => {
     if (!sortMenuOpen) return;
@@ -142,7 +150,11 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
                 type="button"
                 aria-haspopup="dialog"
                 aria-expanded={aboutOpen}
-                onClick={() => setAboutOpen(true)}
+                onClick={() => {
+                  if (aboutOpen && aboutMode === "intro") markIntroSeen();
+                  setAboutMode("full");
+                  setAboutOpen(true);
+                }}
                 className="whitespace-nowrap px-2.5 py-1.5 text-xs font-ui font-normal text-[#b8b5af] hover:text-[#f0ede8] bg-transparent border border-transparent rounded-lg transition-colors"
               >
                 {t.about}
@@ -211,7 +223,9 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
 
       <AboutDialog
         open={aboutOpen}
+        mode={aboutMode}
         onClose={() => {
+          if (aboutMode === "intro") markIntroSeen();
           setAboutOpen(false);
           requestAnimationFrame(() => aboutButton.current?.focus());
         }}
