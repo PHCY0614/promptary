@@ -499,7 +499,6 @@ const en: Messages = {
     "If you hit a bug, have a feature idea, or just want to chat, find me on Threads!",
     "My Threads has no DMs — reply to a post, or message me on Instagram.",
   ],
-  aboutThreadsLabel: "Threads",
   aboutThreadsUrl: "https://www.threads.com/@jadezzjh",
   aboutInstagramUrl: "https://www.instagram.com/jadezzjh/",
   searchPlaceholder: "Search prompts, notes, tags…",
