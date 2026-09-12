@@ -72,7 +72,7 @@ export default function AboutDialog({ open, mode = "full", onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="about-title"
-        className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-[#161618] border border-[#2e2e32] p-5 text-sm text-[#f0ede8]"
+        className="w-full max-w-2xl max-h-[75dvh] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-[#161618] border border-[#2e2e32] p-5 text-sm text-[#f0ede8]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 mb-4">
