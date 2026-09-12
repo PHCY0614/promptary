@@ -469,7 +469,6 @@ const en: Messages = {
   about: "About",
   aboutIntro: [
     "Promptary is a small tool for collecting AI image prompts, source links, and attempt records, so you can keep everything in one place and easily find or compare it later.",
-    "No sign-in required. Your data stays in your browser.",
   ],
   aboutSteps: [
     "Click \"New\" to create a collection, then add images and prompts (you can save the images first and fill in the text later)",
