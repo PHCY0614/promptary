@@ -14,13 +14,15 @@ No sign-in is required. Collections and images are stored locally in your browse
 
 ## Current Version
 
-Last updated: 11 September 2026.
+Last updated: 12 September 2026.
 
-Promptary currently supports collection management, experiment tracking, categorised prompt reading, side-by-side image comparison, ZIP backups, and local storage information. Recent updates also introduced a limit of 10 images per selection, with up to 2 images processed concurrently, along with size limits for backup imports.
+Promptary currently supports collection management, experiment tracking, categorised prompt reading, side-by-side image comparison, ZIP backups, and local storage information. Recent updates added starter collections, a first-visit introduction, classification inheritance for custom prompts, and stricter ZIP backup validation, alongside startup and mobile layout fixes.
 
-The current code version is `1ff3877` and has been pushed to the GitHub `main` branch. The live site reflects the most recent successful deployment.
+This overview is based on code version `7e7ca57`. The live site reflects the most recent successful deployment.
 
 ## Workflow
+
+On your first visit, a short introduction explains the workflow and local storage reminders. A new library includes example collections with reference images and experiment results that you can edit or delete. Use **About** to reopen the full introduction, including the story behind Promptary and links to the creator.
 
 1. Create a collection with reference images, prompts, sources, and notes. You can also save images first and add the text later.
 2. Find collections using search, tags, status filters, and favourites.
@@ -33,6 +35,7 @@ The current code version is `1ff3877` and has been pushed to the GitHub `main` b
 * **Collection management**: Name collections and experiments, and organise them with tags, search, status filters, sorting, and favourites.
 * **Experiment tracking**: Each collection can contain multiple experiments with generated images, platform, model, date, rating, and notes. Custom platforms can also be managed.
 * **Prompt reading**: Switch between the original prompt and a categorised view, with categories that can be adjusted manually. Categorisation is based on local Chinese and English keyword matching. It does not modify the original prompt or copied text, and does not call any AI service.
+* **Classification inheritance**: When saving a custom experiment prompt, matching text segments can inherit categories from the original prompt. Existing manual categories in the experiment take priority when editing, so unchanged segments do not need to be categorised again.
 * **Image comparison**: Reference images and generated results can both be used as cover images. Any two images can be compared side by side, including on mobile, with controls for switching the information shown for each side.
 * **Form protection**: If a form contains unsaved changes, Promptary asks for confirmation before closing it. If saving fails, your input is preserved so you can retry.
 * **Bilingual interface**: Switch between Traditional Chinese and English. Your language preference is stored in the current browser.
@@ -71,7 +74,11 @@ This is not a field-by-field merge. Custom platform lists, however, are merged a
 
 The current ZIP import limit is **100 MiB**, with a maximum declared uncompressed size of **200 MiB**. Legacy JSON backups cannot be restored directly through the current import interface.
 
+Import also checks ZIP structure and entry metadata before extracting files. Damaged or inconsistent archives are rejected before the import preview.
+
 **Manage → Local Data** shows the storage usage reported by the browser and the current data protection status. Storage protection is still controlled by the browser. It does not replace ZIP backups and does not provide automatic syncing.
+
+The site includes Cloudflare Web Analytics for website usage measurement. Collection and image storage remains local to the browser; analytics does not provide cloud backups or syncing.
 
 ## Local Development
 

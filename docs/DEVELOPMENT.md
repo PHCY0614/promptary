@@ -2,20 +2,29 @@
 
 [English](./DEVELOPMENT.md) | [正體中文](./DEVELOPMENT.zh-TW.md)
 
-Last updated: 11 September 2026  
-Current code version: `1ff3877`
+Last updated: 12 September 2026
 
-The latest fixes for image batching and backup limits have been pushed to GitHub `main`, with the local and remote commits in sync. The live site reflects the most recent successful GitHub Pages deployment.
+Code version reviewed: `7e7ca57`
+
+These notes describe the current local code and its committed history. Deployment status is separate and should be checked against the latest successful deployment.
 
 ## Current Status
 
 Promptary is a local-first tool for collecting AI image generation prompts and tracking experiments. It is built with React 19, TypeScript, Vite 8, Tailwind CSS v4, and IndexedDB, and is hosted through GitHub Pages.
 
-The current version includes collection search, tag and status filtering, favourites, naming for collections and experiments, ratings, cover image selection, categorised prompt reading, side-by-side mobile comparison, Traditional Chinese and English interfaces, ZIP backups, and local storage information.
+The current version includes collection search, tag and status filtering, favourites, naming for collections and experiments, ratings, cover image selection, categorised prompt reading, side-by-side mobile comparison, Traditional Chinese and English interfaces, ZIP backups, and local storage information. It also includes starter collections, a first-visit introduction and About dialog, and classification inheritance for custom experiment prompts.
 
 Collections and images are stored in the browser under the current site origin. There is no sign-in system, cloud database, or automatic cross-device synchronisation. Supabase has been discussed and evaluated but has not been implemented. For now, moving data between devices relies on manually exporting and importing ZIP backups.
 
 ## Implementation Details
+
+### First Visit and Starter Collections
+
+When no current archive or legacy data exists, the app displays bundled starter collections and queues their images for storage in IndexedDB. `StoredImage.tsx` can display the bundled image URL while the local Blob is unavailable. Existing libraries, including saved empty libraries, are retained rather than repopulated with examples.
+
+Starter installation shares the normal write queue and checks for an existing archive again before committing. Failed installation releases the queue so later writes can proceed. Database opening and initial archive reading have timeouts, as do starter image downloads and decoding; a stalled operation should not leave the initial loading screen waiting indefinitely. This fallback does not make unavailable browser storage writable.
+
+The gallery opens a shorter About introduction until it has been dismissed, recording that preference in `localStorage` as `promptary_intro_seen`. The About button opens the full version with usage reminders, the project's background, and creator links. The dialog supports Escape, keyboard focus containment, and focus return to the About button. If the preference cannot be stored, the introduction may appear again.
 
 ### Images and Storage
 
@@ -34,6 +43,8 @@ Data updates are queued through `store.ts`. The UI is updated only after the cor
 The current backup format is ZIP. It contains the manifest, canonical images, and the custom platform list. Regenerable thumbnails are not included.
 
 Before import, Promptary validates the backup format, version, image data, entry count, file sizes, and unsafe paths. An import preview is shown first, and no data is written until the user confirms. Collections and images are then written transactionally to reduce the risk of partially imported data.
+
+ZIP validation also checks central-directory boundaries and entry counts, rejects split archives and ZIP64 locator records, and verifies size consistency for uncompressed entries. During extraction, the `fflate` filter checks each entry's name, compressed size, declared uncompressed size, and compression method against the preflight result before allocating its output buffer. Missing, repeated, or inconsistent entries cause the import to fail.
 
 When the same collection ID exists both locally and in the backup, the last-updated timestamp determines which version is kept. If the backup is newer, the entire collection is updated. If the local copy is newer or the timestamps are identical, the local version is kept.
 
@@ -61,11 +72,23 @@ Categorised prompt reading is generated using local Chinese and English keyword 
 
 Manual category assignments are tied to the prompt text they were created for, preventing old classifications from being incorrectly applied after the original prompt changes. Categorised reading also does not alter the text copied from the original prompt.
 
+When a custom experiment is created or its prompt changes, `inheritPromptClassification` matches trimmed text segments to the original prompt and carries their categories into a saved classification snapshot. Existing manual experiment categories take priority for matching segments; new segments use the local keyword rules. Saving an unchanged custom prompt retains its existing classification. This is inheritance at save time, not continuous synchronisation with later original-category changes.
+
 When creating a new experiment, the custom prompt field is empty by default. Users can instead select **Unmodified** to use the original prompt.
 
 The data model explicitly distinguishes between using the original prompt and using a custom prompt, rather than inferring the mode solely from whether two text values happen to be identical.
 
 Collection and experiment forms share the same unsaved-change confirmation behaviour. This protection applies when closing a form; it is not automatic draft saving. Refreshing the page may still discard unsaved changes.
+
+### Site Assets and Deployment
+
+`index.html` includes favicons, an Apple touch icon, a theme colour, and a web manifest. The manifest uses relative start and scope URLs with standalone display settings. These assets provide browser and home-screen presentation; no service worker or offline application cache is implemented.
+
+The GitHub Pages workflow checks out Git LFS assets with `lfs: true`. Keep this enabled so published images contain the actual binary files rather than LFS pointers. Vite uses `PAGES_BASE_PATH` for deployment under a subpath, and HTML icon links use `%BASE_URL%`.
+
+`public/_headers` contains Cloudflare deployment headers, including CSP and caching rules. Their presence in the build does not establish that another hosting provider applies them. `.figma/make/site.json` retains site metadata and permits indexing through `robots.index: true`.
+
+The HTML includes a Cloudflare Web Analytics script for website usage measurement, and the stylesheet loads Google Fonts. Local collection storage does not mean the page makes no external requests. Analytics is separate from the browser archive and does not add cloud backups or synchronisation.
 
 ## Main Files
 
@@ -78,13 +101,32 @@ Collection and experiment forms share the same unsaved-change confirmation behav
 | Backups | `backup.ts`, `ImportBackup.tsx` |
 | Prompt reading and comparison | `PromptReader.tsx`, `promptClassification.ts`, `ImageComparison.tsx`, `comparisonImages.ts` |
 | Language and platform preferences | `i18n/`, `platformStorage.ts` |
+| Introduction and starter data | `AboutDialog.tsx`, `starterData.ts`, `starterInitTimeouts.ts`, `withTimeout.ts` |
 | Tests | `tests/` |
 
 The source files above are located under `src/`, while tests are stored in the project-level `tests/` directory.
 
+Site assets and starter images are under `public/`. Deployment configuration is in `.github/workflows/pages.yml`, `vite.config.ts`, `index.html`, `public/_headers`, and `.figma/make/site.json`.
+
 ## Development Log
 
 The following log is organised by Git commit date. Related changes from the same day have been grouped together, while older approaches that have since been replaced are kept only as a summary of the project's evolution.
+
+### 2026-09-12 | Introduction, Startup Recovery, and ZIP Validation
+
+Added an About dialog with usage notes, local storage reminders, the project's background, and creator links. First visits show a shorter introduction, with dismissal remembered in the current browser. Refined the bilingual copy, dialog layout, gallery actions on mobile, dropdown chevrons, and detail header controls.
+
+Fixed IndexedDB starter installation failures so they no longer block subsequent writes. Added the Cloudflare Web Analytics script to the HTML.
+
+Hardened ZIP central-directory validation and cross-checked extraction metadata against the preflight result. Added regression cases for malformed boundaries, inconsistent entry sizes, and split archives. These backup changes are recorded in `7e7ca57`.
+
+### 2026-09-11 | Starter Examples, Classification Inheritance, and Site Assets
+
+Replaced the earlier seed data with bundled example collections and images. Added startup timeouts and a display fallback so a new library can show examples while their images are being stored. Existing archives are preserved, and starter installation runs through the write queue.
+
+Custom experiment prompts now inherit classifications for matching original segments while retaining their own manual adjustments. Refined experiment result cards, loading copy, and alignment between the detail header and content.
+
+Added favicons, an Apple touch icon, and a web manifest. Enabled Git LFS checkout in the Pages workflow, added Cloudflare deployment headers, and updated the indexing setting.
 
 ### 2026-09-11 | Bilingual UI, Backup Management, and Stability
 
@@ -144,13 +186,15 @@ pnpm test
 pnpm build
 ```
 
-As of `1ff3877`, all of the checks above pass.
+Run these checks against the revision being changed; an earlier successful run does not establish the state of a later revision.
 
-Tests cover image processing, batch limits and concurrency control, storage and migration, ZIP backups, classification and comparison image selection, and form-closing behaviour.
+Tests cover image processing, batch limits and concurrency control, storage and migration, ZIP backups and malformed archive rejection, collection flows, custom platforms, classification inheritance and comparison image selection, form-closing behaviour, and starter data loading and fallback.
 
 Some interface checks validate code structure rather than full browser interaction, so they do not replace manual browser testing.
 
 Changes involving images or mobile interaction should still be manually verified for image selection, successful saving, reloading persisted data, adding a second batch, closing forms, and restoring backups.
+
+Also check first-visit introduction dismissal, reopening About, starter loading on a fresh library, and keeping an existing or deliberately emptied library unchanged. For deployment changes, verify the published image bytes and asset paths as well as the build result.
 
 Passing the test suite does not mean that memory usage or processing time has been measured across every device.
 
