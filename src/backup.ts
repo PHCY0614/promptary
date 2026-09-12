@@ -124,22 +124,32 @@ function inspectZip(bytes: Uint8Array) {
   const entries = view.getUint16(eocd + 10, true);
   const centralSize = view.getUint32(eocd + 12, true);
   const centralOffset = view.getUint32(eocd + 16, true);
+  if (view.getUint16(eocd + 4, true) !== 0 || view.getUint16(eocd + 6, true) !== 0 ||
+    view.getUint16(eocd + 8, true) !== entries ||
+    (eocd >= 20 && view.getUint32(eocd - 20, true) === 0x07064b50)) fail(ErrorCode.backupZipUnsupported);
   if (entries > MAX_ENTRY_COUNT || centralOffset + centralSize > bytes.byteLength) fail(ErrorCode.backupZipTooMany);
+  const centralEnd = centralOffset + centralSize;
+  if (centralEnd > eocd) fail();
+  const checkedEntries = new Map<string, { size: number; originalSize: number; compression: number }>();
   let cursor = centralOffset;
   let total = 0;
   const names = new Set<string>();
   for (let index = 0; index < entries; index++) {
-    if (cursor + 46 > bytes.byteLength || view.getUint32(cursor, true) !== 0x02014b50) fail();
+    if (cursor + 46 > centralEnd || view.getUint32(cursor, true) !== 0x02014b50) fail();
     const flags = view.getUint16(cursor + 8, true);
     const method = view.getUint16(cursor + 10, true);
     const size = view.getUint32(cursor + 24, true);
+    const compressedSize = view.getUint32(cursor + 20, true);
     const nameLength = view.getUint16(cursor + 28, true);
     const extraLength = view.getUint16(cursor + 30, true);
     const commentLength = view.getUint16(cursor + 32, true);
+    if (cursor + 46 + nameLength + extraLength + commentLength > centralEnd) fail();
     if ((flags & 1) !== 0 || (method !== 0 && method !== 8)) fail(ErrorCode.backupZipUnsupported);
+    if (method === 0 && compressedSize !== size) fail();
     const name = strFromU8(bytes.subarray(cursor + 46, cursor + 46 + nameLength));
     if (!name || name.includes("\\") || name.startsWith("/") || name.split("/").includes("..") || names.has(name)) fail(ErrorCode.backupZipUnsafePath);
     names.add(name);
+    checkedEntries.set(name, { size: compressedSize, originalSize: size, compression: method });
     if ((name === "manifest.json" && size > MAX_MANIFEST_BYTES) || (name.startsWith("images/") && size > MAX_CANONICAL_BYTES)) {
       fail(ErrorCode.backupZipEntryTooLarge);
     }
@@ -147,6 +157,8 @@ function inspectZip(bytes: Uint8Array) {
     if (total > MAX_UNCOMPRESSED_BYTES) fail(ErrorCode.backupZipUncompressed);
     cursor += 46 + nameLength + extraLength + commentLength;
   }
+  if (cursor !== centralEnd) fail();
+  return checkedEntries;
 }
 
 export async function createBackup(collections: Collection[], customPlatforms: string[]): Promise<Blob> {
@@ -170,9 +182,19 @@ export async function createBackup(collections: Collection[], customPlatforms: s
 
 export async function parseBackup(file: File): Promise<BackupBundle> {
   const bytes = new Uint8Array(await file.arrayBuffer());
-  inspectZip(bytes);
+  const checkedEntries = inspectZip(bytes);
   let files: Record<string, Uint8Array>;
-  try { files = unzipSync(bytes); } catch { fail(); }
+  try {
+    files = unzipSync(bytes, { filter(entry) {
+      // Enforce the preflight result before fflate allocates each output buffer.
+      const checked = checkedEntries.get(entry.name);
+      if (!checked || checked.size !== entry.size || checked.originalSize !== entry.originalSize ||
+        checked.compression !== entry.compression) fail();
+      checkedEntries.delete(entry.name);
+      return true;
+    } });
+    if (checkedEntries.size !== 0) fail();
+  } catch { fail(); }
   const manifestBytes = files["manifest.json"];
   if (!manifestBytes || manifestBytes.byteLength > MAX_MANIFEST_BYTES) fail();
   let manifest: unknown;
