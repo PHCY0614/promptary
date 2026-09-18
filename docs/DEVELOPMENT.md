@@ -82,8 +82,6 @@ Collection and experiment forms share the same unsaved-change confirmation behav
 
 `TagPicker.tsx` derives reusable tag suggestions from the current collection data rather than maintaining a separate tag store. Comparison trims tag text and ignores case, while the first saved display form is retained. Suggestions are ranked by use count and then recency, shown in one adaptive row by default, and expanded with an accessible arrow control. Typing filters the full suggestion set and still allows a new tag to be created.
 
-Collection and experiment forms use matching 55 px header and footer rows without changing their control sizes. Image-storage hints now stay with their image fields and use the same helper-text treatment as tag guidance. The collection favourite control keeps a compact visual line while its text and heart share the click target. Creation buttons use action-specific copy—**Add to library** and **Save attempt**—while edit forms retain **Save changes**.
-
 ### Site Assets and Deployment
 
 `index.html` includes favicons, an Apple touch icon, a theme colour, and a web manifest. The manifest uses relative start and scope URLs with standalone display settings. These assets provide browser and home-screen presentation; no service worker or offline application cache is implemented.
