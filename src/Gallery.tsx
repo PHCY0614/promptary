@@ -6,6 +6,7 @@ import AboutDialog, { hasSeenIntro, markIntroSeen, type AboutMode } from "./Abou
 import ImportBackup from "./ImportBackup";
 import StoredImage from "./StoredImage";
 import { LanguageSwitcher, brandSubtitleClass, useLocale } from "./i18n";
+import { collectionHasAnyTag, normalizeTag, summarizeTags, uniqueTags } from "./tags";
 
 type SortKey = "newest" | "updated" | "oldest";
 
@@ -14,9 +15,6 @@ const STATUS_DOT: Record<Status, string> = {
   want: "bg-[#8FAFCB]",
   ref: "bg-[#B5A0D8]",
 };
-
-const ALL_TAGS_FROM = (cs: Collection[]) =>
-  Array.from(new Set(cs.flatMap((c) => c.tags))).sort();
 
 interface Props {
   store: Store;
@@ -37,8 +35,8 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
   const [showTags, setShowTags] = useState(false);
   const [tagSearch, setTagSearch] = useState("");
   const tagStripRef = useRef<HTMLDivElement>(null);
-  const chooseTag = (tag: string) => {
-    setActiveTags((current) => current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag]);
+  const chooseTag = (tagKey: string) => {
+    setActiveTags((current) => current.includes(tagKey) ? current.filter((key) => key !== tagKey) : [...current, tagKey]);
     if (tagStripRef.current) tagStripRef.current.scrollLeft = 0;
   };
   const containerRef = useRef<HTMLDivElement>(null);
@@ -71,7 +69,17 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
     return () => document.removeEventListener("pointerdown", closeMenu);
   }, [sortMenuOpen]);
 
-  const allTags = useMemo(() => ALL_TAGS_FROM(collections), [collections]);
+  const allTags = useMemo(() => summarizeTags(collections, locale), [collections, locale]);
+  const activeTagSet = useMemo(() => new Set(activeTags), [activeTags]);
+  const orderedTags = useMemo(() => [
+    ...activeTags.map((key) => allTags.find((tag) => tag.key === key)).filter((tag): tag is NonNullable<typeof tag> => Boolean(tag)),
+    ...allTags.filter((tag) => !activeTagSet.has(tag.key)),
+  ], [activeTags, activeTagSet, allTags]);
+
+  useEffect(() => {
+    const availableKeys = new Set(allTags.map((tag) => tag.key));
+    setActiveTags((current) => current.every((key) => availableKeys.has(key)) ? current : current.filter((key) => availableKeys.has(key)));
+  }, [allTags]);
 
   const filtered = useMemo(() => {
     let list = [...collections];
@@ -80,7 +88,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
     else if (filter !== "all") list = list.filter((c) => c.status === filter);
 
     // 多選標籤採 OR：符合任一已選標籤即可。
-    if (activeTags.length) list = list.filter((c) => c.tags.some((tag) => activeTags.includes(tag)));
+    if (activeTags.length) list = list.filter((c) => collectionHasAnyTag(c.tags, activeTagSet));
 
     if (search) {
       const q = search.toLowerCase();
@@ -108,7 +116,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
     });
 
     return list;
-  }, [collections, filter, sort, search, activeTags]);
+  }, [collections, filter, sort, search, activeTags, activeTagSet]);
 
   return (
     <div
@@ -202,17 +210,18 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
         {/* 標籤快篩單獨捲動，已選標籤排在最前面。 */}
         {allTags.length > 0 && <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-2.5 flex items-center gap-2">
           <div ref={tagStripRef} className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
-          {([...activeTags, ...allTags.filter((t) => !activeTags.includes(t))]).map((t) => (
+          {orderedTags.map((tag) => (
             <button
-              key={t}
-              onClick={() => chooseTag(t)}
+              key={tag.key}
+              onClick={() => chooseTag(tag.key)}
+              aria-pressed={activeTagSet.has(tag.key)}
               className={`flex-shrink-0 text-[11px] font-technical px-2 py-0.5 rounded transition-colors ${
-                activeTags.includes(t)
+                activeTagSet.has(tag.key)
                   ? "bg-[#2a2010] text-[#c9a96e]"
                   : "text-[#b8b5af] hover:text-[#b8b5af]"
               }`}
             >
-              #{t}
+              #{tag.label}
             </button>
           ))}
           </div>
@@ -240,8 +249,8 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
           </div>
           <input autoFocus value={tagSearch} onChange={(e) => setTagSearch(e.target.value)} aria-label={t.searchTags} placeholder={t.searchTagsPlaceholder} className="w-full rounded-lg bg-[#0d0d0e] border border-[#2e2e32] p-2 text-xs text-[#f0ede8] placeholder:text-[#9d9a94]" />
           <div className="mt-3 max-h-[50vh] overflow-y-auto flex flex-wrap gap-2">
-            {allTags.filter((tag) => tag.toLowerCase().includes(tagSearch.trim().toLowerCase())).map((tag) => <button key={tag} aria-pressed={activeTags.includes(tag)} onClick={() => chooseTag(tag)} className={`max-w-full break-all rounded px-2 py-1 text-xs ${activeTags.includes(tag) ? "bg-[#2a2010] text-[#c9a96e]" : "bg-[#242427] text-[#c8c4bc]"}`}>#{tag}</button>)}
-            {!allTags.some((tag) => tag.toLowerCase().includes(tagSearch.trim().toLowerCase())) && <p className="text-xs text-[#b8b5af]">{t.noMatchingTags}</p>}
+            {allTags.filter((tag) => tag.key.includes(normalizeTag(tagSearch))).map((tag) => <button key={tag.key} aria-pressed={activeTagSet.has(tag.key)} onClick={() => chooseTag(tag.key)} className={`max-w-full break-all rounded px-2 py-1 text-xs ${activeTagSet.has(tag.key) ? "bg-[#2a2010] text-[#c9a96e]" : "bg-[#242427] text-[#c8c4bc]"}`}>#{tag.label}</button>)}
+            {!allTags.some((tag) => tag.key.includes(normalizeTag(tagSearch))) && <p className="text-xs text-[#b8b5af]">{t.noMatchingTags}</p>}
           </div>
         </section>
       </div>}
@@ -375,7 +384,7 @@ function CollectionCard({
       {/* Bottom row */}
       <div className="px-2.5 py-2 flex items-center justify-between">
         <div className="flex flex-wrap gap-1 flex-1 min-w-0">
-          {c.tags.slice(0, 2).map((t) => (
+          {uniqueTags(c.tags).slice(0, 2).map((t) => (
             <span key={t} className="text-[11px] text-[#b8b5af] font-technical truncate">
               #{t}
             </span>
@@ -396,5 +405,3 @@ function CollectionCard({
     </div>
   );
 }
-
-

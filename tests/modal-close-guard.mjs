@@ -14,10 +14,12 @@ for (const source of [collection, attempt]) {
   assert.match(source, /onDiscard=\{closeGuard\.discardChanges\}/);
 }
 
-for (const field of ["name", "originalPrompt", "promptPending", "tags", "status", "isFavorite", "collectionNotes", "source"]) {
+for (const field of ["name", "originalPrompt", "promptPending", "status", "isFavorite", "collectionNotes", "source"]) {
   assert.match(collection, new RegExp(`a\\.${field} === b\\.${field}`));
 }
 assert.match(collection, /a\.referenceImages\.map\(\(image\) => image\.id\)/);
+assert.match(collection, /a\.tags\.join\("\\u0000"\) === b\.tags\.join\("\\u0000"\)/);
+assert.match(collection, /a\.tagInput === b\.tagInput/);
 
 for (const field of ["name", "platform", "customPlatform", "prompt", "unmodified", "model", "notes", "rating", "date"]) {
   assert.match(attempt, new RegExp(`a\\.${field} === b\\.${field}`));

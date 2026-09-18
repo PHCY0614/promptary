@@ -80,6 +80,7 @@ export default function App() {
       {/* Modals */}
       {modal?.type === "addCollection" && (
         <CollectionModal
+          collections={store.collections}
           onSave={async (data) => {
             const id = await store.addCollection(data);
             if (!id) return;
@@ -92,6 +93,7 @@ export default function App() {
 
       {modal?.type === "editCollection" && (
         <CollectionModal
+          collections={store.collections}
           existing={modal.collection}
           onSave={async (data) => {
             if (!await store.editCollection(modal.collection.id, data)) return;

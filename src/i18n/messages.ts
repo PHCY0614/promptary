@@ -81,6 +81,15 @@ export type Messages = {
   promptPlaceholder: string;
   tagsComma: string;
   tagsPlaceholder: string;
+  tagsHint: string;
+  selectedTags: string;
+  commonTags: string;
+  matchingTags: string;
+  moreTags: string;
+  fewerTags: string;
+  createTag: (tag: string) => string;
+  removeTag: (tag: string) => string;
+  tagAlreadySelected: string;
   status: string;
   sourceUrl: string;
   urlPlaceholder: string;
@@ -300,8 +309,17 @@ const zhTW: Messages = {
   originalPromptOptional: "原始咒語",
   skipForNow: "待補",
   promptPlaceholder: "貼上或輸入咒語",
-  tagsComma: "標籤（逗號分隔）",
-  tagsPlaceholder: "例如：人物、風景、物品……",
+  tagsComma: "標籤",
+  tagsPlaceholder: "輸入或搜尋標籤",
+  tagsHint: "以逗號或 Enter 新增；標籤名稱可以包含空格。",
+  selectedTags: "已選標籤",
+  commonTags: "常用標籤",
+  matchingTags: "符合的標籤",
+  moreTags: "更多標籤",
+  fewerTags: "收起標籤",
+  createTag: (tag) => `建立「${tag}」`,
+  removeTag: (tag) => `移除標籤 ${tag}`,
+  tagAlreadySelected: "這個標籤已經選取。",
   status: "狀態",
   sourceUrl: "來源連結",
   urlPlaceholder: "填入網址",
@@ -566,8 +584,17 @@ const en: Messages = {
   originalPromptOptional: "Original prompt",
   skipForNow: "Skip for now",
   promptPlaceholder: "Paste or type a prompt",
-  tagsComma: "Tags (comma-separated)",
-  tagsPlaceholder: "e.g. portrait, cosmic, cinematic…",
+  tagsComma: "Tags",
+  tagsPlaceholder: "Type or search tags",
+  tagsHint: "Press comma or Enter to add. Tag names can contain spaces.",
+  selectedTags: "Selected tags",
+  commonTags: "Common tags",
+  matchingTags: "Matching tags",
+  moreTags: "More tags",
+  fewerTags: "Show fewer",
+  createTag: (tag) => `Create “${tag}”`,
+  removeTag: (tag) => `Remove tag ${tag}`,
+  tagAlreadySelected: "This tag is already selected.",
   status: "Status",
   sourceUrl: "Source URL",
   urlPlaceholder: "URL",

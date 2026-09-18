@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Collection, ImageRef, Status } from "./types";
 import { createCanonicalImage } from "./imageUpload";
 import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
@@ -7,6 +7,8 @@ import ResizableTextarea from "./ResizableTextarea";
 import { ErrorCode, translateError, useLocale } from "./i18n";
 import { UnsavedChangesDialog, useModalCloseGuard } from "./ModalCloseGuard";
 import { enqueueImageBatch, MAX_IMAGES_PER_BATCH } from "./imageBatch";
+import TagPicker from "./TagPicker";
+import { normalizeTag, summarizeTags, uniqueTags } from "./tags";
 
 // ── 圖片暫存：以固定 ID 對應非同步結果，移除或追加圖片不會錯位 ──
 interface UploadItem {
@@ -25,7 +27,8 @@ interface FormState {
   referenceImages: UploadItem[];
   originalPrompt: string;
   promptPending: boolean;
-  tags: string;
+  tags: string[];
+  tagInput: string;
   status: Status;
   isFavorite: boolean;
   collectionNotes: string;
@@ -39,7 +42,8 @@ function initForm(c?: Collection): FormState {
       referenceImages: c.referenceImages.map((image) => ({ id: image.id, progress: 100, image, name: "", status: "done" })),
       originalPrompt: c.originalPrompt,
       promptPending: c.promptPending,
-      tags: c.tags.join(", "),
+      tags: uniqueTags(c.tags),
+      tagInput: "",
       status: c.status,
       isFavorite: c.isFavorite,
       collectionNotes: c.collectionNotes,
@@ -51,7 +55,8 @@ function initForm(c?: Collection): FormState {
     referenceImages: [],
     originalPrompt: "",
     promptPending: false,
-    tags: "",
+    tags: [],
+    tagInput: "",
     status: "want",
     isFavorite: false,
     collectionNotes: "",
@@ -64,7 +69,8 @@ function sameForm(a: FormState, b: FormState) {
     a.referenceImages.map((image) => image.id).join("\u0000") === b.referenceImages.map((image) => image.id).join("\u0000") &&
     a.originalPrompt === b.originalPrompt &&
     a.promptPending === b.promptPending &&
-    a.tags === b.tags &&
+    a.tags.join("\u0000") === b.tags.join("\u0000") &&
+    a.tagInput === b.tagInput &&
     a.status === b.status &&
     a.isFavorite === b.isFavorite &&
     a.collectionNotes === b.collectionNotes &&
@@ -72,13 +78,14 @@ function sameForm(a: FormState, b: FormState) {
 }
 
 interface Props {
+  collections: readonly Collection[];
   existing?: Collection;
   onSave: (data: Omit<Collection, "id" | "createdAt" | "updatedAt" | "attempts">) => Promise<void>;
   onClose: () => void;
 }
 
-export default function CollectionModal({ existing, onSave, onClose }: Props) {
-  const { t } = useLocale();
+export default function CollectionModal({ collections, existing, onSave, onClose }: Props) {
+  const { locale, t } = useLocale();
   const statusOpts: { value: Status }[] = [{ value: "want" }, { value: "tried" }, { value: "ref" }];
   const [form, setForm] = useState<FormState>(() => initForm(existing));
   const initialFormRef = useRef(form);
@@ -91,6 +98,7 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
   const newImageIds = useRef(new Set<string>());
   const mountedRef = useRef(true);
   const imageQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const tagSuggestions = useMemo(() => summarizeTags(collections, locale), [collections, locale]);
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -158,10 +166,10 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
   async function handleSubmit() {
     if (savingRef.current) return;
     if (form.referenceImages.some((image) => image.status !== "done")) return;
-    const tags = form.tags
-      .split(/[,，\s]+/)
-      .map((t) => t.trim().replace(/^#/, ""))
-      .filter(Boolean);
+    const tags = uniqueTags([...form.tags, form.tagInput]).map((tag) => {
+      const key = normalizeTag(tag);
+      return tagSuggestions.find((suggestion) => suggestion.key === key)?.label ?? tag;
+    });
 
     savingRef.current = true;
     setIsSaving(true);
@@ -294,18 +302,13 @@ export default function CollectionModal({ existing, onSave, onClose }: Props) {
           </div>
 
           {/* Tags */}
-          <div>
-            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-              {t.tagsComma}
-            </label>
-            <input
-              type="text"
-              value={form.tags}
-              onChange={(e) => set("tags", e.target.value)}
-              placeholder={t.tagsPlaceholder}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
-            />
-          </div>
+          <TagPicker
+            selected={form.tags}
+            draft={form.tagInput}
+            suggestions={tagSuggestions}
+            onSelectedChange={(tags) => set("tags", tags)}
+            onDraftChange={(tagInput) => set("tagInput", tagInput)}
+          />
 
           {/* Status + source in a row */}
           <div className="grid grid-cols-2 gap-3">
