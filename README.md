@@ -14,11 +14,11 @@ No sign-in is required. Collections and images are stored locally in your browse
 
 ## Current Version
 
-Last updated: 12 September 2026.
+Last updated: 18 September 2026.
 
-Promptary currently supports collection management, experiment tracking, categorised prompt reading, side-by-side image comparison, ZIP backups, and local storage information. Recent updates added starter collections, a first-visit introduction, classification inheritance for custom prompts, and stricter ZIP backup validation, alongside startup and mobile layout fixes.
+Promptary currently supports collection management, experiment tracking, categorised prompt reading, side-by-side image comparison, ZIP backups, and local storage information. Recent updates added reusable tag suggestions, more compact collection and experiment forms, starter collections, a first-visit introduction, classification inheritance for custom prompts, and stricter ZIP backup validation.
 
-This overview is based on code version `7e7ca57`. The live site reflects the most recent successful deployment.
+This overview was reviewed against the source tree on 18 September 2026. The live site reflects the most recent successful deployment.
 
 ## Workflow
 
@@ -32,7 +32,7 @@ On your first visit, a short introduction explains the workflow and local storag
 
 ## Features
 
-* **Collection management**: Name collections and experiments, and organise them with tags, search, status filters, sorting, and favourites.
+* **Collection management**: Name collections and experiments, and organise them with tags, search, status filters, sorting, and favourites. Existing tags are suggested when creating or editing a collection, with search and new-tag creation available in the same field.
 * **Experiment tracking**: Each collection can contain multiple experiments with generated images, platform, model, date, rating, and notes. Custom platforms can also be managed.
 * **Prompt reading**: Switch between the original prompt and a categorised view, with categories that can be adjusted manually. Categorisation is based on local Chinese and English keyword matching. It does not modify the original prompt or copied text, and does not call any AI service.
 * **Classification inheritance**: When saving a custom experiment prompt, matching text segments can inherit categories from the original prompt. Existing manual categories in the experiment take priority when editing, so unchanged segments do not need to be categorised again.

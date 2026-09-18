@@ -200,7 +200,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
       <div
         className="relative z-10 w-full sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-xl bg-[#161618] border border-[#2e2e32] shadow-2xl"
       >
-        <div className="px-5 py-4 flex items-center justify-between border-b border-[#1e1e21]">
+        <div className="h-[55px] px-5 flex items-center justify-between border-b border-[#1e1e21]">
           <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
             {existing ? t.editCollection : t.newCollection}
           </h2>
@@ -265,10 +265,10 @@ export default function CollectionModal({ collections, existing, onSave, onClose
                 +
               </button>
             </div>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-[#9d9a94]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
             {imageBatchError && <p role="alert" className="mt-2 text-xs text-[#e06e6e]">{translateError(imageBatchError, t)}</p>}
           </div>
 
-          <p className="text-xs leading-relaxed text-[#b8b5af]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
           {hasImageError && <div role="alert" className="text-xs text-[#e06e6e]">
             {form.referenceImages.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error ? translateError(image.error, t) : ""}</p>)}
             {t.imageSaveBlocked}
@@ -342,38 +342,48 @@ export default function CollectionModal({ collections, existing, onSave, onClose
             </div>
           </div>
 
-          {/* Notes */}
-          <div>
-            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
-              {t.collectionNotes}
-            </label>
-            <ResizableTextarea
-              value={form.collectionNotes}
-              onChange={(e) => set("collectionNotes", e.target.value)}
-              placeholder={t.notesPlaceholder}
-              rows={2}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
-            />
-          </div>
+          {/* Notes + Favorite */}
+          <div className="flex flex-col gap-2">
+            <div>
+              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
+                {t.collectionNotes}
+              </label>
+              <ResizableTextarea
+                value={form.collectionNotes}
+                onChange={(e) => set("collectionNotes", e.target.value)}
+                placeholder={t.notesPlaceholder}
+                rows={2}
+                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
+              />
+            </div>
 
-          {/* Favorite */}
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => set("isFavorite", !form.isFavorite)}
-              aria-label={form.isFavorite ? t.removeFavorite : t.addFavorite}
-              aria-pressed={form.isFavorite}
-              className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${form.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill={form.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
-              </svg>
-            </button>
-            <span className="text-xs text-[#b8b5af]">{t.addFavorite}</span>
+            <div className="relative h-4">
+              <button
+                type="button"
+                onClick={() => set("isFavorite", !form.isFavorite)}
+                aria-label={form.isFavorite ? t.removeFavorite : t.addFavorite}
+                aria-pressed={form.isFavorite}
+                className="group absolute left-0 top-1/2 inline-flex min-h-6 -translate-y-1/2 items-center gap-2.5 rounded text-xs leading-4 text-[#b8b5af] transition-colors hover:text-[#f0ede8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161618]"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill={form.isFavorite ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  aria-hidden="true"
+                  className={`shrink-0 transition-colors ${form.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] group-hover:text-[#DB8587]"}`}
+                >
+                  <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
+                </svg>
+                <span>{t.addFavorite}</span>
+              </button>
+            </div>
           </div>
         </fieldset>
 
-        <div className="px-5 py-4 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
+        <div className="h-[55px] px-5 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
           <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-ui transition-colors">
             {t.cancel}
           </button>
@@ -382,7 +392,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
             disabled={isSaving || isLoading || hasImageError}
             className="px-4 py-2 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors disabled:opacity-40"
           >
-            {isSaving ? t.saving : isLoading ? t.reading : existing ? t.saveChanges : t.newCollection}
+            {isSaving ? t.saving : isLoading ? t.reading : existing ? t.saveChanges : t.addToLibrary}
           </button>
         </div>
       </div>

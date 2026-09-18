@@ -245,7 +245,7 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
       <div
         className="relative z-10 w-full sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-xl bg-[#161618] border border-[#2e2e32] shadow-2xl"
       >
-        <div className="px-5 py-4 flex items-center justify-between border-b border-[#1e1e21]">
+        <div className="h-[55px] px-5 flex items-center justify-between border-b border-[#1e1e21]">
           <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
             {existing ? t.editAttempt : t.newAttempt}
           </h2>
@@ -295,10 +295,10 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
                 className="w-16 h-16 rounded border border-dashed border-[#2e2e32] text-[#b8b5af] hover:border-[#c9a96e55] hover:text-[#b8b5af] flex items-center justify-center text-xl transition-colors flex-shrink-0"
               >+</button>
             </div>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-[#9d9a94]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
             {imageBatchError && <p role="alert" className="mt-2 text-xs text-[#e06e6e]">{translateError(imageBatchError, t)}</p>}
           </div>
 
-          <p className="text-xs leading-relaxed text-[#b8b5af]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
           {hasImageError && <div role="alert" className="text-xs text-[#e06e6e]">
             {form.images.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error ? translateError(image.error, t) : ""}</p>)}
             {t.imageSaveBlocked}
@@ -433,14 +433,14 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
           </div>
         </fieldset>
 
-        <div className="px-5 py-4 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
+        <div className="h-[55px] px-5 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
           <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-ui transition-colors">{t.cancel}</button>
           <button
             onClick={handleSubmit}
             disabled={isSaving || isLoading || hasImageError}
             className="px-4 py-2 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors disabled:opacity-40"
           >
-            {isSaving ? t.saving : isLoading ? t.uploading : existing ? t.saveChanges : t.newAttempt}
+            {isSaving ? t.saving : isLoading ? t.uploading : existing ? t.saveChanges : t.saveAttempt}
           </button>
         </div>
       </div>

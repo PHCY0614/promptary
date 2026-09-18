@@ -69,6 +69,7 @@ export type Messages = {
   unchanged: string;
   attemptPrompt: string;
   newCollection: string;
+  addToLibrary: string;
   editCollection: string;
   nameOptional: string;
   referenceImagesOptional: string;
@@ -98,6 +99,7 @@ export type Messages = {
   reading: string;
   saveChanges: string;
   newAttempt: string;
+  saveAttempt: string;
   editAttempt: string;
   resultImages: string;
   platform: string;
@@ -299,6 +301,7 @@ const zhTW: Messages = {
   unchanged: "沿用原始咒語",
   attemptPrompt: "這次嘗試的咒語",
   newCollection: "新增收藏",
+  addToLibrary: "加入收藏",
   editCollection: "編輯收藏",
   nameOptional: "名稱",
   referenceImagesOptional: "參考圖片",
@@ -328,6 +331,7 @@ const zhTW: Messages = {
   reading: "讀取中……",
   saveChanges: "儲存變更",
   newAttempt: "新增嘗試",
+  saveAttempt: "儲存嘗試",
   editAttempt: "編輯嘗試紀錄",
   resultImages: "成果圖片（可多張）",
   platform: "平台",
@@ -574,6 +578,7 @@ const en: Messages = {
   unchanged: "Original prompt",
   attemptPrompt: "Attempt prompt",
   newCollection: "New collection",
+  addToLibrary: "Add to library",
   editCollection: "Edit collection",
   nameOptional: "Name (optional)",
   referenceImagesOptional: "Reference images (optional)",
@@ -603,6 +608,7 @@ const en: Messages = {
   reading: "Reading…",
   saveChanges: "Save changes",
   newAttempt: "New attempt",
+  saveAttempt: "Save attempt",
   editAttempt: "Edit attempt",
   resultImages: "Result images",
   platform: "Platform",

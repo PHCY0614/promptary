@@ -2,9 +2,9 @@
 
 [English](./DEVELOPMENT.md) | [正體中文](./DEVELOPMENT.zh-TW.md)
 
-Last updated: 12 September 2026
+Last updated: 18 September 2026
 
-Code version reviewed: `7e7ca57`
+Source reviewed: 18 September 2026
 
 These notes describe the current local code and its committed history. Deployment status is separate and should be checked against the latest successful deployment.
 
@@ -12,7 +12,7 @@ These notes describe the current local code and its committed history. Deploymen
 
 Promptary is a local-first tool for collecting AI image generation prompts and tracking experiments. It is built with React 19, TypeScript, Vite 8, Tailwind CSS v4, and IndexedDB, and is hosted through GitHub Pages.
 
-The current version includes collection search, tag and status filtering, favourites, naming for collections and experiments, ratings, cover image selection, categorised prompt reading, side-by-side mobile comparison, Traditional Chinese and English interfaces, ZIP backups, and local storage information. It also includes starter collections, a first-visit introduction and About dialog, and classification inheritance for custom experiment prompts.
+The current version includes collection search, reusable tag suggestions, tag and status filtering, favourites, naming for collections and experiments, ratings, cover image selection, categorised prompt reading, side-by-side mobile comparison, Traditional Chinese and English interfaces, ZIP backups, and local storage information. It also includes starter collections, a first-visit introduction and About dialog, and classification inheritance for custom experiment prompts.
 
 Collections and images are stored in the browser under the current site origin. There is no sign-in system, cloud database, or automatic cross-device synchronisation. Supabase has been discussed and evaluated but has not been implemented. For now, moving data between devices relies on manually exporting and importing ZIP backups.
 
@@ -80,6 +80,10 @@ The data model explicitly distinguishes between using the original prompt and us
 
 Collection and experiment forms share the same unsaved-change confirmation behaviour. This protection applies when closing a form; it is not automatic draft saving. Refreshing the page may still discard unsaved changes.
 
+`TagPicker.tsx` derives reusable tag suggestions from the current collection data rather than maintaining a separate tag store. Comparison trims tag text and ignores case, while the first saved display form is retained. Suggestions are ranked by use count and then recency, shown in one adaptive row by default, and expanded with an accessible arrow control. Typing filters the full suggestion set and still allows a new tag to be created.
+
+Collection and experiment forms use matching 55 px header and footer rows without changing their control sizes. Image-storage hints now stay with their image fields and use the same helper-text treatment as tag guidance. The collection favourite control keeps a compact visual line while its text and heart share the click target. Creation buttons use action-specific copy—**Add to library** and **Save attempt**—while edit forms retain **Save changes**.
+
 ### Site Assets and Deployment
 
 `index.html` includes favicons, an Apple touch icon, a theme colour, and a web manifest. The manifest uses relative start and scope URLs with standalone display settings. These assets provide browser and home-screen presentation; no service worker or offline application cache is implemented.
@@ -95,7 +99,7 @@ The HTML includes a Cloudflare Web Analytics script for website usage measuremen
 | Area | Files |
 | --- | --- |
 | Gallery and detail views | `App.tsx`, `Gallery.tsx`, `DetailView.tsx` |
-| Collection and experiment forms | `CollectionModal.tsx`, `AttemptModal.tsx`, `ModalCloseGuard.tsx` |
+| Collection and experiment forms | `CollectionModal.tsx`, `AttemptModal.tsx`, `TagPicker.tsx`, `tags.ts`, `ModalCloseGuard.tsx` |
 | Image processing and display | `imageBatch.ts`, `imageProcessing.ts`, `StoredImage.tsx` |
 | Local data | `store.ts`, `archiveStorage.ts`, `storagePersistence.ts` |
 | Backups | `backup.ts`, `ImportBackup.tsx` |
@@ -111,6 +115,14 @@ Site assets and starter images are under `public/`. Deployment configuration is 
 ## Development Log
 
 The following log is organised by Git commit date. Related changes from the same day have been grouped together, while older approaches that have since been replaced are kept only as a summary of the project's evolution.
+
+### 2026-09-18 | Reusable Tags and Compact Forms
+
+Refined the existing-tag picker so collection forms show one adaptive row of frequently used tags without fixed item counts or uneven spacing. An icon-only arrow expands and collapses the remaining suggestions, typing searches the full tag set, and new tags can still be created from the same input. Tag comparison remains trimmed and case-insensitive, with frequency and recency determining suggestion order.
+
+Aligned local-image helper text with tag guidance, grouped the favourite action with collection notes, and kept its 14 px heart from increasing the visual row height. Collection and experiment forms now share 55 px headers and footers while retaining the existing text and control sizes. Creation actions were clarified as **Add to library** and **Save attempt** in English, with corresponding Traditional Chinese copy; edit actions remain **Save changes**.
+
+Expanded `tests/tags.mjs` to protect the single-row tag layout, accessible expand control, shared hint treatment, compact form rows, favourite layout, and bilingual creation-button labels.
 
 ### 2026-09-12 | Introduction, Startup Recovery, and ZIP Validation
 

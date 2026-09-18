@@ -20,6 +20,7 @@ export default function TagPicker({
   const { t } = useLocale()
   const inputId = useId()
   const hintId = useId()
+  const suggestionsId = useId()
   const composingRef = useRef(false)
   const commonRowRef = useRef<HTMLDivElement>(null)
   const [showAll, setShowAll] = useState(false)
@@ -180,29 +181,14 @@ export default function TagPicker({
       </p>
 
       {(available.length > 0 || (queryKey && !exactSuggestion)) && (
-        <div className="mt-3">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <span className="text-xs text-[#b8b5af]">
-              {queryKey ? t.matchingTags : t.commonTags}
-            </span>
-            {!queryKey && commonVisibleCount < available.length && (
-              <button
-                type="button"
-                aria-expanded={showAll}
-                onClick={() => setShowAll((current) => !current)}
-                className="min-h-7 shrink-0 rounded-md px-1.5 text-[11px] text-[#c9a96e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]"
-              >
-                {showAll ? t.fewerTags : t.moreTags}
-              </button>
-            )}
-          </div>
-
+        <div className="mt-2 flex min-w-0 items-start gap-1.5">
           <div
+            id={suggestionsId}
             ref={commonRowRef}
             className={`${
               queryKey || showAll
-                ? "flex max-h-48 flex-wrap gap-1.5 overflow-y-auto pr-1"
-                : "flex max-h-7 flex-wrap gap-1.5 overflow-hidden"
+                ? "flex max-h-48 min-w-0 flex-1 flex-wrap gap-1.5 overflow-y-auto pr-1"
+                : "flex max-h-7 min-w-0 flex-1 flex-wrap gap-1.5 overflow-hidden"
             }`}
           >
             {visibleSuggestions.map((tag, index) => (
@@ -246,6 +232,25 @@ export default function TagPicker({
                 </p>
               )}
           </div>
+          {!queryKey &&
+            commonVisibleCount > 0 &&
+            commonVisibleCount < available.length && (
+              <button
+                type="button"
+                aria-label={showAll ? t.fewerTags : t.moreTags}
+                aria-controls={suggestionsId}
+                aria-expanded={showAll}
+                onClick={() => setShowAll((current) => !current)}
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#c9a96e] transition-colors hover:text-[#f0d9a6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`inline-block text-base leading-none transition-transform duration-150 motion-reduce:transition-none ${showAll ? "rotate-180" : ""}`}
+                >
+                  ▾
+                </span>
+              </button>
+            )}
         </div>
       )}
     </div>
