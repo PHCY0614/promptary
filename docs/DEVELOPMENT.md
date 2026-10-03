@@ -116,7 +116,7 @@ The following log is organised by Git commit date. Related changes from the same
 
 ### 2026-10-03 | Moved Deployment to Cloudflare
 
-Deployment moved from GitHub Pages to Cloudflare Workers, with the site now served at `https://promptary.phcy0614.workers.dev/`. The old GitHub Pages site has been disabled. Because collections are stored in IndexedDB separately for each site origin, libraries created under the old URL do not appear automatically at the new one. Subpath deployment through `PAGES_BASE_PATH` is no longer needed, the Pages deployment workflow was removed, and the deployment notes and dates in the READMEs and development notes were updated.
+Deployment moved from GitHub Pages to Cloudflare Workers, with the site now served at `https://promptary.phcy0614.workers.dev/`. The old GitHub Pages site has been disabled. Because collections are stored in IndexedDB separately for each site origin, libraries created under the old URL do not appear automatically at the new one. The legacy `.github/workflows/pages.yml` is still in the repository but is no longer used for deployment, and the deployment notes and dates in the READMEs and development notes were updated.
 
 ### 2026-09-18 | Reusable Tags and Compact Forms
 
