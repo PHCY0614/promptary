@@ -2,13 +2,13 @@
 
 [English](./DEVELOPMENT.md) | [正體中文](./DEVELOPMENT.zh-TW.md)
 
-更新日期：2026-09-18
-原始碼核對日期：2026-09-18
+更新日期：2026-10-03
+原始碼核對日期：2026-10-03
 本說明依目前本機程式碼與 Git 提交紀錄整理；部署狀態需另外核對，以最近一次成功部署為準。
 
 ## 目前版本狀態
 
-Promptary 是以本機儲存為核心的 AI 生圖咒語收藏與嘗試紀錄工具，使用 React 19、TypeScript、Vite 8、Tailwind CSS v4 與 IndexedDB，網站透過 GitHub Pages 提供。
+Promptary 是以本機儲存為核心的 AI 生圖咒語收藏與嘗試紀錄工具，使用 React 19、TypeScript、Vite 8、Tailwind CSS v4 與 IndexedDB，網站部署於 Cloudflare。
 
 目前已完成收藏搜尋、既有標籤建議、標籤與狀態篩選、最愛、收藏與嘗試命名、評分、封面選擇、分類閱讀、手機雙圖比較、正體中文／英文切換、ZIP 備份，以及本機儲存資訊。另已加入範例收藏、首次使用介紹與「關於」視窗，以及自訂嘗試咒語的分類沿用。
 
@@ -76,7 +76,7 @@ Storage API 用於查詢用量、檢查及請求持續性儲存。瀏覽器不�
 
 `index.html` 已加入 favicon、Apple 主畫面圖示、主題色與 web manifest。Manifest 使用相對的啟動網址與範圍，並設定獨立視窗顯示；這些資源提供瀏覽器與主畫面外觀，目前沒有 service worker 或離線應用程式快取。
 
-GitHub Pages 工作流程透過 `lfs: true` 取得 Git LFS 資源，應保留此設定，避免發布的圖片實際上只是 LFS 指標文字。Vite 以 `PAGES_BASE_PATH` 處理子路徑部署，HTML 圖示連結使用 `%BASE_URL%`。
+網站部署於 Cloudflare。建置時須取得 Git LFS 資源，避免發布的圖片實際上只是 LFS 指標文字。HTML 圖示連結使用 `%BASE_URL%`。
 
 `public/_headers` 包含 Cloudflare 部署所用的 CSP 與快取等標頭；建置產物內有這份檔案，不代表其他代管平台也會套用。`.figma/make/site.json` 保留網站中繼資料，並透過 `robots.index: true` 允許索引。
 
@@ -97,11 +97,15 @@ HTML 已加入 Cloudflare Web Analytics 腳本，用於網站使用情況統計�
 
 以上程式檔案位於 `src/`，測試位於專案根目錄的 `tests/`。
 
-首次使用介紹與範例資料由 `AboutDialog.tsx`、`starterData.ts`、`starterInitTimeouts.ts` 與 `withTimeout.ts` 處理。網站資源與範例圖片位於 `public/`；部署設定位於 `.github/workflows/pages.yml`、`vite.config.ts`、`index.html`、`public/_headers` 與 `.figma/make/site.json`。
+首次使用介紹與範例資料由 `AboutDialog.tsx`、`starterData.ts`、`starterInitTimeouts.ts` 與 `withTimeout.ts` 處理。網站資源與範例圖片位於 `public/`；部署相關設定位於 `vite.config.ts`、`index.html`、`public/_headers` 與 `.figma/make/site.json`。
 
 ## 開發紀錄
 
 以下依 Git 提交日期整理，同日相關修改合併記錄；早期已被取代的方案只保留演進摘要。
+
+### 2026-10-03｜改用 Cloudflare 部署
+
+網站部署從 GitHub Pages 改為 Cloudflare Workers，新網址為 `https://promptary.phcy0614.workers.dev/`，舊的 GitHub Pages 網站已停用。由於資料保存在瀏覽器的 IndexedDB 且依網站來源分開，舊網址下的圖庫不會自動出現在新網址。Cloudflare 部署不再需要以 `PAGES_BASE_PATH` 處理子路徑，並移除 Pages 部署流程；README 與開發筆記中的部署說明與日期一併更新。
 
 ### 2026-09-18｜既有標籤與精簡表單
 
