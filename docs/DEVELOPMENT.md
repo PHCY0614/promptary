@@ -2,15 +2,15 @@
 
 [English](./DEVELOPMENT.md) | [正體中文](./DEVELOPMENT.zh-TW.md)
 
-Last updated: 18 September 2026
+Last updated: 3 October 2026
 
-Source reviewed: 18 September 2026
+Source reviewed: 3 October 2026
 
 These notes describe the current local code and its committed history. Deployment status is separate and should be checked against the latest successful deployment.
 
 ## Current Status
 
-Promptary is a local-first tool for collecting AI image generation prompts and tracking experiments. It is built with React 19, TypeScript, Vite 8, Tailwind CSS v4, and IndexedDB, and is hosted through GitHub Pages.
+Promptary is a local-first tool for collecting AI image generation prompts and tracking experiments. It is built with React 19, TypeScript, Vite 8, Tailwind CSS v4, and IndexedDB, and is hosted on Cloudflare.
 
 The current version includes collection search, reusable tag suggestions, tag and status filtering, favourites, naming for collections and experiments, ratings, cover image selection, categorised prompt reading, side-by-side mobile comparison, Traditional Chinese and English interfaces, ZIP backups, and local storage information. It also includes starter collections, a first-visit introduction and About dialog, and classification inheritance for custom experiment prompts.
 
@@ -86,7 +86,7 @@ Collection and experiment forms share the same unsaved-change confirmation behav
 
 `index.html` includes favicons, an Apple touch icon, a theme colour, and a web manifest. The manifest uses relative start and scope URLs with standalone display settings. These assets provide browser and home-screen presentation; no service worker or offline application cache is implemented.
 
-The GitHub Pages workflow checks out Git LFS assets with `lfs: true`. Keep this enabled so published images contain the actual binary files rather than LFS pointers. Vite uses `PAGES_BASE_PATH` for deployment under a subpath, and HTML icon links use `%BASE_URL%`.
+The site is deployed on Cloudflare. The build must check out Git LFS assets so published images contain the actual binary files rather than LFS pointers. HTML icon links use `%BASE_URL%`.
 
 `public/_headers` contains Cloudflare deployment headers, including CSP and caching rules. Their presence in the build does not establish that another hosting provider applies them. `.figma/make/site.json` retains site metadata and permits indexing through `robots.index: true`.
 
