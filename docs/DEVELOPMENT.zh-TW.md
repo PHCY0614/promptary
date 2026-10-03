@@ -105,7 +105,7 @@ HTML 已加入 Cloudflare Web Analytics 腳本，用於網站使用情況統計�
 
 ### 2026-10-03｜改用 Cloudflare 部署
 
-網站部署從 GitHub Pages 改為 Cloudflare Workers，新網址為 `https://promptary.phcy0614.workers.dev/`，舊的 GitHub Pages 網站已停用。由於資料保存在瀏覽器的 IndexedDB 且依網站來源分開，舊網址下的圖庫不會自動出現在新網址。Cloudflare 部署不再需要以 `PAGES_BASE_PATH` 處理子路徑，並移除 Pages 部署流程；README 與開發筆記中的部署說明與日期一併更新。
+網站部署從 GitHub Pages 改為 Cloudflare Workers，新網址為 `https://promptary.phcy0614.workers.dev/`，舊的 GitHub Pages 網站已停用。由於資料保存在瀏覽器的 IndexedDB 且依網站來源分開，舊網址下的圖庫不會自動出現在新網址。舊的 `.github/workflows/pages.yml` 仍保留在儲存庫中，但不再用於部署；README 與開發筆記中的部署說明與日期一併更新。
 
 ### 2026-09-18｜既有標籤與精簡表單
 
