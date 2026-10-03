@@ -8,7 +8,7 @@ Promptary is a small tool for collecting AI image generation prompts and keeping
 
 I kept finding great prompts online without having a convenient place to save and organise them, so I burned some tokens before my Codex reset and built Promptary — a place where reference images, original prompts, sources, generated results, and personal notes can all live together.
 
-🔗 [Try Promptary online](https://phcy0614.github.io/promptary/)
+🔗 [Try Promptary online](https://promptary.phcy0614.workers.dev/)
 
 No sign-in is required. Collections and images are stored locally in your browser. The interface supports Traditional Chinese and English. Cloud storage and automatic cross-device syncing are not currently available.
 
