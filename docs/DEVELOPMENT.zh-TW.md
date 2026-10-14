@@ -2,15 +2,15 @@
 
 [English](./DEVELOPMENT.md) | [正體中文](./DEVELOPMENT.zh-TW.md)
 
-更新日期：2026-10-03
-原始碼核對日期：2026-10-03
+更新日期：2026-10-14
+原始碼核對日期：2026-10-14
 本說明依目前本機程式碼與 Git 提交紀錄整理；部署狀態需另外核對，以最近一次成功部署為準。
 
 ## 目前版本狀態
 
 Promptary 是以本機儲存為核心的 AI 生圖咒語收藏與嘗試紀錄工具，使用 React 19、TypeScript、Vite 8、Tailwind CSS v4 與 IndexedDB，網站部署於 Cloudflare。
 
-目前已完成收藏搜尋、既有標籤建議、標籤與狀態篩選、最愛、收藏與嘗試命名、評分、封面選擇、分類閱讀、手機雙圖比較、正體中文／英文切換、ZIP 備份，以及本機儲存資訊。另已加入範例收藏、首次使用介紹與「關於」視窗，以及自訂嘗試咒語的分類沿用。
+目前已完成收藏搜尋、既有標籤建議、標籤與狀態篩選、最愛、收藏與嘗試命名、評分、封面選擇、分類閱讀、手機雙圖比較、正體中文／英文切換、深色與淺色主題、ZIP 備份，以及本機儲存資訊。另已加入範例收藏、首次使用介紹與「關於」視窗，以及自訂嘗試咒語的分類沿用。
 
 收藏與圖片存在目前網站來源的瀏覽器中，沒有登入、雲端資料庫或跨裝置自動同步。Supabase 曾討論評估，但尚未實作；目前跨裝置搬移仍透過手動匯出與匯入 ZIP。
 
@@ -23,6 +23,12 @@ Promptary 是以本機儲存為核心的 AI 生圖咒語收藏與嘗試紀錄工
 範例初始化與一般寫入共用佇列，提交前也會再次檢查是否已有圖庫；初始化失敗仍會釋放佇列，讓後續寫入繼續。資料庫開啟、首次讀取、範例圖片下載與解碼皆有逾時處理，避免停滯的操作讓初始載入畫面無限等待。這項替代顯示機制不代表無法使用的瀏覽器儲存空間會恢復可寫入。
 
 圖庫會在尚未關閉過介紹時開啟精簡版「關於」，並以 `localStorage` 的 `promptary_intro_seen` 記住已讀狀態。「關於」按鈕則開啟完整版本，包含使用提醒、製作緣由與作者連結。視窗支援 Escape 關閉、鍵盤焦點限制在視窗內，以及關閉後將焦點移回按鈕；若瀏覽器無法保存偏好，下次可能再次顯示介紹。
+
+### 主題偏好
+
+介面支援深色與淺色主題，兩者由 `src/index.css` 中以 Tailwind CSS v4 `@theme` 宣告的語意化 CSS 變數提供色彩。深色維持預設，選取的主題保存在目前瀏覽器，不跟隨作業系統；主題偏好是呈現設定，不屬於圖庫資料，因此刻意排除在 ZIP 備份之外。
+
+`src/theme/theme.ts` 負責主題偏好鍵值，以及安全讀取、寫入與套用的輔助函式。`src/theme/ThemeSwitcher.tsx` 依照語言切換器的模式實作，`Gallery.tsx` 與 `DetailView.tsx` 的標頭會將它放在 `LanguageSwitcher.tsx` 旁邊。部署用 CSP 禁止 inline script，因此 `src/main.tsx` 會在呼叫 `createRoot` 前套用已保存的主題，讓初始文件狀態與偏好一致。Web manifest 的啟動畫面底色維持深色。
 
 ### 圖片與儲存
 
@@ -38,7 +44,7 @@ React 狀態保存圖片 ID 與中繼資料，圖片 Blob 和縮圖分開存入 
 
 ### 備份與本機資料
 
-現行備份格式為 ZIP，包含 manifest、canonical 圖片及自訂平台清單，不包含可重新產生的縮圖。
+現行備份格式為 ZIP，包含 manifest、canonical 圖片及自訂平台清單，不包含可重新產生的縮圖。主題與語言偏好保存在目前瀏覽器，也不包含在 ZIP 備份中。
 
 匯入前檢查格式、版本、圖片資料、項目數量、大小與不安全路徑，先顯示預覽，確認後才寫入。收藏與圖片沿用交易式寫入，避免只匯入部分資料。
 
@@ -74,7 +80,7 @@ Storage API 用於查詢用量、檢查及請求持續性儲存。瀏覽器不�
 
 ### 網站資源與部署
 
-`index.html` 已加入 favicon、Apple 主畫面圖示、主題色與 web manifest。Manifest 使用相對的啟動網址與範圍，並設定獨立視窗顯示；這些資源提供瀏覽器與主畫面外觀，目前沒有 service worker 或離線應用程式快取。
+`index.html` 已加入 favicon、Apple 主畫面圖示、主題色與 web manifest。Manifest 使用相對的啟動網址與範圍，並設定獨立視窗顯示，且保留深色啟動畫面底色；這些資源提供瀏覽器與主畫面外觀，目前沒有 service worker 或離線應用程式快取。
 
 網站部署於 Cloudflare。建置時須取得 Git LFS 資源，避免發布的圖片實際上只是 LFS 指標文字。HTML 圖示連結使用 `%BASE_URL%`。
 
@@ -93,7 +99,8 @@ HTML 已加入 Cloudflare Web Analytics 腳本，用於網站使用情況統計�
 | 備份      | `backup.ts`、`ImportBackup.tsx`                                                           |
 | 分類閱讀與比較 | `PromptReader.tsx`、`promptClassification.ts`、`ImageComparison.tsx`、`comparisonImages.ts` |
 | 語言與平台偏好 | `i18n/`、`platformStorage.ts`                                                             |
-| 測試      | `tests/`                                                                                 |
+| 主題偏好與切換器 | `theme/theme.ts`、`theme/ThemeSwitcher.tsx`、`index.css`、`main.tsx` |
+| 測試      | `tests/`，包含 `tests/theme.mjs` |
 
 以上程式檔案位於 `src/`，測試位於專案根目錄的 `tests/`。
 
@@ -102,6 +109,12 @@ HTML 已加入 Cloudflare Web Analytics 腳本，用於網站使用情況統計�
 ## 開發紀錄
 
 以下依 Git 提交日期整理，同日相關修改合併記錄；早期已被取代的方案只保留演進摘要。
+
+### 2026-10-14｜淺色主題與語意化色彩變數
+
+加入可由使用者選取的淺色主題，同時維持深色為預設。將元件內的主題色彩改為由 CSS 變數支援的語意化 utility class，讓相同角色在兩種主題使用不同色值而不改變元件行為。切換器沿用現有語言偏好模式，選擇保存在目前瀏覽器，也不寫入 ZIP 備份。
+
+由於部署用 CSP 禁止 inline script，`main.tsx` 會在 `createRoot` 前套用保存的主題；Web manifest 的啟動畫面底色維持深色。新增 `tests/theme.mjs` 作為主題契約測試，並在上方記錄主題模組、語意化變數與啟動套用路徑。
 
 ### 2026-10-03｜改用 Cloudflare 部署
 

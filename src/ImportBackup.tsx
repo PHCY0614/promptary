@@ -125,54 +125,54 @@ export default function ImportBackup({
     <div ref={menuRef} className="relative z-40 shrink-0" onKeyDown={(event) => {
       if (event.key === "Escape") { setMenuOpen(false); manageButton.current?.focus(); }
     }}>
-      <button ref={manageButton} type="button" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen((current) => !current)} className={`whitespace-nowrap bg-[#161618] ${buttonClassName} py-1.5 text-xs text-[#b8b5af] border border-[#2e2e32] rounded-lg`}>
+      <button ref={manageButton} type="button" aria-haspopup="true" aria-expanded={menuOpen} onClick={() => setMenuOpen((current) => !current)} className={`whitespace-nowrap bg-surface ${buttonClassName} py-1.5 text-xs text-text-muted border border-border rounded-lg`}>
         {t.manage}{" "}<span aria-hidden="true" className={`inline-block text-xs transition-transform duration-150 motion-reduce:transition-none ${menuOpen ? "rotate-180" : ""}`}>▾</span>
       </button>
-      {menuOpen && <div className="absolute right-0 top-full mt-1 min-w-full rounded-lg border border-[#2e2e32] bg-[#161618] p-1 shadow-xl">
-        <button type="button" onClick={() => { setMenuOpen(false); void store.exportData(); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">{t.exportAction}</button>
-        <button type="button" onClick={() => openDialog("import")} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">{t.importAction}</button>
-        <button type="button" onClick={() => openDialog("clear")} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f19b9b] hover:bg-[#2e2e32] rounded">{t.clearAction}</button>
-        <button type="button" onClick={() => openDialog("storage")} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-[#f0ede8] hover:bg-[#2e2e32] rounded">{t.storageAction}</button>
+      {menuOpen && <div className="absolute right-0 top-full mt-1 min-w-full rounded-lg border border-border bg-surface p-1 shadow-xl">
+        <button type="button" onClick={() => { setMenuOpen(false); void store.exportData(); }} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-text hover:bg-border rounded">{t.exportAction}</button>
+        <button type="button" onClick={() => openDialog("import")} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-text hover:bg-border rounded">{t.importAction}</button>
+        <button type="button" onClick={() => openDialog("clear")} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-danger-muted hover:bg-border rounded">{t.clearAction}</button>
+        <button type="button" onClick={() => openDialog("storage")} className="w-full whitespace-nowrap text-left px-1.5 py-2 text-xs text-text hover:bg-border rounded">{t.storageAction}</button>
       </div>}
     </div>
 
     {dialog && createPortal(<div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onKeyDown={handleDialogKeyDown}>
-      <section ref={dialogRef} role="dialog" aria-modal="true" aria-label={dialog === "import" ? t.importBackup : dialog === "clear" ? t.clearData : t.localData} className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-[#161618] border border-[#2e2e32] p-5 text-sm text-[#f0ede8]">
+      <section ref={dialogRef} role="dialog" aria-modal="true" aria-label={dialog === "import" ? t.importBackup : dialog === "clear" ? t.clearData : t.localData} className="w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-surface border border-border p-5 text-sm text-text">
         {dialog === "import" && <>
           <h2 className="mb-3 text-sm font-bold">{t.importBackup}</h2>
-          <p className="text-xs text-[#b8b5af] mb-3">{t.importHelp}</p>
+          <p className="text-xs text-text-muted mb-3">{t.importHelp}</p>
           <input ref={fileInput} aria-label={t.chooseBackupZip} type="file" accept=".zip,application/zip" disabled={busy} onChange={(event) => { const file = event.target.files?.[0]; if (file) { setFileName(file.name); void read(file); } event.target.value = ""; }} className="hidden" />
           <div className="flex flex-wrap items-center gap-3">
-            <button autoFocus type="button" disabled={busy} onClick={() => fileInput.current?.click()} className="shrink-0 rounded-lg border border-[#b8b5af] bg-[#303034] px-2.5 py-1.5 text-xs text-[#f0ede8] hover:bg-[#404046] disabled:opacity-50">{fileName ? t.changeFile : t.chooseBackupFile}</button>
-            <span className="min-w-0 break-all text-xs text-[#b8b5af]">{fileName || t.noFileChosen}</span>
+            <button autoFocus type="button" disabled={busy} onClick={() => fileInput.current?.click()} className="shrink-0 rounded-lg border border-border-muted bg-surface-action px-2.5 py-1.5 text-xs text-text hover:bg-surface-action-hover disabled:opacity-50">{fileName ? t.changeFile : t.chooseBackupFile}</button>
+            <span className="min-w-0 break-all text-xs text-text-muted">{fileName || t.noFileChosen}</span>
           </div>
           {preview && <p className="mt-4">{t.importPreview(pending!.collections.length, preview.added, preview.updated, preview.kept)}</p>}
-          {flash && <p role="status" className="mt-4 text-xs text-[#e1c48e]">{flash}</p>}
+          {flash && <p role="status" className="mt-4 text-xs text-accent-notice">{flash}</p>}
           <div className="mt-5 flex justify-end gap-3">
-            <button disabled={busy} onClick={closeDialog} className="text-xs text-[#b8b5af] p-2">{t.close}</button>
-            {pending && <button disabled={busy} onClick={() => void submitImport()} className="text-xs bg-[#c9a96e] text-black rounded px-3 py-2 disabled:opacity-50">{busy ? t.processing : t.confirmImport}</button>}
+            <button disabled={busy} onClick={closeDialog} className="text-xs text-text-muted p-2">{t.close}</button>
+            {pending && <button disabled={busy} onClick={() => void submitImport()} className="text-xs bg-accent text-on-accent-strong rounded px-3 py-2 disabled:opacity-50">{busy ? t.processing : t.confirmImport}</button>}
           </div>
         </>}
 
         {dialog === "clear" && <>
           <h2 className="mb-3 text-sm font-bold">{t.clearData}</h2>
-          <p className="text-xs text-[#b8b5af]">{t.clearDataHelp}</p>
+          <p className="text-xs text-text-muted">{t.clearDataHelp}</p>
           <div className="mt-5 flex justify-end gap-3">
-            <button autoFocus type="button" disabled={busy} onClick={closeDialog} className="px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-ui hover:text-[#f0ede8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c9a96e] disabled:opacity-50">{t.cancel}</button>
-            <button type="button" disabled={busy} onClick={() => void submitClear()} className="px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-ui hover:bg-[#ef7f7f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e06e6e] disabled:opacity-50">{busy ? t.clearing : t.confirm}</button>
+            <button autoFocus type="button" disabled={busy} onClick={closeDialog} className="px-2 py-1 text-xs text-text-muted border border-border rounded font-ui hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50">{t.cancel}</button>
+            <button type="button" disabled={busy} onClick={() => void submitClear()} className="px-2 py-1 text-xs bg-danger text-white rounded font-ui hover:bg-danger-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger disabled:opacity-50">{busy ? t.clearing : t.confirm}</button>
           </div>
         </>}
 
         {dialog === "storage" && <>
           <h2 className="mb-4 text-sm font-bold">{t.localData}</h2>
           <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-5 gap-y-3 text-xs">
-            <dt className="text-[#b8b5af]">{t.storageUsed}</dt>
+            <dt className="text-text-muted">{t.storageUsed}</dt>
             <dd className="text-right font-technical tabular-nums">{storageStatus ? storageUsed ?? t.storageUnavailable : t.loadingStorage}</dd>
-            <dt className="text-[#b8b5af]">{t.dataProtection}</dt>
+            <dt className="text-text-muted">{t.dataProtection}</dt>
             <dd className="text-right">{storageStatus ? storageStatus.persisted === true ? t.storageEnabled : storageStatus.persisted === false ? t.storageNotEnabled : t.storageUnavailable : t.loadingStorage}</dd>
           </dl>
           <div className="mt-5 flex justify-end">
-            <button autoFocus type="button" onClick={closeDialog} className="text-xs text-[#b8b5af] p-2">{t.close}</button>
+            <button autoFocus type="button" onClick={closeDialog} className="text-xs text-text-muted p-2">{t.close}</button>
           </div>
         </>}
       </section>

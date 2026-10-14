@@ -14,7 +14,7 @@ export default function LanguageSwitcher({ buttonClassName = "px-2.5" }: Props) 
       type="button"
       aria-label={t.switchLanguage}
       onClick={() => setLocale(nextLocale)}
-      className={`whitespace-nowrap ${buttonClassName} py-1.5 text-xs font-ui font-normal text-[#b8b5af] hover:text-[#f0ede8] bg-transparent border border-transparent rounded-lg transition-colors`}
+      className={`whitespace-nowrap ${buttonClassName} py-1.5 text-xs font-ui font-normal text-text-muted hover:text-text bg-transparent border border-transparent rounded-lg transition-colors`}
     >
       {label}
     </button>

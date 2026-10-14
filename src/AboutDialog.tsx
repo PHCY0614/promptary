@@ -72,23 +72,23 @@ export default function AboutDialog({ open, mode = "full", onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="about-title"
-        className="w-full max-w-2xl max-h-[75dvh] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-[#161618] border border-[#2e2e32] p-5 text-sm text-[#f0ede8]"
+        className="w-full max-w-2xl max-h-[75dvh] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-surface border border-border p-5 text-sm text-text"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 mb-4">
           <h2
             id="about-title"
-            className="text-xl font-semibold text-[#f0ede8] leading-tight"
+            className="text-xl font-semibold text-text leading-tight"
             style={{ fontFamily: "'Fraunces', serif" }}
           >
             {t.about}
           </h2>
-          <button ref={closeButton} type="button" onClick={onClose} className="text-xs text-[#b8b5af] p-2">
+          <button ref={closeButton} type="button" onClick={onClose} className="text-xs text-text-muted p-2">
             {t.close}
           </button>
         </div>
 
-        <div className="space-y-4 text-sm leading-relaxed text-[#c8c4bc]">
+        <div className="space-y-4 text-sm leading-relaxed text-text-body">
           {t.aboutIntro.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
@@ -100,7 +100,7 @@ export default function AboutDialog({ open, mode = "full", onClose }: Props) {
           </ol>
 
           <section>
-            <h3 className="mb-2 text-sm font-bold text-[#f0ede8]">{t.aboutReminderTitle}</h3>
+            <h3 className="mb-2 text-sm font-bold text-text">{t.aboutReminderTitle}</h3>
             <div className="space-y-3">
               {t.aboutReminder.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
@@ -109,7 +109,7 @@ export default function AboutDialog({ open, mode = "full", onClose }: Props) {
           </section>
 
           {mode === "full" && <section>
-            <h3 className="mb-2 text-sm font-bold text-[#f0ede8]">{t.aboutWhyTitle}</h3>
+            <h3 className="mb-2 text-sm font-bold text-text">{t.aboutWhyTitle}</h3>
             <div className="space-y-3">
               {t.aboutWhy.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
@@ -118,7 +118,7 @@ export default function AboutDialog({ open, mode = "full", onClose }: Props) {
           </section>}
 
           {mode === "full" && <section>
-            <h3 className="mb-2 text-sm font-bold text-[#f0ede8]">{t.aboutMeTitle}</h3>
+            <h3 className="mb-2 text-sm font-bold text-text">{t.aboutMeTitle}</h3>
             <div className="space-y-3">
               <p>{t.aboutMeKaomoji}</p>
               {t.aboutMe.map((paragraph) => (
@@ -132,7 +132,7 @@ export default function AboutDialog({ open, mode = "full", onClose }: Props) {
                   rel="noopener noreferrer"
                   aria-label="Threads"
                   title="Threads"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#18181B] text-white transition-opacity hover:opacity-80"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-social text-white transition-opacity hover:opacity-80"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +152,7 @@ export default function AboutDialog({ open, mode = "full", onClose }: Props) {
                   rel="noopener noreferrer"
                   aria-label="Instagram"
                   title="Instagram"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#18181B] text-white transition-opacity hover:opacity-80"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-social text-white transition-opacity hover:opacity-80"
                 >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

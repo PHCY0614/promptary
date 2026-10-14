@@ -9,6 +9,9 @@ export type Messages = {
   languageZhTW: string;
   languageEn: string;
   switchLanguage: string;
+  switchTheme: string;
+  themeLight: string;
+  themeDark: string;
   searchPlaceholder: string;
   sortNewest: string;
   sortUpdated: string;
@@ -212,6 +215,9 @@ const zhTW: Messages = {
   languageZhTW: "正體中文",
   languageEn: "English",
   switchLanguage: "Switch to English",
+  switchTheme: "切換主題",
+  themeLight: "亮色",
+  themeDark: "深色",
   about: "關於",
   aboutIntro: [
     "Promptary 是用來收藏 AI 生圖咒語、來源網址和嘗試紀錄的小工具，方便集中整理與比較。",
@@ -488,6 +494,9 @@ const en: Messages = {
   languageZhTW: "正體中文",
   languageEn: "English",
   switchLanguage: "切換至正體中文",
+  switchTheme: "Switch theme",
+  themeLight: "Light",
+  themeDark: "Dark",
   about: "About",
   aboutIntro: [
     "Promptary is a small tool for collecting AI image prompts, source links, and attempt records, so you can keep everything in one place and easily find or compare it later.",

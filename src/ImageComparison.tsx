@@ -27,7 +27,7 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
   function renderTextInfo(slot: 0 | 1) {
     const image = slotImages[slot];
     const attempt = image?.attempt;
-    if (!image) return <p className="text-sm text-[#b8b5af]">{t.selectImageAbove}</p>;
+    if (!image) return <p className="text-sm text-text-muted">{t.selectImageAbove}</p>;
     const attemptIndex = attempt ? collection.attempts.findIndex((candidate) => candidate.id === attempt.id) : -1;
     const model = attempt?.model?.trim();
     const usesOriginalPrompt = attempt?.promptMode === "original";
@@ -47,8 +47,8 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
           : store.editAttempt(collection.id, attempt.id, { promptClassification })}
       />
       {(attempt?.notes || (!attempt && collection.collectionNotes)) && <div>
-        <p className={`mb-1.5 text-xs font-bold text-[#c8c4bc] ${sectionLabelClass(locale)}`}>{attempt ? t.notes : t.collectionNotes}</p>
-        <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">{attempt ? attempt.notes : collection.collectionNotes}</p>
+        <p className={`mb-1.5 text-xs font-bold text-text-body ${sectionLabelClass(locale)}`}>{attempt ? t.notes : t.collectionNotes}</p>
+        <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-border bg-overlay p-3 text-xs leading-relaxed text-text-body">{attempt ? attempt.notes : collection.collectionNotes}</p>
       </div>}
     </>;
   }
@@ -62,7 +62,7 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
             title={valid.filter(Boolean).length === 2 && !valid.includes(option.id) ? t.deselectImageFirst : option.label}
             disabled={valid.filter(Boolean).length === 2 && !valid.includes(option.id)}
             onClick={() => setSelected(toggleComparisonSelection(valid, option.id))}
-            className={`h-[58px] w-[44px] shrink-0 overflow-hidden rounded-md border p-0.5 focus-visible:outline-2 focus-visible:outline-[#c9a96e] focus-visible:outline-offset-2 disabled:opacity-50 ${valid.includes(option.id) ? "border-[#c9a96e] bg-[#2a2010] text-[#e4c68f]" : "border-[#55545a] text-[#b8b5af] hover:text-[#f0ede8]"}`}>
+            className={`h-[58px] w-[44px] shrink-0 overflow-hidden rounded-md border p-0.5 focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 disabled:opacity-50 ${valid.includes(option.id) ? "border-accent bg-ref-dim text-accent-label" : "border-border-strong text-text-muted hover:text-text"}`}>
             <StoredImage image={option.image} variant="thumbnail" alt="" loading="lazy" className="h-full w-full rounded-sm object-cover" />
           </button>
         ))}
@@ -72,15 +72,15 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
         {([0, 1] as const).map((slot) => {
           const image = slotImages[slot];
           return <div key={slot} aria-label={t.imageSlot(slot === 0 ? "A" : "B")} className="min-w-0">
-            <p className="mb-2 h-5 truncate text-xs leading-5 text-[#b8b5af]" title={image?.label}>{image?.label ?? t.selectSlotImage(slot === 0 ? "A" : "B")}</p>
-            {image ? <button type="button" onClick={() => onZoom(image.image)} aria-label={t.zoomSlot(slot === 0 ? "A" : "B")} className="h-[42vh] min-h-[260px] max-h-[460px] w-full cursor-zoom-in overflow-hidden rounded-lg bg-[#161618]">
+            <p className="mb-2 h-5 truncate text-xs leading-5 text-text-muted" title={image?.label}>{image?.label ?? t.selectSlotImage(slot === 0 ? "A" : "B")}</p>
+            {image ? <button type="button" onClick={() => onZoom(image.image)} aria-label={t.zoomSlot(slot === 0 ? "A" : "B")} className="h-[42vh] min-h-[260px] max-h-[460px] w-full cursor-zoom-in overflow-hidden rounded-lg bg-surface">
               <StoredImage image={image.image} variant="canonical" alt={image.label} className="h-full w-full object-contain" />
-            </button> : <div className="flex h-[42vh] min-h-[260px] max-h-[460px] items-center justify-center rounded-lg border border-dashed border-[#55545a] px-2 text-center text-xs text-[#b8b5af]">{images.length ? t.selectImageAbove : t.noComparableImages}</div>}
+            </button> : <div className="flex h-[42vh] min-h-[260px] max-h-[460px] items-center justify-center rounded-lg border border-dashed border-border-strong px-2 text-center text-xs text-text-muted">{images.length ? t.selectImageAbove : t.noComparableImages}</div>}
           </div>;
         })}
       </div>
       <div className="mt-4 md:hidden">
-        <div aria-label={t.compareInfo} className="mx-auto flex w-fit items-center gap-1 rounded-md border border-[#2e2e32] bg-[#111113] p-0.5">
+        <div aria-label={t.compareInfo} className="mx-auto flex w-fit items-center gap-1 rounded-md border border-border bg-overlay p-0.5">
           {([0, 1] as const).map((slot) => <button
             key={slot}
             type="button"
@@ -88,7 +88,7 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
             title={slot === 0 ? t.showLeftInfo : t.showRightInfo}
             aria-pressed={activeMobileSlot === slot}
             onClick={() => setActiveMobileSlot(slot)}
-            className={`inline-flex h-7 w-8 cursor-pointer items-center justify-center rounded border transition-colors focus-visible:outline-2 focus-visible:outline-[#c9a96e] focus-visible:outline-offset-2 ${activeMobileSlot === slot ? "border-[#c9a96e] bg-[#2a2010] text-[#e4c68f]" : "border-transparent text-[#77747c] hover:bg-[#1b1b1e] hover:text-[#f0ede8]"}`}
+            className={`inline-flex h-7 w-8 cursor-pointer items-center justify-center rounded border transition-colors focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${activeMobileSlot === slot ? "border-accent bg-ref-dim text-accent-label" : "border-transparent text-text-handle hover:bg-surface-raised hover:text-text"}`}
           >
             {slot === 0
               ? <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 fill-none stroke-current" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
@@ -109,10 +109,10 @@ export default function ImageComparison({ collection, store, onZoom, preferredAt
         {([0, 1] as const).map((slot) => {
           const image = slotImages[slot];
           return <div key={slot} aria-label={slot === 0 ? t.leftColumn : t.rightColumn} className="min-w-0 flex flex-col gap-4">
-            <p className="h-5 truncate text-xs leading-5 text-[#b8b5af]" title={image?.label}>{image?.label ?? t.selectImageAbove}</p>
-            {image ? <button type="button" onClick={() => onZoom(image.image)} aria-label={t.zoomColumn(slot === 0 ? "left" : "right")} className="h-[min(60vh,640px)] w-full overflow-hidden rounded-lg bg-[#161618] cursor-zoom-in">
+            <p className="h-5 truncate text-xs leading-5 text-text-muted" title={image?.label}>{image?.label ?? t.selectImageAbove}</p>
+            {image ? <button type="button" onClick={() => onZoom(image.image)} aria-label={t.zoomColumn(slot === 0 ? "left" : "right")} className="h-[min(60vh,640px)] w-full overflow-hidden rounded-lg bg-surface cursor-zoom-in">
               <StoredImage image={image.image} variant="canonical" alt={image.label} className="h-full w-full object-contain" />
-            </button> : <div className="h-[min(60vh,640px)] rounded-lg border border-dashed border-[#55545a] flex items-center justify-center text-sm text-[#b8b5af]">{images.length ? t.selectImageAbove : t.noComparableImages}</div>}
+            </button> : <div className="h-[min(60vh,640px)] rounded-lg border border-dashed border-border-strong flex items-center justify-center text-sm text-text-muted">{images.length ? t.selectImageAbove : t.noComparableImages}</div>}
             {image && renderTextInfo(slot)}
           </div>;
         })}

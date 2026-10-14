@@ -46,7 +46,7 @@ export default function ResizableTextarea({ className = "", disabled, style, ...
           const height = textareaRef.current?.getBoundingClientRect().height ?? 0;
           setHeight(height + (event.key === "ArrowDown" ? 16 : -16));
         }}
-        className="absolute bottom-1 right-1 flex h-5 w-5 touch-none cursor-ns-resize items-center justify-center rounded text-[#77747c] transition-colors hover:bg-[#242427] hover:text-[#c8c4bc] focus-visible:outline-1 focus-visible:outline-[#c9a96e] disabled:hidden"
+        className="absolute bottom-1 right-1 flex h-5 w-5 touch-none cursor-ns-resize items-center justify-center rounded text-text-handle transition-colors hover:bg-surface-hover hover:text-text-body focus-visible:outline-1 focus-visible:outline-accent disabled:hidden"
       >
         <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5 fill-none stroke-current" strokeWidth="1.5" strokeLinecap="round">
           <path d="m8 15 7-7M11.5 15l3.5-3.5" />

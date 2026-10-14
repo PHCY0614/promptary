@@ -14,7 +14,7 @@ No sign-in is required. Collections and images are stored locally in your browse
 
 ## Current Version
 
-Last updated: 3 October 2026.
+Last updated: 14 October 2026.
 
 Promptary currently supports collection management, experiment tracking, categorised prompt reading, side-by-side image comparison, ZIP backups, and local storage information. Recent updates added reusable tag suggestions, more compact collection and experiment forms, starter collections, a first-visit introduction, classification inheritance for custom prompts, and stricter ZIP backup validation.
 
@@ -39,6 +39,7 @@ On your first visit, a short introduction explains the workflow and local storag
 * **Image comparison**: Reference images and generated results can both be used as cover images. Any two images can be compared side by side, including on mobile, with controls for switching the information shown for each side.
 * **Form protection**: If a form contains unsaved changes, Promptary asks for confirmation before closing it. If saving fails, your input is preserved so you can retry.
 * **Bilingual interface**: Switch between Traditional Chinese and English. Your language preference is stored in the current browser.
+* **Theme preference**: Switch between dark and light themes from the header. Dark is the default, the preference is stored in the current browser, and the theme does not follow the operating system.
 
 ## Image Processing
 
@@ -62,6 +63,8 @@ Clearing site data may delete your collections, and private or incognito browsin
 
 The ZIP backup contains collections, experiment records, processed images, and the custom platform list.
 
+Theme and language preferences belong to the current browser and are not included in ZIP backups.
+
 To import a backup:
 
 1. Open **Manage → Import** and select a ZIP file exported by Promptary.
@@ -83,6 +86,8 @@ The site includes Cloudflare Web Analytics for website usage measurement. Collec
 ## Local Development
 
 Built with React 19, TypeScript, Vite 8, Tailwind CSS v4, and IndexedDB.
+
+The interface uses semantic CSS colour tokens for both themes. The dark palette remains the default, while the saved theme preference is applied before React renders so the page can honour the Content Security Policy without an inline script. The web manifest keeps a dark background for the launch screen.
 
 The interface is based on a design originally created in Figma Make, with OpenAI Codex used during development and debugging.
 

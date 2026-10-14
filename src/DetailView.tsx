@@ -8,6 +8,7 @@ import PromptReader from "./PromptReader";
 import type { PromptClassification } from "./promptClassification";
 import StoredImage from "./StoredImage";
 import { LanguageSwitcher, sectionLabelClass, useLocale } from "./i18n";
+import ThemeSwitcher from "./theme/ThemeSwitcher";
 
 // 來源只允許一般網頁協定成為連結，避免危險協定被直接執行。
 function safeSourceHref(source: string): string | null {
@@ -19,15 +20,15 @@ function safeSourceHref(source: string): string | null {
   }
 }
 const PLATFORM_COLORS: Record<string, string> = {
-  PixAI: "text-[#a78bfa]",
-  Midjourney: "text-[#6abf96]",
-  Flux: "text-[#60a5fa]",
-  Gemini: "text-[#fbbf24]",
-  ChatGPT: "text-[#34d399]",
-  "GPT-4o": "text-[#34d399]",
-  SDXL: "text-[#f472b6]",
-  ComfyUI: "text-[#fb923c]",
-  Leonardo: "text-[#e879f9]",
+  PixAI: "text-platform-pixai",
+  Midjourney: "text-platform-midjourney",
+  Flux: "text-platform-flux",
+  Gemini: "text-platform-gemini",
+  ChatGPT: "text-platform-chatgpt",
+  "GPT-4o": "text-platform-chatgpt",
+  SDXL: "text-platform-sdxl",
+  ComfyUI: "text-platform-comfyui",
+  Leonardo: "text-platform-leonardo",
 };
 
 type CompareMode = "mine" | "side";
@@ -94,19 +95,19 @@ export default function DetailView({
   const sourceHref = c.source ? safeSourceHref(c.source) : null;
 
   return (
-    <div ref={detailRef} className="h-full overflow-y-auto bg-[#0d0d0e]">
+    <div ref={detailRef} className="h-full overflow-y-auto bg-bg">
       {/* Nav bar */}
-      <header className="sticky top-0 z-30 bg-[#0d0d0e]/95 backdrop-blur-md border-b border-[#1e1e21]">
+      <header className="sticky top-0 z-30 bg-header backdrop-blur-md border-b border-border-subtle">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           <button
             onClick={onBack}
-            className="shrink-0 text-[#b8b5af] hover:text-[#f0ede8] transition-colors text-sm font-ui flex items-center gap-1.5"
+            className="shrink-0 text-text-muted hover:text-text transition-colors text-sm font-ui flex items-center gap-1.5"
           >
             {t.back}
           </button>
           {c.name ? (
             <p
-              className="min-w-0 flex-1 truncate text-sm font-normal not-italic text-[#f0ede8]"
+              className="min-w-0 flex-1 truncate text-sm font-normal not-italic text-text"
               style={{ fontFamily: "'Fraunces', serif" }}
             >
               {c.name}
@@ -114,33 +115,34 @@ export default function DetailView({
           ) : (
             <div className="flex-1" />
           )}
-          <div className="hidden md:block shrink-0">
+          <div className="hidden md:flex shrink-0 items-center">
             <LanguageSwitcher />
+            <ThemeSwitcher />
           </div>
           <button
             onClick={() => toggleFavorite(c.id)}
-            aria-label={c.isFavorite ? t.removeFavorite : t.addFavorite} aria-pressed={c.isFavorite} className={`shrink-0 text-xs w-9 h-9 flex items-center justify-center transition-colors ${c.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] hover:text-[#DB8587]"}`}
+            aria-label={c.isFavorite ? t.removeFavorite : t.addFavorite} aria-pressed={c.isFavorite} className={`shrink-0 text-xs w-9 h-9 flex items-center justify-center transition-colors ${c.isFavorite ? "text-favorite" : "text-text-muted hover:text-favorite"}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill={c.isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
           </button>
           <button
             onClick={onEditCollection}
-            className="shrink-0 whitespace-nowrap px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
+            className="shrink-0 whitespace-nowrap px-2.5 py-1 text-xs font-medium bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors"
           >
             {t.edit}
           </button>
           {!showDeleteConfirm ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="shrink-0 whitespace-nowrap px-2.5 py-1 text-xs text-[#b8b5af] hover:text-[#e06e6e] hover:border-[#e06e6e] border border-[#2e2e32] rounded-lg transition-colors font-ui"
+              className="shrink-0 whitespace-nowrap px-2.5 py-1 text-xs text-text-muted hover:text-danger hover:border-danger border border-border rounded-lg transition-colors font-ui"
             >
               {t.delete}
             </button>
           ) : (
             <div className="flex shrink-0 items-center gap-1">
-              <span className="whitespace-nowrap text-xs text-[#e06e6e] font-ui">{t.confirmDelete}</span>
-              <button onClick={handleDelete} className="shrink-0 whitespace-nowrap px-2 py-1 text-xs bg-[#e06e6e] text-white rounded font-ui">{t.confirm}</button>
-              <button onClick={() => setShowDeleteConfirm(false)} className="shrink-0 whitespace-nowrap px-2 py-1 text-xs text-[#b8b5af] border border-[#2e2e32] rounded font-ui">{t.cancel}</button>
+              <span className="whitespace-nowrap text-xs text-danger font-ui">{t.confirmDelete}</span>
+              <button onClick={handleDelete} className="shrink-0 whitespace-nowrap px-2 py-1 text-xs bg-danger text-white rounded font-ui">{t.confirm}</button>
+              <button onClick={() => setShowDeleteConfirm(false)} className="shrink-0 whitespace-nowrap px-2 py-1 text-xs text-text-muted border border-border rounded font-ui">{t.cancel}</button>
             </div>
           )}
         </div>
@@ -155,7 +157,7 @@ export default function DetailView({
               {t.statusLabel[c.status]}
             </span>
             {c.tags.map((t) => (
-              <span key={t} className="text-xs font-technical text-[#c9a96e] bg-[#2a2010] px-2 py-0.5 rounded-full">
+              <span key={t} className="text-xs font-technical text-accent-text bg-ref-dim px-2 py-0.5 rounded-full">
                 #{t}
               </span>
             ))}
@@ -169,8 +171,8 @@ export default function DetailView({
                   onClick={() => setCompareMode(m)}
                   className={`px-2.5 py-1 text-xs font-ui rounded-md transition-colors ${
                     compareMode === m
-                      ? "bg-[#c9a96e] text-[#0d0d0e]"
-                      : "text-[#b8b5af] hover:text-[#f0ede8] border border-[#2e2e32]"
+                      ? "bg-accent text-on-accent"
+                      : "text-text-muted hover:text-text border border-border"
                   }`}
                 >
                   {m === "mine" ? t.myResults : t.compare}
@@ -199,7 +201,7 @@ export default function DetailView({
             <div>
               <button
                 onClick={() => setShowCoverPicker(!showCoverPicker)}
-                className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-ui transition-colors"
+                className="text-xs text-text-muted hover:text-accent-text font-ui transition-colors"
               >
                 <span aria-hidden="true" className={`inline-block text-[14px] transition-transform duration-150 motion-reduce:transition-none ${showCoverPicker ? "rotate-180" : ""}`}>▾</span>{" "}
                 {showCoverPicker ? t.collapse : t.changeCover}
@@ -209,14 +211,14 @@ export default function DetailView({
                   {allImages.map((img, i) => (
                     <div
                       key={i}
-                      className={`relative rounded overflow-hidden bg-[#161618] cursor-pointer group`}
+                      className={`relative rounded overflow-hidden bg-surface cursor-pointer group`}
                       style={{ aspectRatio: "1" }}
                       onClick={async () => { if (await setCover(c.id, img.coverSrc)) setShowCoverPicker(false); }}
                       title={img.label}
                     >
                       <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover group-hover:opacity-70 transition-opacity" />
                       {currentCover?.id === img.image.id && (
-                        <div className="absolute inset-0 border-2 border-[#c9a96e] rounded pointer-events-none" />
+                        <div className="absolute inset-0 border-2 border-accent rounded pointer-events-none" />
                       )}
                     </div>
                   ))}
@@ -236,17 +238,17 @@ export default function DetailView({
           {/* Collection notes */}
           {c.collectionNotes && (
             <div>
-              <p className={`text-xs font-bold text-[#c8c4bc] mb-1.5 ${sectionLabelClass(locale)}`}>{t.collectionNotes}</p>
-              <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">
+              <p className={`text-xs font-bold text-text-body mb-1.5 ${sectionLabelClass(locale)}`}>{t.collectionNotes}</p>
+              <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-border bg-overlay p-3 text-xs leading-relaxed text-text-body">
                 {c.collectionNotes}
               </p>
             </div>
           )}
 
           {c.source && (
-            <p className="text-xs text-[#b8b5af] font-ui break-all">
+            <p className="text-xs text-text-muted font-ui break-all">
               {t.source}{sourceHref ? (
-                <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="font-technical underline underline-offset-2 hover:text-[#c9a96e]">
+                <a href={sourceHref} target="_blank" rel="noopener noreferrer" className="font-technical underline underline-offset-2 hover:text-accent-text">
                   {c.source}
                 </a>
               ) : c.source}
@@ -260,21 +262,21 @@ export default function DetailView({
           {/* Attempts */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <p className={`text-xs font-bold text-[#b8b5af] ${sectionLabelClass(locale)}`}>
+              <p className={`text-xs font-bold text-text-muted ${sectionLabelClass(locale)}`}>
                 {t.attemptLog(c.attempts.length)}
               </p>
               <button
                 onClick={onAddAttempt}
-                className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors"
+                className="px-2.5 py-1 text-xs font-medium bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors"
               >
                 {t.addAttempt}
               </button>
             </div>
 
             {c.attempts.length === 0 ? (
-              <div className="text-center py-8 border border-dashed border-[#2e2e32] rounded-lg">
-                <p className="text-xs text-[#b8b5af] font-ui mb-2">{t.noAttempts}</p>
-                <button onClick={onAddAttempt} className="text-xs text-[#c9a96e] hover:underline font-ui">
+              <div className="text-center py-8 border border-dashed border-border rounded-lg">
+                <p className="text-xs text-text-muted font-ui mb-2">{t.noAttempts}</p>
+                <button onClick={onAddAttempt} className="text-xs text-accent-text hover:underline font-ui">
                   {t.addFirstAttempt}
                 </button>
               </div>
@@ -328,11 +330,11 @@ function ImagePane({
   const [idx, setIdx] = useState(0);
   const i = Math.min(idx, images.length - 1);
   // 圖片標題與收藏日期同排；手機可換行。
-  const heading = <div className="flex flex-wrap items-baseline justify-between gap-2"><p className={`text-xs font-bold text-[#c8c4bc] ${sectionLabelClass(locale)}`}>{label}</p>{collectedDate && <p className="text-xs text-[#b8b5af]">{t.collectedOn(collectedDate)}</p>}</div>;
+  const heading = <div className="flex flex-wrap items-baseline justify-between gap-2"><p className={`text-xs font-bold text-text-body ${sectionLabelClass(locale)}`}>{label}</p>{collectedDate && <p className="text-xs text-text-muted">{t.collectedOn(collectedDate)}</p>}</div>;
 
   if (images.length === 0) {
     return (
-      <div className="flex flex-col gap-1.5">{heading}<div className="h-[min(65vh,640px)] bg-[#161618] rounded-lg flex items-center justify-center border border-[#2e2e32]"><p className="text-xs text-[#b8b5af] font-ui">{emptyText}</p></div></div>
+      <div className="flex flex-col gap-1.5">{heading}<div className="h-[min(65vh,640px)] bg-surface rounded-lg flex items-center justify-center border border-border"><p className="text-xs text-text-muted font-ui">{emptyText}</p></div></div>
     );
   }
 
@@ -340,7 +342,7 @@ function ImagePane({
     <div className="flex flex-col gap-1.5">
       {heading}
       <button
-        className="relative w-full h-[min(65vh,640px)] rounded-lg overflow-hidden bg-[#161618] cursor-zoom-in"
+        className="relative w-full h-[min(65vh,640px)] rounded-lg overflow-hidden bg-surface cursor-zoom-in"
         aria-label={t.zoom(label)}
         type="button"
         onClick={() => onZoom(i)}
@@ -352,7 +354,7 @@ function ImagePane({
           {images.map((image, j) => (
             <div
               key={image.id}
-              className={`w-12 shrink-0 rounded overflow-hidden cursor-pointer bg-[#161618] ${j === i ? "ring-1 ring-[#c9a96e]" : "opacity-50 hover:opacity-80"}`}
+              className={`w-12 shrink-0 rounded overflow-hidden cursor-pointer bg-surface ${j === i ? "ring-1 ring-accent" : "opacity-50 hover:opacity-80"}`}
               style={{ aspectRatio: "1" }}
               onClick={() => setIdx(j)}
             >
@@ -382,17 +384,17 @@ function AttemptCard({
 }) {
   const { locale, t } = useLocale();
   const [showDelConfirm, setShowDelConfirm] = useState(false);
-  const platformColor = PLATFORM_COLORS[a.platform] ?? "text-[#b8b5af]";
+  const platformColor = PLATFORM_COLORS[a.platform] ?? "text-text-muted";
 
   return (
-    <div className="rounded-lg border border-[#c9a96e44] bg-[#161618]">
+    <div className="rounded-lg border border-accent-subtle bg-surface">
       <div className="p-3">
         {/* Header row */}
         <div className="flex items-start gap-2 mb-2.5">
           <div className="flex-1 min-w-0">
             {a.name && (
               <p
-                className="mb-1 text-sm font-normal text-[#f0ede8]"
+                className="mb-1 text-sm font-normal text-text"
                 style={{ fontFamily: "'Fraunces', serif" }}
               >
                 {a.name}
@@ -400,14 +402,14 @@ function AttemptCard({
             )}
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-xs font-technical font-bold ${platformColor}`}>{a.platform}</span>
-              {a.model && <span className="text-xs text-[#b8b5af] font-technical">{a.model}</span>}
-              <span className="text-xs text-[#b8b5af] font-technical">{a.date}</span>
+              {a.model && <span className="text-xs text-text-muted font-technical">{a.model}</span>}
+              <span className="text-xs text-text-muted font-technical">{a.date}</span>
             </div>
           </div>
           {a.rating && (
             <div className="flex gap-0.5 flex-shrink-0">
               {[1,2,3,4,5].map((s) => (
-                <span key={s} className={s <= a.rating! ? "text-[#c9a96e]" : "text-[#b8b5af]"} style={{ fontSize: 12 }}>★</span>
+                <span key={s} className={s <= a.rating! ? "text-accent-text" : "text-text-muted"} style={{ fontSize: 12 }}>★</span>
               ))}
             </div>
           )}
@@ -419,7 +421,7 @@ function AttemptCard({
             {a.images.map((image, i) => (
               <div
                 key={image.id}
-                className="relative rounded overflow-hidden bg-[#1e1e21] cursor-pointer group flex-shrink-0"
+                className="relative rounded overflow-hidden bg-surface-2 cursor-pointer group flex-shrink-0"
                 style={{ width: 112, height: 112 }}
                 onClick={() => onZoom(i)}
               >
@@ -432,13 +434,13 @@ function AttemptCard({
         {/* Notes */}
         {a.notes && (
           <div className="mb-3">
-            <p className={`mb-1.5 text-xs font-bold text-[#c8c4bc] ${sectionLabelClass(locale)}`}>{t.notes}</p>
-            <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-[#2e2e32] bg-[#111113] p-3 text-xs leading-relaxed text-[#c8c4bc]">{a.notes}</p>
+            <p className={`mb-1.5 text-xs font-bold text-text-body ${sectionLabelClass(locale)}`}>{t.notes}</p>
+            <p className="whitespace-pre-wrap break-words rounded-lg border-2 border-dashed border-border bg-overlay p-3 text-xs leading-relaxed text-text-body">{a.notes}</p>
           </div>
         )}
 
         {a.promptMode === "original" ? (
-          <p className={`text-xs font-bold text-[#c8c4bc] ${sectionLabelClass(locale)}`}>{t.unchanged}</p>
+          <p className={`text-xs font-bold text-text-body ${sectionLabelClass(locale)}`}>{t.unchanged}</p>
         ) : (
           <PromptReader
             title={t.attemptPrompt}
@@ -450,15 +452,15 @@ function AttemptCard({
       </div>
 
       {/* Action row */}
-      <div className="px-3 pb-2 flex flex-wrap items-center gap-2 border-t border-[#1e1e21] pt-2">
+      <div className="px-3 pb-2 flex flex-wrap items-center gap-2 border-t border-border-subtle pt-2">
         <div className="flex-1" />
-        <button onClick={onEdit} className="px-2.5 py-1 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors">{t.edit}</button>
+        <button onClick={onEdit} className="px-2.5 py-1 text-xs font-medium bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors">{t.edit}</button>
         {!showDelConfirm ? (
-          <button onClick={() => setShowDelConfirm(true)} className="text-xs text-[#b8b5af] hover:text-[#e06e6e] font-ui transition-colors">{t.delete}</button>
+          <button onClick={() => setShowDelConfirm(true)} className="text-xs text-text-muted hover:text-danger font-ui transition-colors">{t.delete}</button>
         ) : (
           <>
-            <button onClick={onDelete} className="text-xs text-[#e06e6e] font-ui">{t.confirm}</button>
-            <button onClick={() => setShowDelConfirm(false)} className="text-xs text-[#b8b5af] font-ui">{t.cancel}</button>
+            <button onClick={onDelete} className="text-xs text-danger font-ui">{t.confirm}</button>
+            <button onClick={() => setShowDelConfirm(false)} className="text-xs text-text-muted font-ui">{t.cancel}</button>
           </>
         )}
       </div>

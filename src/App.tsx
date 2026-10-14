@@ -35,7 +35,7 @@ export default function App() {
     <div className="h-full">
       {/* 儲存錯誤跨表單顯示；失敗時不關閉表單、不切換頁面。 */}
       {store.storageError && (
-        <div role="alert" className="fixed top-3 left-4 right-4 z-[100] rounded-lg bg-[#2a1010] border border-[#e06e6e] p-3 text-sm text-[#ffcaca]">
+        <div role="alert" className="fixed top-3 left-4 right-4 z-[100] rounded-lg bg-danger-bg border border-danger p-3 text-sm text-danger-text">
           <div className="flex items-start justify-between gap-3">
             <span>{translateError(store.storageError, t)}</span>
             <button type="button" onClick={store.dismissStorageError} aria-label={t.dismissStorageError} className="shrink-0 rounded px-2 text-lg hover:bg-white/10">×</button>
@@ -43,9 +43,9 @@ export default function App() {
         </div>
       )}
       {store.loadState !== "ready" && (
-        <div className="flex h-full flex-col items-center justify-center gap-4 text-sm text-[#c8c4bc]">
+        <div className="flex h-full flex-col items-center justify-center gap-4 text-sm text-text-body">
           <p role="status">{store.loadState === "loading" ? t.loadingArchive : t.loadFailed}</p>
-          {store.loadState === "error" && <button onClick={() => void store.reload()} className="rounded bg-[#c9a96e] px-4 py-2 text-black">{t.retryLoad}</button>}
+          {store.loadState === "error" && <button onClick={() => void store.reload()} className="rounded bg-accent px-4 py-2 text-on-accent-strong">{t.retryLoad}</button>}
         </div>
       )}
       {/* Gallery */}

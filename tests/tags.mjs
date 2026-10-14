@@ -113,7 +113,7 @@ assert.match(modal, /<svg\s+width="14"\s+height="14"[\s\S]*?<span>\{t\.addFavori
 for (const source of [modal, attemptModal]) {
   assert.match(
     source,
-    /mt-1\.5 text-\[11px\] leading-relaxed text-\[#9d9a94\][^>]*>\{t\.localLibraryHint/s,
+    /mt-1\.5 text-\[11px\] leading-relaxed text-placeholder[^>]*>\{t\.localLibraryHint/s,
   )
 }
 assert.match(gallery, /collectionHasAnyTag/)

@@ -112,7 +112,7 @@ export default function TagPicker({
     >
       <label
         htmlFor={inputId}
-        className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5"
+        className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5"
       >
         {t.tagsComma}
       </label>
@@ -135,7 +135,7 @@ export default function TagPicker({
                 }
                 aria-label={t.removeTag(label)}
                 title={label}
-                className="inline-flex min-h-7 max-w-full items-center gap-1 overflow-hidden rounded-md border border-[#6f5b35] bg-[#2a2010] px-2 py-1 text-[11px] text-[#d8bd83] transition-colors hover:border-[#c9a96e] hover:text-[#f0d9a6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]"
+                className="inline-flex min-h-7 max-w-full items-center gap-1 overflow-hidden rounded-md border border-accent-tag-border bg-ref-dim px-2 py-1 text-[11px] text-accent-tag transition-colors hover:border-accent hover:text-accent-tag-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <span className="min-w-0 truncate whitespace-nowrap font-technical">#{label}</span>
                 <span aria-hidden="true" className="shrink-0 text-sm leading-none">
@@ -171,11 +171,11 @@ export default function TagPicker({
         }}
         placeholder={t.tagsPlaceholder}
         aria-describedby={hintId}
-        className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
+        className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-xs text-text-body placeholder-placeholder focus:outline-none focus:border-accent-soft transition-colors font-technical"
       />
       <p
         id={hintId}
-        className="mt-1.5 text-[11px] leading-relaxed text-[#9d9a94]"
+        className="mt-1.5 text-[11px] leading-relaxed text-placeholder"
       >
         {t.tagsHint}
       </p>
@@ -208,7 +208,7 @@ export default function TagPicker({
                     ? -1
                     : undefined
                 }
-                className="inline-flex min-h-7 min-w-0 max-w-full shrink-0 overflow-hidden rounded-md border border-[#2e2e32] bg-[#242427] px-2 py-1 text-[11px] text-[#c8c4bc] transition-colors hover:border-[#c9a96e55] hover:text-[#f0ede8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]"
+                className="inline-flex min-h-7 min-w-0 max-w-full shrink-0 overflow-hidden rounded-md border border-border bg-surface-hover px-2 py-1 text-[11px] text-text-body transition-colors hover:border-accent-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <span className="block min-w-0 truncate whitespace-nowrap">#{tag.label}</span>
               </button>
@@ -218,7 +218,7 @@ export default function TagPicker({
                 type="button"
                 onClick={() => commit([draft])}
                 title={t.createTag(cleanTag(draft))}
-                className="min-h-7 max-w-full shrink-0 truncate whitespace-nowrap rounded-md border border-dashed border-[#6f5b35] px-2 py-1 text-left text-[11px] text-[#c9a96e] transition-colors hover:border-[#c9a96e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]"
+                className="min-h-7 max-w-full shrink-0 truncate whitespace-nowrap rounded-md border border-dashed border-accent-tag-border px-2 py-1 text-left text-[11px] text-accent-text transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {t.createTag(cleanTag(draft))}
               </button>
@@ -227,7 +227,7 @@ export default function TagPicker({
               visibleSuggestions.length === 0 &&
               exactSuggestion &&
               selectedKeys.has(exactSuggestion.key) && (
-                <p className="py-2 text-xs text-[#9d9a94]">
+                <p className="py-2 text-xs text-placeholder">
                   {t.tagAlreadySelected}
                 </p>
               )}
@@ -241,7 +241,7 @@ export default function TagPicker({
                 aria-controls={suggestionsId}
                 aria-expanded={showAll}
                 onClick={() => setShowAll((current) => !current)}
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#c9a96e] transition-colors hover:text-[#f0d9a6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-accent-text transition-colors hover:text-accent-tag-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <span
                   aria-hidden="true"
