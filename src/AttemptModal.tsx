@@ -243,63 +243,63 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative z-10 w-full sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-xl bg-[#161618] border border-[#2e2e32] shadow-2xl"
+        className="relative z-10 w-full sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-xl bg-surface border border-border shadow-2xl"
       >
-        <div className="h-[55px] px-5 flex items-center justify-between border-b border-[#1e1e21]">
-          <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
+        <div className="h-[55px] px-5 flex items-center justify-between border-b border-border-subtle">
+          <h2 className="text-sm font-bold text-text" style={{ fontFamily: "'Fraunces', serif" }}>
             {existing ? t.editAttempt : t.newAttempt}
           </h2>
-          <button onClick={close} className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors w-7 h-7 flex items-center justify-center">×</button>
+          <button onClick={close} className="text-text-muted hover:text-text transition-colors w-7 h-7 flex items-center justify-center">×</button>
         </div>
 
         <fieldset disabled={isSaving} className="ios-form-zoom-fix px-5 py-4 flex flex-col gap-4">
           {/* 嘗試名稱：選填；與收藏名稱分開保存 */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
+            <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">
               {t.nameOptional}
             </label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] transition-colors"
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-xs text-text-body focus:outline-none focus:border-accent-soft transition-colors"
             />
           </div>
 
           {/* Images */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
+            <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">
               {t.resultImages}
             </label>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
             <div className="flex gap-2 flex-wrap">
               {form.images.map((img, i) => (
-                <div key={img.id} className="relative rounded overflow-hidden bg-[#1e1e21] flex-shrink-0" style={{ width: 64, height: 64 }}>
+                <div key={img.id} className="relative rounded overflow-hidden bg-surface-2 flex-shrink-0" style={{ width: 64, height: 64 }}>
                   {img.status === "loading" ? (
                     <div className="w-full h-full flex items-center justify-center">
-                      <div className="w-4 h-4 border-2 border-[#c9a96e] border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : img.status === "error" ? (
-                    <button type="button" onClick={() => enqueueImages([img])} className="w-full h-full flex items-center justify-center bg-[#2a1010] text-[#e06e6e] text-xs" title={img.error ? translateError(img.error, t) : undefined}>{t.retry}</button>
+                    <button type="button" onClick={() => enqueueImages([img])} className="w-full h-full flex items-center justify-center bg-danger-bg text-danger text-xs" title={img.error ? translateError(img.error, t) : undefined}>{t.retry}</button>
                   ) : (
                     img.image && <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover" />
                   )}
                   <button
                     onClick={() => removeImage(i)}
-                    className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-[#e06e6e] transition-colors"
+                    className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-danger transition-colors"
                   >×</button>
                 </div>
               ))}
               <button
                 onClick={() => fileRef.current?.click()}
-                className="w-16 h-16 rounded border border-dashed border-[#2e2e32] text-[#b8b5af] hover:border-[#c9a96e55] hover:text-[#b8b5af] flex items-center justify-center text-xl transition-colors flex-shrink-0"
+                className="w-16 h-16 rounded border border-dashed border-border text-text-muted hover:border-accent-soft hover:text-text-muted flex items-center justify-center text-xl transition-colors flex-shrink-0"
               >+</button>
             </div>
-            <p className="mt-1.5 text-[11px] leading-relaxed text-[#9d9a94]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
-            {imageBatchError && <p role="alert" className="mt-2 text-xs text-[#e06e6e]">{translateError(imageBatchError, t)}</p>}
+            <p className="mt-1.5 text-[11px] leading-relaxed text-placeholder">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
+            {imageBatchError && <p role="alert" className="mt-2 text-xs text-danger">{translateError(imageBatchError, t)}</p>}
           </div>
 
-          {hasImageError && <div role="alert" className="text-xs text-[#e06e6e]">
+          {hasImageError && <div role="alert" className="text-xs text-danger">
             {form.images.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error ? translateError(image.error, t) : ""}</p>)}
             {t.imageSaveBlocked}
           </div>}
@@ -307,11 +307,11 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
           {/* Platform + model */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.platform}</label>
+              <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">{t.platform}</label>
               <select
                 value={form.platform}
                 onChange={(e) => set("platform", e.target.value)}
-                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] font-technical"
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-xs text-text-body focus:outline-none focus:border-accent-soft font-technical"
               >
                 {[...PLATFORMS.slice(0, -1), ...customPlatforms, "自訂"].map((p) => <option key={p} value={p}>{p === "自訂" ? t.customPlatform : p}</option>)}
               </select>
@@ -322,35 +322,35 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
                   value={form.customPlatform}
                   onChange={(e) => set("customPlatform", e.target.value)}
                   placeholder={t.platformName}
-                  className="mt-1.5 w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] font-technical"
+                  className="mt-1.5 w-full bg-bg border border-border rounded-lg px-3 py-2 text-xs text-text-body placeholder-placeholder focus:outline-none focus:border-accent-soft font-technical"
                 />
-                <button type="button" onClick={addPlatform} className="mt-2 text-xs text-[#c9a96e]">{t.addPlatform}</button>
+                <button type="button" onClick={addPlatform} className="mt-2 text-xs text-accent-text">{t.addPlatform}</button>
                 </div>
               )}
               {/* 自訂平台管理：只移除選單選項，歷史紀錄保留原名稱。 */}
               {customPlatforms.length > 0 && (
-                <details className="mt-2 text-xs text-[#b8b5af]">
+                <details className="mt-2 text-xs text-text-muted">
                   <summary className="cursor-pointer">{t.manageCustomPlatforms}</summary>
                   <p className="mt-2">{t.deletePlatformHint}</p>
                   <div className="max-h-32 overflow-y-auto">
                     {customPlatforms.map((name) => (
                       <div key={name} className="flex items-center justify-between gap-2 py-2">
                         <span className="break-all">{name}</span>
-                        <button type="button" onClick={() => deletePlatform(name)} aria-label={t.deletePlatformOption(name)} className="shrink-0 text-[#f19b9b]">{t.delete}</button>
+                        <button type="button" onClick={() => deletePlatform(name)} aria-label={t.deletePlatformOption(name)} className="shrink-0 text-danger-muted">{t.delete}</button>
                       </div>
                     ))}
                   </div>
                 </details>
               )}
-              {platformError && <p role="alert" className="mt-2 text-xs text-[#f19b9b]">{translateError(platformError, t)}</p>}
+              {platformError && <p role="alert" className="mt-2 text-xs text-danger-muted">{translateError(platformError, t)}</p>}
             </div>
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.modelOptional}</label>
+              <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">{t.modelOptional}</label>
               <input
                 type="text"
                 value={form.model}
                 onChange={(e) => set("model", e.target.value)}
-                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] font-technical"
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-xs text-text-body placeholder-placeholder focus:outline-none focus:border-accent-soft font-technical"
               />
             </div>
           </div>
@@ -358,18 +358,18 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
           {/* Prompt */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal">
+              <label className="text-xs text-text-muted font-ui normal-case tracking-normal">
                 {t.promptUsed}
               </label>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-[#b8b5af] font-ui">{t.unchanged}</span>
+                <span className="text-xs text-text-muted font-ui">{t.unchanged}</span>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={form.unmodified}
                   aria-label={t.useOriginalUnchanged}
                   onClick={toggleUnmodified}
-                  className={`h-4 w-7 rounded-full transition-colors ${form.unmodified ? "bg-[#c9a96e]" : "bg-[#2e2e32]"}`}
+                  className={`h-4 w-7 rounded-full transition-colors ${form.unmodified ? "bg-accent" : "bg-border"}`}
                 >
                   <span className={`mt-0.5 block h-3 w-3 rounded-full bg-white transition-transform ${form.unmodified ? "translate-x-3.5" : "translate-x-0.5"}`} />
                 </button>
@@ -380,13 +380,13 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
               onChange={(e) => set("prompt", e.target.value)}
               placeholder={t.promptPlaceholder}
               rows={3}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-xs text-text-body placeholder-placeholder focus:outline-none focus:border-accent-soft transition-colors font-technical"
               style={{ height: 56 }}
             />}
             {promptDiffers && (
               <button
                 onClick={() => set("prompt", originalPrompt)}
-                className="text-xs text-[#b8b5af] hover:text-[#c9a96e] font-ui mt-1 transition-colors"
+                className="text-xs text-text-muted hover:text-accent-text font-ui mt-1 transition-colors"
               >
                 {t.restoreOriginalPrompt}
               </button>
@@ -395,26 +395,26 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
 
           {/* Notes */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.notes}</label>
+            <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">{t.notes}</label>
             <ResizableTextarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
               placeholder={t.notesPlaceholder}
               rows={2}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-xs text-text-body placeholder-placeholder focus:outline-none focus:border-accent-soft transition-colors"
             />
           </div>
 
           {/* Rating + date */}
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.rating}</label>
+              <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">{t.rating}</label>
               <div className="flex gap-1">
                 {([1, 2, 3, 4, 5] as const).map((s) => (
                   <button
                     key={s}
                     onClick={() => setRating(s)}
-                    className={`text-lg transition-colors ${(form.rating ?? 0) >= s ? "text-[#c9a96e]" : "text-[#b8b5af] hover:text-[#b8b5af]"}`}
+                    className={`text-lg transition-colors ${(form.rating ?? 0) >= s ? "text-accent-text" : "text-text-muted hover:text-text-muted"}`}
                   >
                     ★
                   </button>
@@ -422,23 +422,23 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
               </div>
             </div>
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">{t.generatedDate}</label>
+              <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">{t.generatedDate}</label>
               <input
                 type="date"
                 value={form.date}
                 onChange={(e) => set("date", e.target.value)}
-                className="bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] font-technical"
+                className="bg-bg border border-border rounded-lg px-3 py-2 text-xs text-text-body focus:outline-none focus:border-accent-soft font-technical"
               />
             </div>
           </div>
         </fieldset>
 
-        <div className="h-[55px] px-5 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
-          <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-ui transition-colors">{t.cancel}</button>
+        <div className="h-[55px] px-5 border-t border-border-subtle flex items-center gap-3 justify-end">
+          <button onClick={close} className="px-4 py-2 text-xs text-text-muted hover:text-text font-ui transition-colors">{t.cancel}</button>
           <button
             onClick={handleSubmit}
             disabled={isSaving || isLoading || hasImageError}
-            className="px-4 py-2 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors disabled:opacity-40"
+            className="px-4 py-2 text-xs font-medium bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-40"
           >
             {isSaving ? t.saving : isLoading ? t.uploading : existing ? t.saveChanges : t.saveAttempt}
           </button>

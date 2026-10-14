@@ -1,24 +1,81 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@600&display=swap');
 @import 'tailwindcss';
 
-@theme {
-  --color-bg: #0d0d0e;
-  --color-surface: #161618;
-  --color-surface-2: #1e1e21;
-  --color-surface-3: #272729;
-  --color-border: #2e2e32;
-  --color-border-subtle: #1e1e21;
-  --color-text: #f0ede8;
-  --color-text-muted: #b8b5af;
-  --color-text-dim: #a09c95;
-  --color-accent: #c9a96e;
-  --color-accent-dim: #8a6e42;
-  --color-tried: #4a8c6e;
-  --color-tried-dim: #1e3d2e;
-  --color-want: #6e7abf;
-  --color-want-dim: #1e2040;
-  --color-ref: #8a6e42;
-  --color-ref-dim: #2a2010;
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-header: var(--c-header);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-3: var(--c-surface-3);
+  --color-surface-hover: var(--c-surface-hover);
+  --color-surface-raised: var(--c-surface-raised);
+  --color-surface-action: var(--c-surface-action);
+  --color-surface-action-hover: var(--c-surface-action-hover);
+  --color-border: var(--c-border);
+  --color-border-subtle: var(--c-border-subtle);
+  --color-border-strong: var(--c-border-strong);
+  --color-border-muted: var(--c-border-muted);
+  --color-scrollbar-hover: var(--c-scrollbar-hover);
+  --color-text: var(--c-text);
+  --color-text-body: var(--c-text-body);
+  --color-text-muted: var(--c-text-muted);
+  --color-text-dim: var(--c-text-dim);
+  --color-placeholder: var(--c-placeholder);
+  --color-text-subtitle: var(--c-text-subtitle);
+  --color-text-secondary: var(--c-text-secondary);
+  --color-text-decoration: var(--c-text-decoration);
+  --color-text-handle: var(--c-text-handle);
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-accent-text: var(--c-accent-text);
+  --color-on-accent: var(--c-on-accent);
+  --color-on-accent-strong: var(--c-on-accent-strong);
+  --color-accent-dim: var(--c-accent-dim);
+  --color-accent-label: var(--c-accent-label);
+  --color-accent-notice: var(--c-accent-notice);
+  --color-accent-tag: var(--c-accent-tag);
+  --color-accent-tag-hover: var(--c-accent-tag-hover);
+  --color-accent-tag-border: var(--c-accent-tag-border);
+  --color-ref-dim: var(--c-ref-dim);
+  --color-warning-bg: var(--c-warning-bg);
+  --color-danger: var(--c-danger);
+  --color-danger-hover: var(--c-danger-hover);
+  --color-danger-bg: var(--c-danger-bg);
+  --color-danger-text: var(--c-danger-text);
+  --color-danger-muted: var(--c-danger-muted);
+  --color-favorite: var(--c-favorite);
+  --color-overlay: var(--c-overlay);
+  --color-scrim: var(--c-scrim);
+  --color-scrim-from: var(--c-scrim-from);
+  --color-scrim-via: var(--c-scrim-via);
+  --color-on-image: var(--c-on-image);
+  --color-on-image-muted: var(--c-on-image-muted);
+  --color-on-image-secondary: var(--c-on-image-secondary);
+  --color-on-image-accent: var(--c-on-image-accent);
+  --color-social: var(--c-social);
+  --color-status-ref: var(--c-status-ref);
+  --color-status-ref-bg: var(--c-status-ref-bg);
+  --color-status-tried: var(--c-status-tried);
+  --color-status-tried-bg: var(--c-status-tried-bg);
+  --color-status-want: var(--c-status-want);
+  --color-status-want-bg: var(--c-status-want-bg);
+  --color-platform-pixai: var(--c-platform-pixai);
+  --color-platform-midjourney: var(--c-platform-midjourney);
+  --color-platform-flux: var(--c-platform-flux);
+  --color-platform-gemini: var(--c-platform-gemini);
+  --color-platform-chatgpt: var(--c-platform-chatgpt);
+  --color-platform-sdxl: var(--c-platform-sdxl);
+  --color-platform-comfyui: var(--c-platform-comfyui);
+  --color-platform-leonardo: var(--c-platform-leonardo);
+  --color-tried: var(--c-tried);
+  --color-tried-dim: var(--c-tried-dim);
+  --color-want: var(--c-want);
+  --color-want-dim: var(--c-want-dim);
+  --color-ref: var(--c-ref);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-subtle: var(--c-accent-subtle);
+  --color-ref-soft: var(--c-ref-soft);
+  --color-selection: var(--c-selection);
 
   --font-display: 'Fraunces', serif;
   --font-ui: 'Inter', 'Noto Sans TC', sans-serif;
@@ -28,10 +85,166 @@
   --font-brand-subtitle: 'Noto Serif TC', serif;
 }
 
+:root {
+  --c-bg: #0d0d0e;
+  /* 沿用原 production CSS 的換算精度，避免動態 color-mix 讓深色像素差一階。 */
+  --c-header: oklab(15.9517% .000580817 -.00200437 / .95);
+  --c-scrim-from: oklab(15.9517% .000580817 -.00200437 / .9);
+  --c-scrim-via: oklab(15.9517% .000580817 -.00200437 / .1);
+  --c-surface: #161618;
+  --c-surface-2: #1e1e21;
+  --c-surface-3: #272729;
+  --c-surface-hover: #242427;
+  --c-surface-raised: #1b1b1e;
+  --c-surface-action: #303034;
+  --c-surface-action-hover: #404046;
+  --c-border: #2e2e32;
+  --c-border-subtle: #1e1e21;
+  --c-border-strong: #55545a;
+  --c-border-muted: #b8b5af;
+  --c-scrollbar-hover: #4a4a4e;
+  --c-text: #f0ede8;
+  --c-text-body: #c8c4bc;
+  --c-text-muted: #b8b5af;
+  --c-text-dim: #a09c95;
+  --c-placeholder: #9d9a94;
+  --c-text-subtitle: #9f9b95;
+  --c-text-secondary: #b0aca5;
+  --c-text-decoration: #e8e1d7;
+  --c-text-handle: #77747c;
+  --c-accent: #c9a96e;
+  --c-accent-hover: #d4b87e;
+  --c-accent-text: #c9a96e;
+  --c-on-accent: #0d0d0e;
+  --c-on-accent-strong: #000000;
+  --c-accent-dim: #8a6e42;
+  --c-accent-label: #e4c68f;
+  --c-accent-notice: #e1c48e;
+  --c-accent-tag: #d8bd83;
+  --c-accent-tag-hover: #f0d9a6;
+  --c-accent-tag-border: #6f5b35;
+  --c-ref-dim: #2a2010;
+  --c-warning-bg: #2a1a00;
+  --c-danger: #e06e6e;
+  --c-danger-hover: #ef7f7f;
+  --c-danger-bg: #2a1010;
+  --c-danger-text: #ffcaca;
+  --c-danger-muted: #f19b9b;
+  --c-favorite: #db8587;
+  --c-overlay: #111113;
+  --c-scrim: #0d0d0e;
+  /* 圖片遮罩保持深色，疊在上方的文字也必須維持原本亮度。 */
+  --c-on-image: #f0ede8;
+  --c-on-image-muted: #b8b5af;
+  --c-on-image-secondary: #b0aca5;
+  --c-on-image-accent: #c9a96e;
+  --c-social: #18181b;
+  --c-status-ref: #b5a0d8;
+  --c-status-ref-bg: #282231;
+  --c-status-tried: #91b8a0;
+  --c-status-tried-bg: #202d26;
+  --c-status-want: #8fafcb;
+  --c-status-want-bg: #202a33;
+  --c-platform-pixai: #a78bfa;
+  --c-platform-midjourney: #6abf96;
+  --c-platform-flux: #60a5fa;
+  --c-platform-gemini: #fbbf24;
+  --c-platform-chatgpt: #34d399;
+  --c-platform-sdxl: #f472b6;
+  --c-platform-comfyui: #fb923c;
+  --c-platform-leonardo: #e879f9;
+  --c-tried: #4a8c6e;
+  --c-tried-dim: #1e3d2e;
+  --c-want: #6e7abf;
+  --c-want-dim: #1e2040;
+  --c-ref: #8a6e42;
+  /* 深色保留原八位 hex，避免 color-mix 的 alpha 量化造成單一色階差異。 */
+  --c-accent-soft: #c9a96e55;
+  --c-accent-subtle: #c9a96e44;
+  --c-ref-soft: #8a6e4244;
+  --c-selection: #c9a96e33;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --c-bg: #f7f5f0;
+  --c-header: color-mix(in oklab, var(--c-bg) 95%, transparent);
+  --c-surface: #ffffff;
+  --c-surface-2: #efece5;
+  --c-surface-3: #e6e2d9;
+  --c-surface-hover: #eae6dd;
+  --c-surface-raised: #f3f0ea;
+  --c-surface-action: #e6e2d9;
+  --c-surface-action-hover: #d9d4c8;
+  --c-border: #d9d4c8;
+  --c-border-subtle: #ebe7de;
+  --c-border-strong: #918b80;
+  --c-border-muted: #55514a;
+  --c-scrollbar-hover: #918b80;
+  --c-text: #1d1b17;
+  --c-text-body: #423e37;
+  --c-text-muted: #55514a;
+  --c-text-dim: #625d55;
+  --c-placeholder: #625d55;
+  --c-text-subtitle: #625d55;
+  --c-text-secondary: #55514a;
+  --c-text-decoration: #423e37;
+  --c-text-handle: #625d55;
+  --c-accent: #94702f;
+  --c-accent-hover: #856126;
+  --c-accent-text: #805b1d;
+  --c-on-accent: #ffffff;
+  --c-on-accent-strong: #ffffff;
+  --c-accent-dim: #8a6420;
+  --c-accent-label: #755315;
+  --c-accent-notice: #755315;
+  --c-accent-tag: #755315;
+  --c-accent-tag-hover: #624410;
+  --c-accent-tag-border: #94702f;
+  --c-ref-dim: #f2e8cf;
+  --c-warning-bg: #fff1d6;
+  --c-danger: #b33327;
+  --c-danger-hover: #a93226;
+  --c-danger-bg: #fce9e6;
+  --c-danger-text: #972c21;
+  --c-danger-muted: #a93226;
+  --c-favorite: #a04450;
+  --c-overlay: #f1eee8;
+  --c-scrim: #0d0d0e;
+  --c-on-image: #f0ede8;
+  --c-on-image-muted: #b8b5af;
+  --c-on-image-secondary: #b0aca5;
+  --c-on-image-accent: #c9a96e;
+  --c-social: #18181b;
+  --c-status-ref: #69448e;
+  --c-status-ref-bg: #f0e9f8;
+  --c-status-tried: #356648;
+  --c-status-tried-bg: #e7f1e9;
+  --c-status-want: #3f6482;
+  --c-status-want-bg: #e8eff6;
+  --c-platform-pixai: #7050b3;
+  --c-platform-midjourney: #326c4c;
+  --c-platform-flux: #2b65a0;
+  --c-platform-gemini: #805d0d;
+  --c-platform-chatgpt: #24694c;
+  --c-platform-sdxl: #a0356b;
+  --c-platform-comfyui: #974b18;
+  --c-platform-leonardo: #963a9f;
+  --c-tried: #356648;
+  --c-tried-dim: #e7f1e9;
+  --c-want: #3f6482;
+  --c-want-dim: #e8eff6;
+  --c-ref: #8a6420;
+  --c-accent-soft: color-mix(in srgb, var(--c-accent) 33.33333333333333%, transparent);
+  --c-accent-subtle: color-mix(in srgb, var(--c-accent) 26.666666666666668%, transparent);
+  --c-ref-soft: color-mix(in srgb, var(--c-ref) 26.666666666666668%, transparent);
+  --c-selection: color-mix(in srgb, var(--c-accent) 20%, transparent);
+}
+
 html, body, #root {
   height: 100%;
-  background-color: #0d0d0e;
-  color: #f0ede8;
+  background-color: var(--c-bg);
+  color: var(--c-text);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
 }
@@ -42,12 +255,12 @@ html, body, #root {
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2e2e32; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #4a4a4e; }
+::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--c-scrollbar-hover); }
 
 ::selection {
-  background: #c9a96e33;
-  color: #f0ede8;
+  background: var(--c-selection);
+  color: var(--c-text);
 }
 
 /* Prevent iOS browsers from zooming the page when a form control receives focus. */

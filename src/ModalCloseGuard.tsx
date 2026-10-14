@@ -68,29 +68,29 @@ export function UnsavedChangesDialog({ open, onContinueEditing, onDiscard }: Con
         aria-modal="true"
         aria-labelledby="unsaved-changes-title"
         aria-describedby="unsaved-changes-description"
-        className="relative z-10 w-full max-w-xs rounded-xl border border-[#2e2e32] bg-[#161618] shadow-2xl"
+        className="relative z-10 w-full max-w-xs rounded-xl border border-border bg-surface shadow-2xl"
       >
-        <div className="border-b border-[#1e1e21] px-4 py-3">
-          <h2 id="unsaved-changes-title" className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
+        <div className="border-b border-border-subtle px-4 py-3">
+          <h2 id="unsaved-changes-title" className="text-sm font-bold text-text" style={{ fontFamily: "'Fraunces', serif" }}>
             {t.unsavedChangesTitle}
           </h2>
         </div>
-        <p id="unsaved-changes-description" className="px-4 py-3 text-xs text-[#c8c4bc]">
+        <p id="unsaved-changes-description" className="px-4 py-3 text-xs text-text-body">
           {t.discardChangesPrompt}
         </p>
-        <div className="flex items-center justify-end gap-2 border-t border-[#1e1e21] px-4 py-3">
+        <div className="flex items-center justify-end gap-2 border-t border-border-subtle px-4 py-3">
           <button
             type="button"
             autoFocus
             onClick={onContinueEditing}
-            className="rounded-lg bg-[#c9a96e] px-3 py-2 text-xs font-medium text-[#0d0d0e] transition-colors hover:bg-[#d4b87e]"
+            className="rounded-lg bg-accent px-3 py-2 text-xs font-medium text-on-accent transition-colors hover:bg-accent-hover"
           >
             {t.continueEditing}
           </button>
           <button
             type="button"
             onClick={onDiscard}
-            className="px-3 py-2 text-xs text-[#b8b5af] transition-colors hover:text-[#e06e6e]"
+            className="px-3 py-2 text-xs text-text-muted transition-colors hover:text-danger"
           >
             {t.discardChanges}
           </button>

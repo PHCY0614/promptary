@@ -56,20 +56,20 @@ function CategorySelect({ label, value, disabled, onChange }: {
         aria-expanded={menuOpen}
         disabled={disabled}
         onClick={() => setMenuOpen((current) => !current)}
-        className={`flex w-full items-center gap-2 rounded border border-[#2e2e32] bg-[#0d0d0e] py-1 pl-2 pr-2 text-xs text-[#a09c95] ${disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+        className={`flex w-full items-center gap-2 rounded border border-border bg-bg py-1 pl-2 pr-2 text-xs text-text-dim ${disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
       >
         <span className="min-w-0 flex-1 truncate">{t.promptCategory[selected.id]}</span>
         <span aria-hidden="true" className={`inline-block shrink-0 text-[14px] transition-transform duration-150 motion-reduce:transition-none ${menuOpen ? "rotate-180" : ""}`}>▾</span>
       </button>
       {menuOpen && (
-        <div className="absolute left-0 top-[calc(100%-1px)] z-20 min-w-full overflow-hidden rounded border border-[#2e2e32] bg-[#0d0d0e] shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
+        <div className="absolute left-0 top-[calc(100%-1px)] z-20 min-w-full overflow-hidden rounded border border-border bg-bg shadow-[0_8px_20px_rgba(0,0,0,0.35)]">
           {PROMPT_CATEGORIES.map((category) => (
             <button
               key={category.id}
               type="button"
               aria-pressed={category.id === value}
               onClick={() => { onChange(category.id); setMenuOpen(false); }}
-              className={`block w-full whitespace-nowrap px-2 py-1.5 text-left text-xs transition-colors ${category.id === value ? "bg-[#2a2010] text-[#e4c68f]" : "text-[#a09c95] hover:bg-[#1e1e21] hover:text-[#f0ede8]"}`}
+              className={`block w-full whitespace-nowrap px-2 py-1.5 text-left text-xs transition-colors ${category.id === value ? "bg-ref-dim text-accent-label" : "text-text-dim hover:bg-surface-2 hover:text-text"}`}
             >
               {t.promptCategory[category.id]}
             </button>
@@ -137,7 +137,7 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
   return (
     <section aria-label={title} className="min-w-0">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className={`min-w-0 flex-1 font-bold text-xs text-[#c8c4bc] ${sectionLabelClass(locale)}`}>{title}</h3>
+        <h3 className={`min-w-0 flex-1 font-bold text-xs text-text-body ${sectionLabelClass(locale)}`}>{title}</h3>
         {text.trim() && <div className="flex shrink-0 items-center gap-2" aria-label={t.readerMode(title)}>
           {(["original", "categories"] as const).map((mode) => {
             const blockedByDraft = mode === "original" && view === "categories" && (dirty || showResetConfirm);
@@ -149,7 +149,7 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
                 disabled={blockedByDraft}
                 title={blockedByDraft ? t.saveOrCancelCategories : undefined}
                 onClick={() => { setView(mode); setShowResetConfirm(false); }}
-                className={`rounded-md border px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40 ${view === mode ? "border-[#c9a96e] bg-[#2a2010] text-[#e4c68f]" : "border-[#2e2e32] text-[#a09c95]"}`}
+                className={`rounded-md border px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40 ${view === mode ? "border-accent bg-ref-dim text-accent-label" : "border-border text-text-dim"}`}
               >
                 {mode === "original" ? t.original : t.categoryView}
               </button>
@@ -159,22 +159,22 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
       </div>
       {text.trim() ? <>
         {view === "original" ? (
-          <div className="relative rounded-lg border border-[#2e2e32] bg-[#111113] p-3 pt-11">
+          <div className="relative rounded-lg border border-border bg-overlay p-3 pt-11">
             <div className="absolute right-2 top-2"><CopyPromptButton text={text} /></div>
             <div tabIndex={0} aria-label={t.originalContent(title)} className={fullHeight || expanded ? "max-h-[min(55vh,480px)] overflow-y-auto overscroll-contain pr-2" : ""}>
-              <p className={`whitespace-pre-wrap break-words [overflow-wrap:anywhere] font-technical text-xs leading-relaxed text-[#c8c4bc] ${fullHeight || expanded ? "" : "line-clamp-5"}`}>{text}</p>
+              <p className={`whitespace-pre-wrap break-words [overflow-wrap:anywhere] font-technical text-xs leading-relaxed text-text-body ${fullHeight || expanded ? "" : "line-clamp-5"}`}>{text}</p>
             </div>
-            {!fullHeight && <button type="button" onClick={() => setExpanded(!expanded)} className="mt-2 text-xs text-[#c9a96e]">{expanded ? t.collapsePrompt : t.expandPrompt}</button>}
+            {!fullHeight && <button type="button" onClick={() => setExpanded(!expanded)} className="mt-2 text-xs text-accent-text">{expanded ? t.collapsePrompt : t.expandPrompt}</button>}
           </div>
         ) : (
-          <div className="relative rounded-lg border border-[#2e2e32] bg-[#111113] p-3">
+          <div className="relative rounded-lg border border-border bg-overlay p-3">
             {editable && <div className="mb-4 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 disabled={saving || showResetConfirm || (editing && dirty)}
                 title={editing && dirty ? t.saveOrCancelCategories : undefined}
                 onClick={() => { setEditing(!editing); setShowResetConfirm(false); }}
-                className="rounded border border-[#2e2e32] px-3 py-1.5 text-xs text-[#c9a96e] disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded border border-border px-3 py-1.5 text-xs text-accent-text disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {editing ? t.doneAdjusting : t.adjustCategories}
               </button>
@@ -183,18 +183,18 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
                   type="button"
                   disabled={saving || showResetConfirm}
                   onClick={() => setShowResetConfirm(true)}
-                  className="text-xs text-[#a09c95] hover:text-[#c9a96e] disabled:opacity-40"
+                  className="text-xs text-text-dim hover:text-accent-text disabled:opacity-40"
                 >
                   {t.restoreDefaultCategories}
                 </button>
               )}
             </div>}
             {editing && showResetConfirm && (
-              <div role="alert" className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[#8a6e42] bg-[#2a2010] px-3 py-2 text-xs text-[#e4c68f]">
+              <div role="alert" className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-accent-dim bg-ref-dim px-3 py-2 text-xs text-accent-label">
                 <p className="min-w-0 flex-1">{t.confirmRestoreCategories}</p>
                 <div className="flex shrink-0 items-center gap-1.5">
-                  <button type="button" disabled={saving} onClick={restoreDefaults} className="rounded border border-[#8a6e42] px-2 py-1 text-[#c8c4bc]">✓ {t.confirm}</button>
-                  <button type="button" disabled={saving} onClick={() => setShowResetConfirm(false)} className="rounded bg-[#c9a96e] px-2 py-1 text-[#0d0d0e]">× {t.cancel}</button>
+                  <button type="button" disabled={saving} onClick={restoreDefaults} className="rounded border border-accent-dim px-2 py-1 text-text-body">✓ {t.confirm}</button>
+                  <button type="button" disabled={saving} onClick={() => setShowResetConfirm(false)} className="rounded bg-accent px-2 py-1 text-on-accent">× {t.cancel}</button>
                 </div>
               </div>
             )}
@@ -202,11 +202,11 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
             <div tabIndex={0} aria-label={t.categoryContent(title)} className="h-[min(55vh,480px)] overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable] flex flex-col gap-4">
               {groups.filter((group) => group.parts.length).map((group) => (
                 <section key={group.id} aria-label={t.promptCategory[group.id]}>
-                  <h4 className={`mb-2 text-xs font-bold text-[#e4c68f] ${sectionLabelClass(locale)}`}>{t.promptCategory[group.id]} · {group.parts.length}</h4>
+                  <h4 className={`mb-2 text-xs font-bold text-accent-label ${sectionLabelClass(locale)}`}>{t.promptCategory[group.id]} · {group.parts.length}</h4>
                   <ul className="flex flex-wrap gap-2">
                     {group.parts.map((part) => (
-                      <li key={part.id} className={`min-w-0 max-w-full rounded border border-[#2e2e32] bg-[#161618] px-2.5 py-1.5 ${editing ? "basis-[200px] grow" : ""}`}>
-                        <p className="whitespace-pre-wrap [overflow-wrap:anywhere] font-technical text-xs leading-relaxed text-[#c8c4bc]">{part.text}</p>
+                      <li key={part.id} className={`min-w-0 max-w-full rounded border border-border bg-surface px-2.5 py-1.5 ${editing ? "basis-[200px] grow" : ""}`}>
+                        <p className="whitespace-pre-wrap [overflow-wrap:anywhere] font-technical text-xs leading-relaxed text-text-body">{part.text}</p>
                         {editing && <div className="mt-2 flex flex-wrap items-center gap-2">
                           <CategorySelect
                             label={t.categorize(part.text)}
@@ -214,25 +214,25 @@ function PromptReaderContent({ title, text, saved, onSave, fullHeight = false, e
                             disabled={saving || showResetConfirm}
                             onChange={(category) => changeCategory(part.id, category)}
                           />
-                          <span className="text-[11px] text-[#a09c95]">{overrides[part.id] ? t.categoryManual : part.ambiguous ? t.categoryAmbiguous : part.category === "other" ? t.categoryUnrecognized : t.categorySuggested}</span>
+                          <span className="text-[11px] text-text-dim">{overrides[part.id] ? t.categoryManual : part.ambiguous ? t.categoryAmbiguous : part.category === "other" ? t.categoryUnrecognized : t.categorySuggested}</span>
                         </div>}
                       </li>
                     ))}
                   </ul>
                 </section>
               ))}
-              {!parts.length && <p className="text-xs text-[#a09c95]">{t.noFragments}</p>}
+              {!parts.length && <p className="text-xs text-text-dim">{t.noFragments}</p>}
             </div>
-            {(editing || dirty || message) && <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#2e2e32] pt-3">
-              <span role="status" className="text-xs text-[#c8c4bc]">{message || (dirty ? t.unsavedCategoryChanges : "")}</span>
+            {(editing || dirty || message) && <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+              <span role="status" className="text-xs text-text-body">{message || (dirty ? t.unsavedCategoryChanges : "")}</span>
               <div className="ml-auto flex items-center gap-2">
-                <button type="button" disabled={saving || showResetConfirm || !dirty} onClick={cancelChanges} className="rounded border border-[#2e2e32] px-3 py-2 text-xs text-[#a09c95] disabled:opacity-40">{t.cancel}</button>
-                <button type="button" disabled={saving || showResetConfirm || !dirty} onClick={() => void save()} className="rounded bg-[#c9a96e] px-3 py-2 text-xs text-[#0d0d0e] disabled:opacity-40">{saving ? t.savingCategories : t.saveCategories}</button>
+                <button type="button" disabled={saving || showResetConfirm || !dirty} onClick={cancelChanges} className="rounded border border-border px-3 py-2 text-xs text-text-dim disabled:opacity-40">{t.cancel}</button>
+                <button type="button" disabled={saving || showResetConfirm || !dirty} onClick={() => void save()} className="rounded bg-accent px-3 py-2 text-xs text-on-accent disabled:opacity-40">{saving ? t.savingCategories : t.saveCategories}</button>
               </div>
             </div>}
           </div>
         )}
-      </> : <p className="rounded-lg border border-[#2e2e32] p-3 text-xs text-[#c9a96e]">{t.promptPending}</p>}
+      </> : <p className="rounded-lg border border-border p-3 text-xs text-accent-text">{t.promptPending}</p>}
     </section>
   );
 }

@@ -25,19 +25,19 @@ export default function CopyPromptButton({ text }: { text: string }) {
       <button type="button" onClick={() => void copy()}
         title={status === "copied" ? t.copied : t.copyPrompt}
         aria-label={status === "copied" ? t.copiedPrompt : t.copyPrompt}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-[#b8b5af] hover:bg-[#272729] hover:text-[#c9a96e] transition-colors">
+        className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-3 hover:text-accent-text transition-colors">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
           {status === "copied" ? <path d="m5 12 4 4L19 6" /> : <><rect x="8" y="8" width="12" height="13" rx="2" /><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3" /></>}
         </svg>
       </button>
       <span role="status" className="sr-only">{status === "copied" ? t.copiedPrompt : ""}</span>
       {status === "error" && (
-        <div role="alert" className="absolute right-0 top-full z-20 w-64 rounded-lg border border-[#2e2e32] bg-[#161618] p-3 text-xs text-[#c8c4bc]">
+        <div role="alert" className="absolute right-0 top-full z-20 w-64 rounded-lg border border-border bg-surface p-3 text-xs text-text-body">
           <div className="mb-2 flex justify-between gap-2">
             <span>{t.copyFailed}</span>
             <button onClick={() => setStatus("idle")} aria-label={t.dismissCopyError}>×</button>
           </div>
-          <textarea readOnly aria-label={t.manualCopyPrompt} value={text} onFocus={(event) => event.currentTarget.select()} className="w-full rounded bg-[#0d0d0e] p-2" />
+          <textarea readOnly aria-label={t.manualCopyPrompt} value={text} onFocus={(event) => event.currentTarget.select()} className="w-full rounded bg-bg p-2" />
         </div>
       )}
     </div>

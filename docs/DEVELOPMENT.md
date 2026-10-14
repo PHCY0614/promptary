@@ -2,9 +2,9 @@
 
 [English](./DEVELOPMENT.md) | [正體中文](./DEVELOPMENT.zh-TW.md)
 
-Last updated: 3 October 2026
+Last updated: 14 October 2026
 
-Source reviewed: 3 October 2026
+Source reviewed: 14 October 2026
 
 These notes describe the current local code and its committed history. Deployment status is separate and should be checked against the latest successful deployment.
 
@@ -12,7 +12,7 @@ These notes describe the current local code and its committed history. Deploymen
 
 Promptary is a local-first tool for collecting AI image generation prompts and tracking experiments. It is built with React 19, TypeScript, Vite 8, Tailwind CSS v4, and IndexedDB, and is hosted on Cloudflare.
 
-The current version includes collection search, reusable tag suggestions, tag and status filtering, favourites, naming for collections and experiments, ratings, cover image selection, categorised prompt reading, side-by-side mobile comparison, Traditional Chinese and English interfaces, ZIP backups, and local storage information. It also includes starter collections, a first-visit introduction and About dialog, and classification inheritance for custom experiment prompts.
+The current version includes collection search, reusable tag suggestions, tag and status filtering, favourites, naming for collections and experiments, ratings, cover image selection, categorised prompt reading, side-by-side mobile comparison, Traditional Chinese and English interfaces, dark and light themes, ZIP backups, and local storage information. It also includes starter collections, a first-visit introduction and About dialog, and classification inheritance for custom experiment prompts.
 
 Collections and images are stored in the browser under the current site origin. There is no sign-in system, cloud database, or automatic cross-device synchronisation. Supabase has been discussed and evaluated but has not been implemented. For now, moving data between devices relies on manually exporting and importing ZIP backups.
 
@@ -25,6 +25,12 @@ When no current archive or legacy data exists, the app displays bundled starter 
 Starter installation shares the normal write queue and checks for an existing archive again before committing. Failed installation releases the queue so later writes can proceed. Database opening and initial archive reading have timeouts, as do starter image downloads and decoding; a stalled operation should not leave the initial loading screen waiting indefinitely. This fallback does not make unavailable browser storage writable.
 
 The gallery opens a shorter About introduction until it has been dismissed, recording that preference in `localStorage` as `promptary_intro_seen`. The About button opens the full version with usage reminders, the project's background, and creator links. The dialog supports Escape, keyboard focus containment, and focus return to the About button. If the preference cannot be stored, the introduction may appear again.
+
+### Theme Preference
+
+The interface has dark and light themes backed by semantic CSS variables declared with Tailwind CSS v4 `@theme` tokens in `src/index.css`. Dark is the default, and the selected theme is stored in the current browser. It does not follow the operating system, and the theme preference is deliberately excluded from ZIP backups because it is a presentation setting rather than library data.
+
+`src/theme/theme.ts` owns the saved-theme key and browser-safe read, write, and apply helpers. `src/theme/ThemeSwitcher.tsx` mirrors the language switcher pattern, while `Gallery.tsx` and `DetailView.tsx` place it beside `LanguageSwitcher.tsx`. Because the deployment CSP forbids inline scripts, `src/main.tsx` applies the saved theme before calling `createRoot`; this keeps the initial document state aligned with the user's preference without adding an inline script. The manifest launch-screen background remains dark.
 
 ### Images and Storage
 
@@ -84,7 +90,7 @@ Collection and experiment forms share the same unsaved-change confirmation behav
 
 ### Site Assets and Deployment
 
-`index.html` includes favicons, an Apple touch icon, a theme colour, and a web manifest. The manifest uses relative start and scope URLs with standalone display settings. These assets provide browser and home-screen presentation; no service worker or offline application cache is implemented.
+`index.html` includes favicons, an Apple touch icon, a theme colour, and a web manifest. The manifest uses relative start and scope URLs with standalone display settings and retains a dark launch-screen background. These assets provide browser and home-screen presentation; no service worker or offline application cache is implemented.
 
 The site is deployed on Cloudflare. The build must check out Git LFS assets so published images contain the actual binary files rather than LFS pointers. HTML icon links use `%BASE_URL%`.
 
@@ -103,8 +109,9 @@ The HTML includes a Cloudflare Web Analytics script for website usage measuremen
 | Backups | `backup.ts`, `ImportBackup.tsx` |
 | Prompt reading and comparison | `PromptReader.tsx`, `promptClassification.ts`, `ImageComparison.tsx`, `comparisonImages.ts` |
 | Language and platform preferences | `i18n/`, `platformStorage.ts` |
+| Theme preference and switcher | `theme/theme.ts`, `theme/ThemeSwitcher.tsx`, `index.css`, `main.tsx` |
 | Introduction and starter data | `AboutDialog.tsx`, `starterData.ts`, `starterInitTimeouts.ts`, `withTimeout.ts` |
-| Tests | `tests/` |
+| Tests | `tests/`, including `tests/theme.mjs` |
 
 The source files above are located under `src/`, while tests are stored in the project-level `tests/` directory.
 
@@ -113,6 +120,12 @@ Site assets and starter images are under `public/`. Deployment configuration is 
 ## Development Log
 
 The following log is organised by Git commit date. Related changes from the same day have been grouped together, while older approaches that have since been replaced are kept only as a summary of the project's evolution.
+
+### 2026-10-14 | Light Theme and Semantic Colour Tokens
+
+Added a user-selectable light theme while keeping dark as the default. Replaced component-level theme hexes with semantic utility classes backed by CSS variables, so the same role can receive a distinct light or dark value without changing component behaviour. The switcher follows the existing language preference pattern and stores the choice in the current browser without adding it to ZIP backups.
+
+The saved theme is applied in `main.tsx` before `createRoot` because the deployment CSP forbids inline scripts. The web manifest keeps a dark background for the launch screen. Added `tests/theme.mjs` for the theme contract and documented the theme modules, semantic variables, and startup application path above.
 
 ### 2026-10-03 | Moved Deployment to Cloudflare
 

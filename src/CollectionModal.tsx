@@ -198,13 +198,13 @@ export default function CollectionModal({ collections, existing, onSave, onClose
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
-        className="relative z-10 w-full sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-xl bg-[#161618] border border-[#2e2e32] shadow-2xl"
+        className="relative z-10 w-full sm:max-w-lg max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-xl bg-surface border border-border shadow-2xl"
       >
-        <div className="h-[55px] px-5 flex items-center justify-between border-b border-[#1e1e21]">
-          <h2 className="text-sm font-bold text-[#f0ede8]" style={{ fontFamily: "'Fraunces', serif" }}>
+        <div className="h-[55px] px-5 flex items-center justify-between border-b border-border-subtle">
+          <h2 className="text-sm font-bold text-text" style={{ fontFamily: "'Fraunces', serif" }}>
             {existing ? t.editCollection : t.newCollection}
           </h2>
-          <button onClick={close} className="text-[#b8b5af] hover:text-[#f0ede8] transition-colors w-7 h-7 flex items-center justify-center">
+          <button onClick={close} className="text-text-muted hover:text-text transition-colors w-7 h-7 flex items-center justify-center">
             ×
           </button>
         </div>
@@ -212,20 +212,20 @@ export default function CollectionModal({ collections, existing, onSave, onClose
         <fieldset disabled={isSaving} className="ios-form-zoom-fix px-5 py-4 flex flex-col gap-4">
           {/* 收藏名稱：選填；空白時不建立名稱欄位 */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
+            <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">
               {t.nameOptional}
             </label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] focus:outline-none focus:border-[#c9a96e55] transition-colors"
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-xs text-text-body focus:outline-none focus:border-accent-soft transition-colors"
             />
           </div>
 
           {/* Reference images */}
           <div>
-            <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
+            <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">
               {t.referenceImagesOptional}
             </label>
             <input
@@ -240,19 +240,19 @@ export default function CollectionModal({ collections, existing, onSave, onClose
               {form.referenceImages.map((img, i) => (
                 <div
                   key={img.id}
-                  className="relative rounded overflow-hidden bg-[#1e1e21] flex-shrink-0"
+                  className="relative rounded overflow-hidden bg-surface-2 flex-shrink-0"
                   style={{ width: 64, height: 64 }}
                 >
                   {img.status === "loading" ? (
-                    <div role="status" className="w-full h-full flex items-center justify-center text-xs text-[#c8c4bc]">{img.progress}%</div>
+                    <div role="status" className="w-full h-full flex items-center justify-center text-xs text-text-body">{img.progress}%</div>
                   ) : img.status === "error" ? (
-                    <button type="button" onClick={() => enqueueImages([img])} title={img.error ? translateError(img.error, t) : undefined} aria-label={t.retryNamed(img.name)} className="w-full h-full bg-[#2a1010] text-[#e06e6e] text-xs">{t.retry}</button>
+                    <button type="button" onClick={() => enqueueImages([img])} title={img.error ? translateError(img.error, t) : undefined} aria-label={t.retryNamed(img.name)} className="w-full h-full bg-danger-bg text-danger text-xs">{t.retry}</button>
                   ) : (
                     img.image && <StoredImage image={img.image} variant="thumbnail" alt="" className="w-full h-full object-cover" />
                   )}
                   <button
                     onClick={() => removeImage(i)}
-                    className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white text-xs flex items-center justify-center leading-none hover:bg-[#e06e6e] transition-colors"
+                    className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white text-xs flex items-center justify-center leading-none hover:bg-danger transition-colors"
                   >
                     ×
                   </button>
@@ -260,16 +260,16 @@ export default function CollectionModal({ collections, existing, onSave, onClose
               ))}
               <button
                 onClick={() => fileRef.current?.click()}
-                className="w-16 h-16 rounded border border-dashed border-[#2e2e32] text-[#b8b5af] hover:border-[#c9a96e55] hover:text-[#b8b5af] flex items-center justify-center text-xl transition-colors flex-shrink-0"
+                className="w-16 h-16 rounded border border-dashed border-border text-text-muted hover:border-accent-soft hover:text-text-muted flex items-center justify-center text-xl transition-colors flex-shrink-0"
               >
                 +
               </button>
             </div>
-            <p className="mt-1.5 text-[11px] leading-relaxed text-[#9d9a94]">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
-            {imageBatchError && <p role="alert" className="mt-2 text-xs text-[#e06e6e]">{translateError(imageBatchError, t)}</p>}
+            <p className="mt-1.5 text-[11px] leading-relaxed text-placeholder">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
+            {imageBatchError && <p role="alert" className="mt-2 text-xs text-danger">{translateError(imageBatchError, t)}</p>}
           </div>
 
-          {hasImageError && <div role="alert" className="text-xs text-[#e06e6e]">
+          {hasImageError && <div role="alert" className="text-xs text-danger">
             {form.referenceImages.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error ? translateError(image.error, t) : ""}</p>)}
             {t.imageSaveBlocked}
           </div>}
@@ -277,14 +277,14 @@ export default function CollectionModal({ collections, existing, onSave, onClose
           {/* Prompt */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal">
+              <label className="text-xs text-text-muted font-ui normal-case tracking-normal">
                 {t.originalPromptOptional}
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <span className="text-xs text-[#b8b5af] font-ui">{t.skipForNow}</span>
+                <span className="text-xs text-text-muted font-ui">{t.skipForNow}</span>
                 <div
                   onClick={() => set("promptPending", !form.promptPending)}
-                  className={`w-7 h-4 rounded-full transition-colors cursor-pointer ${form.promptPending ? "bg-[#c9a96e]" : "bg-[#2e2e32]"}`}
+                  className={`w-7 h-4 rounded-full transition-colors cursor-pointer ${form.promptPending ? "bg-accent" : "bg-border"}`}
                 >
                   <div className={`w-3 h-3 rounded-full bg-white mt-0.5 transition-transform ${form.promptPending ? "translate-x-3.5" : "translate-x-0.5"}`} />
                 </div>
@@ -296,7 +296,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
               placeholder={t.promptPlaceholder}
               rows={3}
               disabled={form.promptPending}
-              className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors disabled:opacity-40 font-technical"
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-xs text-text-body placeholder-placeholder focus:outline-none focus:border-accent-soft transition-colors disabled:opacity-40 font-technical"
               style={{ height: 56 }}
             />
           </div>
@@ -313,7 +313,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
           {/* Status + source in a row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
+              <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">
                 {t.status}
               </label>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -321,15 +321,15 @@ export default function CollectionModal({ collections, existing, onSave, onClose
                   <label key={o.value} className="flex items-center gap-2 cursor-pointer">
                     <div
                       onClick={() => set("status", o.value)}
-                      className={`w-3.5 h-3.5 rounded-full border-2 transition-colors ${form.status === o.value ? "border-[#c9a96e] bg-[#c9a96e]" : "border-[#2e2e32]"}`}
+                      className={`w-3.5 h-3.5 rounded-full border-2 transition-colors ${form.status === o.value ? "border-accent bg-accent" : "border-border"}`}
                     />
-                    <span className="text-xs text-[#b8b5af]">{t.statusLabel[o.value]}</span>
+                    <span className="text-xs text-text-muted">{t.statusLabel[o.value]}</span>
                   </label>
                 ))}
               </div>
             </div>
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
+              <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">
                 {t.sourceUrl}
               </label>
               <input
@@ -337,7 +337,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
                 value={form.source}
                 onChange={(e) => set("source", e.target.value)}
                 placeholder={t.urlPlaceholder}
-                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors font-technical"
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-xs text-text-body placeholder-placeholder focus:outline-none focus:border-accent-soft transition-colors font-technical"
               />
             </div>
           </div>
@@ -345,7 +345,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
           {/* Notes + Favorite */}
           <div className="flex flex-col gap-2">
             <div>
-              <label className="text-xs text-[#b8b5af] font-ui normal-case tracking-normal block mb-1.5">
+              <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">
                 {t.collectionNotes}
               </label>
               <ResizableTextarea
@@ -353,7 +353,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
                 onChange={(e) => set("collectionNotes", e.target.value)}
                 placeholder={t.notesPlaceholder}
                 rows={2}
-                className="w-full bg-[#0d0d0e] border border-[#2e2e32] rounded-lg px-3 py-2.5 text-xs text-[#c8c4bc] placeholder-[#9d9a94] focus:outline-none focus:border-[#c9a96e55] transition-colors"
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-xs text-text-body placeholder-placeholder focus:outline-none focus:border-accent-soft transition-colors"
               />
             </div>
 
@@ -363,7 +363,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
                 onClick={() => set("isFavorite", !form.isFavorite)}
                 aria-label={form.isFavorite ? t.removeFavorite : t.addFavorite}
                 aria-pressed={form.isFavorite}
-                className="group absolute left-0 top-1/2 inline-flex min-h-6 -translate-y-1/2 items-center gap-2.5 rounded text-xs leading-4 text-[#b8b5af] transition-colors hover:text-[#f0ede8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161618]"
+                className="group absolute left-0 top-1/2 inline-flex min-h-6 -translate-y-1/2 items-center gap-2.5 rounded text-xs leading-4 text-text-muted transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
               >
                 <svg
                   width="14"
@@ -373,7 +373,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
                   stroke="currentColor"
                   strokeWidth="1.8"
                   aria-hidden="true"
-                  className={`shrink-0 transition-colors ${form.isFavorite ? "text-[#DB8587]" : "text-[#b8b5af] group-hover:text-[#DB8587]"}`}
+                  className={`shrink-0 transition-colors ${form.isFavorite ? "text-favorite" : "text-text-muted group-hover:text-favorite"}`}
                 >
                   <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
                 </svg>
@@ -383,14 +383,14 @@ export default function CollectionModal({ collections, existing, onSave, onClose
           </div>
         </fieldset>
 
-        <div className="h-[55px] px-5 border-t border-[#1e1e21] flex items-center gap-3 justify-end">
-          <button onClick={close} className="px-4 py-2 text-xs text-[#b8b5af] hover:text-[#f0ede8] font-ui transition-colors">
+        <div className="h-[55px] px-5 border-t border-border-subtle flex items-center gap-3 justify-end">
+          <button onClick={close} className="px-4 py-2 text-xs text-text-muted hover:text-text font-ui transition-colors">
             {t.cancel}
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSaving || isLoading || hasImageError}
-            className="px-4 py-2 text-xs font-medium bg-[#c9a96e] text-[#0d0d0e] rounded-lg hover:bg-[#d4b87e] transition-colors disabled:opacity-40"
+            className="px-4 py-2 text-xs font-medium bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-40"
           >
             {isSaving ? t.saving : isLoading ? t.reading : existing ? t.saveChanges : t.addToLibrary}
           </button>
