@@ -32,6 +32,7 @@ export default function ThemeSwitcher({ buttonClassName = "px-2.5", hint, onHint
   return (
     <div className="relative flex shrink-0">
     <button
+      id="theme-switch"
       type="button"
       aria-label={`${t.switchTheme}: ${label}`}
       title={label}
@@ -41,7 +42,7 @@ export default function ThemeSwitcher({ buttonClassName = "px-2.5", hint, onHint
         writeStoredTheme(nextTheme);
         setTheme(nextTheme);
       }}
-      className={`inline-flex shrink-0 items-center justify-center ${buttonClassName} py-1.5 text-xs font-ui font-normal text-text-muted hover:text-text bg-transparent border border-transparent rounded-lg transition-colors`}
+      className={`inline-flex shrink-0 items-center justify-center ${buttonClassName} py-1.5 text-xs font-ui font-normal text-text-muted hover:text-text bg-transparent border border-transparent rounded-lg transition-colors ${hint ? "border-accent text-accent-text" : ""}`}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         {nextTheme === "light" ? <>
