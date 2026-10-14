@@ -7,6 +7,7 @@ import ImportBackup from "./ImportBackup";
 import StoredImage from "./StoredImage";
 import { LanguageSwitcher, brandSubtitleClass, useLocale } from "./i18n";
 import ThemeSwitcher from "./theme/ThemeSwitcher";
+import { hasSeenThemeHint, markThemeHintSeen } from "./theme/theme";
 import { collectionHasAnyTag, normalizeTag, summarizeTags, uniqueTags } from "./tags";
 
 type SortKey = "newest" | "updated" | "oldest";
@@ -43,6 +44,7 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [themeHintOpen, setThemeHintOpen] = useState(() => !hasSeenThemeHint());
   const [aboutMode, setAboutMode] = useState<AboutMode>("full");
   const aboutButton = useRef<HTMLButtonElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
@@ -169,7 +171,12 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
                 {t.about}
               </button>
               <LanguageSwitcher buttonClassName="px-2 lg:px-2.5" />
-              <ThemeSwitcher buttonClassName="px-2 lg:px-2.5" />
+              <ThemeSwitcher
+                buttonClassName="px-2 lg:px-2.5"
+                // 首次介紹彈窗開著時先不顯示，避免兩個提示疊在一起。
+                hint={themeHintOpen && !aboutOpen ? t.themeHint : undefined}
+                onHintDismiss={() => { markThemeHintSeen(); setThemeHintOpen(false); }}
+              />
             </div>
             <span aria-hidden="true" className="h-3.5 w-px shrink-0 self-center border-l border-border" />
             <ImportBackup store={store} buttonClassName="px-2 lg:px-2.5" />

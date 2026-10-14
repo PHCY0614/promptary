@@ -39,7 +39,7 @@ On your first visit, a short introduction explains the workflow and local storag
 * **Image comparison**: Reference images and generated results can both be used as cover images. Any two images can be compared side by side, including on mobile, with controls for switching the information shown for each side.
 * **Form protection**: If a form contains unsaved changes, Promptary asks for confirmation before closing it. If saving fails, your input is preserved so you can retry.
 * **Bilingual interface**: Switch between Traditional Chinese and English. Your language preference is stored in the current browser.
-* **Theme preference**: Switch between dark and light themes from the header. Dark is the default, the preference is stored in the current browser, and the theme does not follow the operating system.
+* **Theme preference**: Switch between dark and light themes from the header. Dark is the default, the preference is stored in the current browser, and the theme does not follow the operating system. A one-time "New: Light mode" bubble appears beside the toggle until it is dismissed or used.
 
 ## Image Processing
 

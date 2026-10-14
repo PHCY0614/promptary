@@ -6,6 +6,7 @@ import ts from "typescript";
 
 const exports = {};
 let stored = null;
+const extra = {};
 let blockedRead = false;
 let blockedWrite = false;
 let meta = { setAttribute: (name, value) => { meta[name] = value; } };
@@ -28,14 +29,13 @@ vm.runInNewContext(
     document,
     localStorage: {
       getItem: (key) => {
-        assert.equal(key, "promptary-theme");
         if (blockedRead) throw new Error("blocked storage");
-        return stored;
+        return key === "promptary-theme" ? stored : (extra[key] ?? null);
       },
       setItem: (key, value) => {
-        assert.equal(key, "promptary-theme");
         if (blockedWrite) throw new Error("blocked storage");
-        stored = value;
+        if (key === "promptary-theme") stored = value;
+        else extra[key] = value;
       },
     },
   },
@@ -108,3 +108,13 @@ for (const foreground of ["accent-label", "accent-notice", "accent-tag", "accent
 }
 assert.ok(contrast(light["danger-text"], light["danger-bg"]) >= 4.5);
 console.log("PASS: theme defaults, storage failures, document/meta sync, startup order, header controls, and light palette AA contrast");
+
+// ---- 新功能提示旗標 ----
+blockedRead = false;
+blockedWrite = false;
+assert.equal(exports.hasSeenThemeHint(), false);
+exports.markThemeHintSeen();
+assert.equal(exports.hasSeenThemeHint(), true);
+blockedRead = true;
+assert.equal(exports.hasSeenThemeHint(), true, "儲存被封鎖時不顯示提示");
+blockedRead = false;

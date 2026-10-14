@@ -12,6 +12,7 @@ export type Messages = {
   switchTheme: string;
   themeLight: string;
   themeDark: string;
+  themeHint: string;
   searchPlaceholder: string;
   sortNewest: string;
   sortUpdated: string;
@@ -199,7 +200,6 @@ export type Messages = {
   aboutMeTitle: string;
   aboutMeKaomoji: string;
   aboutMe: string[];
-  aboutInstagramUrl: string;
   aboutThreadsUrl: string;
   statusLabel: Record<Status, string>;
   errors: Record<ErrorCode, string>;
@@ -216,8 +216,9 @@ const zhTW: Messages = {
   languageEn: "English",
   switchLanguage: "Switch to English",
   switchTheme: "切換主題",
-  themeLight: "亮色",
+  themeLight: "淺色",
   themeDark: "深色",
+  themeHint: "🪄 新增：淺色模式",
   about: "關於",
   aboutIntro: [
     "Promptary 是用來收藏 AI 生圖咒語、來源網址和嘗試紀錄的小工具，方便集中整理與比較。",
@@ -246,11 +247,9 @@ const zhTW: Messages = {
   aboutMe: [
     "這邊是黎晞（Jade），AI RP 玩家，有一點點 IT 背景的文科 I 人。",
     "Promptary 是我自己發想、 vibe coding 完成的個人專案。",
-    "如果你遇到 bug、有功能建議，或只是想跟我聊天，可以到 Threads 找我！",
-    "我的 Threads 沒有私訊功能，可以直接回覆我貼文，或從 IG 私訊。",
+    "如果你遇到 bug、有功能建議，或只是想跟我聊天，歡迎在 Threads 私訊我！",
   ],
   aboutThreadsUrl: "https://www.threads.com/@jadezzjh",
-  aboutInstagramUrl: "https://www.instagram.com/jadezzjh/",
   searchPlaceholder: "搜尋咒語、筆記、標籤……",
   sortNewest: "最新收藏",
   sortUpdated: "最近更新",
@@ -497,6 +496,7 @@ const en: Messages = {
   switchTheme: "Switch theme",
   themeLight: "Light",
   themeDark: "Dark",
+  themeHint: "🪄 New: Light mode",
   about: "About",
   aboutIntro: [
     "Promptary is a small tool for collecting AI image prompts, source links, and attempt records, so you can keep everything in one place and easily find or compare it later.",
@@ -526,11 +526,9 @@ const en: Messages = {
   aboutMe: [
     "This is 黎晞 Lí Hsī (Jade), an AI RP player with a humanities background who somehow wandered into IT, and very much an introvert.",
     "Promptary is a personal project I came up with and vibe-coded myself.",
-    "If you hit a bug, have a feature idea, or just want to chat, find me on Threads!",
-    "My Threads has no DMs — reply to a post, or message me on Instagram.",
+    "If you hit a bug, have a feature idea, or just want to chat, feel free to DM me on Threads!",
   ],
   aboutThreadsUrl: "https://www.threads.com/@jadezzjh",
-  aboutInstagramUrl: "https://www.instagram.com/jadezzjh/",
   searchPlaceholder: "Search prompts, notes, tags…",
   sortNewest: "Newest",
   sortUpdated: "Edited",
