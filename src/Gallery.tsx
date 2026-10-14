@@ -1,5 +1,5 @@
 import { STATUS_STYLE } from "./statusStyles";
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
 import { Collection, Status } from "./types";
 import { getCoverImage, Store } from "./store";
 import AboutDialog, { hasSeenIntro, markIntroSeen, type AboutMode } from "./AboutDialog";
@@ -45,6 +45,8 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [themeHintOpen, setThemeHintOpen] = useState(() => !hasSeenThemeHint());
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const [controlsWrapped, setControlsWrapped] = useState(false);
   const [aboutMode, setAboutMode] = useState<AboutMode>("full");
   const aboutButton = useRef<HTMLButtonElement>(null);
   const sortMenuRef = useRef<HTMLDivElement>(null);
@@ -55,6 +57,20 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
       containerRef.current.scrollTop = scrollPos.current;
     }
   }, []);
+
+  // 功能列已換行時，氣泡落在第二行右邊的空位，不必再多留一行；只有整列放得下一行才需要預留。
+  useLayoutEffect(() => {
+    const row = controlsRef.current;
+    if (!row) return;
+    const measure = () => {
+      const tops = Array.from(row.children, (child) => (child as HTMLElement).offsetTop);
+      setControlsWrapped(Math.max(...tops) - Math.min(...tops) > 8);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [locale]);
 
   useEffect(() => {
     if (store.loadState !== "ready") return;
@@ -154,7 +170,8 @@ export default function Gallery({ store, scrollPos, onOpen, onAdd }: Props) {
             </div>
           </div>
 
-          <div className="min-w-0 flex flex-wrap items-center justify-end gap-1 lg:gap-2 lg:justify-self-end">
+          {/* 氣泡浮在切換鈕下方不佔版面，手機上先預留一行高度，才不會蓋住下面的分類標籤。 */}
+          <div ref={controlsRef} className={`min-w-0 flex flex-wrap items-center justify-end gap-1 lg:gap-2 lg:justify-self-end ${themeHintOpen && !aboutOpen && !controlsWrapped ? "pb-9 sm:pb-0" : ""}`}>
             <div className="flex shrink-0 items-center">
               <button
                 ref={aboutButton}
