@@ -15,6 +15,7 @@ No sign-in is required. Collections and images are stored locally in your browse
 ## Current Version
 
 Last updated: 14 October 2026.
+What's new: light mode.
 
 Promptary currently supports collection management, experiment tracking, categorised prompt reading, side-by-side image comparison, ZIP backups, and local storage information. Recent updates added reusable tag suggestions, more compact collection and experiment forms, starter collections, a first-visit introduction, classification inheritance for custom prompts, and stricter ZIP backup validation.
 
