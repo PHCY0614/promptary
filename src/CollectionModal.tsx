@@ -3,6 +3,7 @@ import { Collection, ImageRef, Status } from "./types";
 import { createCanonicalImage } from "./imageUpload";
 import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
 import StoredImage from "./StoredImage";
+import ImageDropZone from "./ImageDropZone";
 import ResizableTextarea from "./ResizableTextarea";
 import { ErrorCode, translateError, useLocale } from "./i18n";
 import { UnsavedChangesDialog, useModalCloseGuard } from "./ModalCloseGuard";
@@ -224,7 +225,7 @@ export default function CollectionModal({ collections, existing, onSave, onClose
           </div>
 
           {/* Reference images */}
-          <div>
+          <ImageDropZone disabled={isSaving} onFiles={handleFiles}>
             <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">
               {t.referenceImagesOptional}
             </label>
@@ -265,9 +266,10 @@ export default function CollectionModal({ collections, existing, onSave, onClose
                 +
               </button>
             </div>
+            <p className="mt-1.5 -mb-1.5 text-[11px] leading-relaxed text-placeholder">{t.imageDropHint}</p>
             <p className="mt-1.5 text-[11px] leading-relaxed text-placeholder">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
             {imageBatchError && <p role="alert" className="mt-2 text-xs text-danger">{translateError(imageBatchError, t)}</p>}
-          </div>
+          </ImageDropZone>
 
           {hasImageError && <div role="alert" className="text-xs text-danger">
             {form.referenceImages.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error ? translateError(image.error, t) : ""}</p>)}

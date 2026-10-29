@@ -80,6 +80,8 @@ export type Messages = {
   retry: string;
   retryNamed: (name: string) => string;
   localLibraryHint: string;
+  imageDropHint: string;
+  imageDropRelease: string;
   imageSaveBlocked: string;
   originalPromptOptional: string;
   skipForNow: string;
@@ -312,6 +314,8 @@ const zhTW: Messages = {
   referenceImagesOptional: "參考圖片",
   retry: "重試",
   retryNamed: (name) => `重試 ${name}`,
+  imageDropHint: "可拖曳圖片，或點擊 ＋ 加入。",
+  imageDropRelease: "放開以加入圖片",
   localLibraryHint: "支援 JPG、PNG、WebP，每張圖片上限 10 MB，一次最多可選 10 張。",
   imageSaveBlocked: "請重試或移除失敗圖片後再儲存，已填內容會保留。",
   originalPromptOptional: "原始咒語",
@@ -591,6 +595,8 @@ const en: Messages = {
   referenceImagesOptional: "Reference images (optional)",
   retry: "Retry",
   retryNamed: (name) => `Retry ${name}`,
+  imageDropHint: "Drag images here, or tap + to add.",
+  imageDropRelease: "Drop to add images",
   localLibraryHint: "JPG, PNG, WebP. Max 10 MB each, up to 10 images at a time.",
   imageSaveBlocked: "Retry or remove failed images to save. Other fields are kept.",
   originalPromptOptional: "Original prompt",
