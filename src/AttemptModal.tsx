@@ -4,6 +4,7 @@ import { Attempt, ImageRef, PLATFORMS } from "./types";
 import { createCanonicalImage } from "./imageUpload";
 import { discardStagedImage, stageCanonicalImage } from "./archiveStorage";
 import StoredImage from "./StoredImage";
+import ImageDropZone from "./ImageDropZone";
 import ResizableTextarea from "./ResizableTextarea";
 import { ErrorCode, translateError, useLocale } from "./i18n";
 import { readCustomPlatforms, writeCustomPlatforms } from "./platformStorage";
@@ -267,7 +268,7 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
           </div>
 
           {/* Images */}
-          <div>
+          <ImageDropZone disabled={isSaving} onFiles={handleFiles}>
             <label className="text-xs text-text-muted font-ui normal-case tracking-normal block mb-1.5">
               {t.resultImages}
             </label>
@@ -295,9 +296,10 @@ export default function AttemptModal({ originalPrompt, originalClassification, e
                 className="w-16 h-16 rounded border border-dashed border-border text-text-muted hover:border-accent-soft hover:text-text-muted flex items-center justify-center text-xl transition-colors flex-shrink-0"
               >+</button>
             </div>
+            <p className="mt-1.5 -mb-1.5 text-[11px] leading-relaxed text-placeholder">{t.imageDropHint}</p>
             <p className="mt-1.5 text-[11px] leading-relaxed text-placeholder">{t.localLibraryHint.split("\n").map((line, i) => <span key={i}>{i > 0 && <br />}{line}</span>)}</p>
             {imageBatchError && <p role="alert" className="mt-2 text-xs text-danger">{translateError(imageBatchError, t)}</p>}
-          </div>
+          </ImageDropZone>
 
           {hasImageError && <div role="alert" className="text-xs text-danger">
             {form.images.filter((image) => image.status === "error").map((image) => <p key={image.id}>{image.name}：{image.error ? translateError(image.error, t) : ""}</p>)}
